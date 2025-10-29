@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/view/companySide/dashboard/productScreen/addProductScreen.dart';
+import 'package:new_brand/view/companySide/dashboard/productScreen/productDetailScreen.dart';
+import 'package:new_brand/widgets/productCard.dart';
 
 // A standalone Flutter screen that shows:
 // - Top half: a product category image (hero banner)
@@ -13,32 +19,38 @@ class CategoryProductsScreen extends StatelessWidget {
     {
       'name': 'Running Shoes',
       'price': '₹3,499',
-      'image': 'https://picsum.photos/id/1011/400/300',
+      'image':
+          'https://thumbs.dreamstime.com/b/beautiful-rain-forest-ang-ka-nature-trail-doi-inthanon-national-park-thailand-36703721.jpg',
     },
     {
       'name': 'Casual Sneakers',
       'price': '₹2,199',
-      'image': 'https://picsum.photos/id/1012/400/300',
+      'image':
+          'https://cdn.pixabay.com/photo/2025/04/28/19/59/female-model-9565629_640.jpg',
     },
     {
       'name': 'Formal Shoes',
       'price': '₹4,999',
-      'image': 'https://picsum.photos/id/1013/400/300',
+      'image':
+          'https://bkacontent.com/wp-content/uploads/2016/06/Depositphotos_31146757_l-2015.jpg',
     },
     {
       'name': 'Sports Sandals',
       'price': '₹1,299',
-      'image': 'https://picsum.photos/id/1015/400/300',
+      'image':
+          'https://image-processor-storage.s3.us-west-2.amazonaws.com/images/3cf61c1011912a2173ea4dfa260f1108/halo-of-neon-ring-illuminated-in-the-stunning-landscape-of-yosemite.jpg',
     },
     {
       'name': 'High Tops',
       'price': '₹3,799',
-      'image': 'https://picsum.photos/id/1016/400/300',
+      'image':
+          'https://png.pngtree.com/thumb_back/fh260/background/20240522/pngtree-abstract-cloudy-background-beautiful-natural-streaks-of-sky-and-clouds-red-image_15684333.jpg',
     },
     {
       'name': 'Loafers',
       'price': '₹2,899',
-      'image': 'https://picsum.photos/id/1018/400/300',
+      'image':
+          'https://ichef.bbci.co.uk/ace/standard/976/cpsprodpb/14235/production/_100058428_mediaitem100058424.jpg',
     },
   ];
 
@@ -129,16 +141,38 @@ class CategoryProductsScreen extends StatelessWidget {
                   ),
                   itemBuilder: (context, index) {
                     final product = products[index];
-                    return ProductCard(
-                      name: product['name']!,
-                      price: product['price']!,
-                      imageUrl: product['image']!,
-                      onTap: () {
-                        // handle product tap
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Tapped: ${product['name']}')),
-                        );
-                      },
+                    return InkWell(
+                      onTap: () {},
+                      child: ProductCard(
+                        name: product['name']!,
+                        price: product['price']!,
+                        imageUrl: product['image']!,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ProductDetailScreen(
+                                imageUrls: [
+                                  'https://images.unsplash.com/photo-1526779259212-939e64788e3c?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8ZnJlZSUyMGltYWdlc3xlbnwwfHwwfHx8MA%3D%3D&fm=jpg&q=60&w=3000',
+                                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNubLmqdOK9pZWU-2IiD20cuSIdUUDi9-NvQ&s',
+                                  'https://cdn.pixabay.com/photo/2016/11/21/06/53/beautiful-natural-image-1844362_640.jpg',
+                                ],
+                                name: 'Nike Air Zoom Pegasus',
+                                description:
+                                    'Experience next-level comfort and performance with the Nike Air Zoom Pegasus. Designed for everyday runners with responsive cushioning and lightweight design.',
+                                color: 'Black',
+                                size: '42',
+                                price: 'PKR 11,999',
+                              ),
+                            ),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Tapped: ${product['name']}'),
+                            ),
+                          );
+                        },
+                      ),
                     );
                   },
                 ),
@@ -147,83 +181,37 @@ class CategoryProductsScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class ProductCard extends StatelessWidget {
-  final String name;
-  final String price;
-  final String imageUrl;
-  final VoidCallback? onTap;
-
-  const ProductCard({
-    Key? key,
-    required this.name,
-    required this.price,
-    required this.imageUrl,
-    this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 2,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // product image
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-              child: AspectRatio(
-                aspectRatio: 4 / 3,
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const Center(child: CircularProgressIndicator());
-                  },
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: Colors.grey[200],
-                    alignment: Alignment.center,
-                    child: const Icon(Icons.broken_image),
-                  ),
-                ),
-              ),
-            ),
-
-            // name & price
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    price,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                ],
-              ),
+      floatingActionButton: Container(
+        height: 70.h,
+        width: 70.h,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            colors: [
+              AppColor.primaryColor,
+              AppColor.primaryColor.withOpacity(0.8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColor.primaryColor.withOpacity(0.35),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
             ),
           ],
+        ),
+        child: FloatingActionButton(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => AddProductScreen()),
+            );
+          },
+          child: const Icon(LucideIcons.plus, color: Colors.white, size: 30),
         ),
       ),
     );
