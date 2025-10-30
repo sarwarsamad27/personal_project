@@ -44,7 +44,7 @@ class CategoryProductsScreen extends StatelessWidget {
       'name': 'High Tops',
       'price': '₹3,799',
       'image':
-          'https://png.pngtree.com/thumb_back/fh260/background/20240522/pngtree-abstract-cloudy-background-beautiful-natural-streaks-of-sky-and-clouds-red-image_15684333.jpg',
+          'https://ichef.bbci.co.uk/ace/standard/976/cpsprodpb/14235/production/_100058428_mediaitem100058424.jpg',
     },
     {
       'name': 'Loafers',
@@ -84,20 +84,6 @@ class CategoryProductsScreen extends StatelessWidget {
                   ),
                 ),
 
-                // dark gradient for readable text
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.55),
-                      ],
-                    ),
-                  ),
-                ),
-
                 // category title and short description
                 Positioned(
                   left: 16,
@@ -124,58 +110,50 @@ class CategoryProductsScreen extends StatelessWidget {
 
           // Bottom half: scrollable products grid
           Expanded(
-            child: Container(
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: GridView.builder(
+                itemCount: products.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.72,
                 ),
-                child: GridView.builder(
-                  itemCount: products.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.72,
-                  ),
-                  itemBuilder: (context, index) {
-                    final product = products[index];
-                    return InkWell(
-                      onTap: () {},
-                      child: ProductCard(
-                        name: product['name']!,
-                        price: product['price']!,
-                        imageUrl: product['image']!,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ProductDetailScreen(
-                                imageUrls: [
-                                  'https://images.unsplash.com/photo-1526779259212-939e64788e3c?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8ZnJlZSUyMGltYWdlc3xlbnwwfHwwfHx8MA%3D%3D&fm=jpg&q=60&w=3000',
-                                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNubLmqdOK9pZWU-2IiD20cuSIdUUDi9-NvQ&s',
-                                  'https://cdn.pixabay.com/photo/2016/11/21/06/53/beautiful-natural-image-1844362_640.jpg',
-                                ],
-                                name: 'Nike Air Zoom Pegasus',
-                                description:
-                                    'Experience next-level comfort and performance with the Nike Air Zoom Pegasus. Designed for everyday runners with responsive cushioning and lightweight design.',
-                                color: 'Black',
-                                size: '42',
-                                price: 'PKR 11,999',
-                              ),
+                itemBuilder: (context, index) {
+                  final product = products[index];
+                  return InkWell(
+                    onTap: () {},
+                    child: ProductCard(
+                      name: product['name']!,
+                      price: product['price']!,
+                      imageUrl: product['image']!,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ProductDetailScreen(
+                              imageUrls: [
+                                'https://images.unsplash.com/photo-1526779259212-939e64788e3c?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8ZnJlZSUyMGltYWdlc3xlbnwwfHwwfHx8MA%3D%3D&fm=jpg&q=60&w=3000',
+                                'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNubLmqdOK9pZWU-2IiD20cuSIdUUDi9-NvQ&s',
+                                'https://cdn.pixabay.com/photo/2016/11/21/06/53/beautiful-natural-image-1844362_640.jpg',
+                              ],
+                              name: 'Nike Air Zoom Pegasus',
+                              description:
+                                  'Experience next-level comfort and performance with the Nike Air Zoom Pegasus. Designed for everyday runners with responsive cushioning and lightweight design.',
+                              color: 'Black',
+                              size: '42',
+                              price: 'PKR 11,999',
                             ),
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Tapped: ${product['name']}'),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
+                          ),
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Tapped: ${product['name']}')),
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
             ),
           ),

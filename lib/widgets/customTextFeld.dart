@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appColor.dart';
 
 class CustomTextField extends StatefulWidget {
-  final String headerText;
+  final String? headerText;
   final String hintText;
   final TextEditingController controller;
   final bool isPassword;
@@ -12,7 +12,7 @@ class CustomTextField extends StatefulWidget {
 
   const CustomTextField({
     super.key,
-    required this.headerText,
+    this.headerText,
     required this.hintText,
     required this.controller,
     this.isPassword = false,
@@ -35,7 +35,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
       children: [
         /// Header Text
         Text(
-          widget.headerText,
+          widget.headerText ?? '',
           style: TextStyle(
             color: AppColor.textPrimaryColor,
             fontWeight: FontWeight.w600,

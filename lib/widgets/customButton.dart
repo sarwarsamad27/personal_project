@@ -9,11 +9,13 @@ class CustomButton extends StatelessWidget {
   final double width;
   final bool isGradient;
   final bool isDisabled;
+  final Color? borderColor;
 
   const CustomButton({
     super.key,
     required this.text,
     required this.onTap,
+    this.borderColor,
     this.height = 55,
     this.width = double.infinity,
     this.isGradient = true,
@@ -29,6 +31,7 @@ class CustomButton extends StatelessWidget {
         width: width.w,
         alignment: Alignment.center,
         decoration: BoxDecoration(
+          border: Border.all(color: borderColor ?? Colors.white),
           gradient: isGradient
               ? LinearGradient(
                   colors: [

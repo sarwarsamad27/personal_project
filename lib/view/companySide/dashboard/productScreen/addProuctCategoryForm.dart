@@ -2,7 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
+import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
 
 class AddCategoryScreen extends StatefulWidget {
@@ -41,15 +43,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFFFD2A1), Color(0xFFDF762E)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      body: CustomBgContainer(
         child: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 30.h),
@@ -69,41 +63,20 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                 // 🔹 Main Glass Container
                 Expanded(
                   child: Center(
-                    child: Container(
+                    child: CustomAppContainer(
                       width: double.infinity,
                       padding: EdgeInsets.all(24.w),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(30.r),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
-                            blurRadius: 12,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
+
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           // 🔹 Image Picker
                           GestureDetector(
                             onTap: _pickImage,
-                            child: Container(
+                            child: CustomAppContainer(
                               height: 140.h,
                               width: 140.w,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(25.r),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.4),
-                                  width: 2,
-                                ),
-                              ),
+
                               child: _selectedImage == null
                                   ? Column(
                                       mainAxisAlignment:

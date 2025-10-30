@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTabBar.dart';
 import 'package:new_brand/widgets/dashboardContainer.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -55,19 +56,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
             top: 50.h,
             left: 16.w,
             right: 16.w,
-            child: Container(
+            child: CustomAppContainer(
               padding: EdgeInsets.all(18.w),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
+              color: Colors.white,
+
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -83,15 +75,15 @@ class _HomeDashboardState extends State<HomeDashboard> {
                           color: Colors.black87,
                         ),
                       ),
-                      Container(
+                      CustomAppContainer(
                         padding: EdgeInsets.symmetric(
                           horizontal: 12.w,
-                          vertical: 4.h,
+                         
                         ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEEF2FF),
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
+
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(20.r),
+
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: selectedFilter,

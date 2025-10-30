@@ -22,7 +22,6 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     const HomeDashboard(),
     const CategoryScreen(),
     const OrderScreen(),
-    const ReportScreen(),
     const ProfileScreen(),
   ];
 
@@ -58,8 +57,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                 navItem(LucideIcons.home, "Home", 0),
                 navItem(LucideIcons.package, "Products", 1),
                 navItem(LucideIcons.receipt, "Orders", 2),
-                navItem(LucideIcons.barChart, "Reports", 3),
-                navItem(LucideIcons.user, "Profile", 4),
+                navItem(LucideIcons.user, "Profile", 3),
               ],
             ),
           ),

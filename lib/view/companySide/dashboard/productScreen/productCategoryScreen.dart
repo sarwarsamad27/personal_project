@@ -35,7 +35,6 @@ class CategoryScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6FA),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 4,

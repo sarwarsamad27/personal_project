@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CustomAppContainer extends StatelessWidget {
-  final Widget child;
+  final Widget? child;
   final EdgeInsetsGeometry? padding;
-  final double? borderRadius;
+  final BorderRadius? borderRadius;
   final double? blurRadius;
   final Color? startColor;
   final Color? endColor;
@@ -13,10 +13,12 @@ class CustomAppContainer extends StatelessWidget {
   final Color? shadow;
   final double? height;
   final double? width;
+  
+  final Border? border;
 
   const CustomAppContainer({
     super.key,
-    required this.child,
+    this.child,
     this.padding,
     this.borderRadius,
     this.blurRadius,
@@ -26,35 +28,29 @@ class CustomAppContainer extends StatelessWidget {
     this.height,
     this.gradient,
     this.width,
+    this.border,
     this.shadow,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: height ?? null,
-      width: width ?? double.infinity,
-      padding: padding ?? EdgeInsets.symmetric(vertical: 30.h),
+     
+      height: height,
+      width: width,
+      padding:
+          padding ?? EdgeInsets.symmetric(vertical: 20.h, horizontal: 20.w),
       decoration: BoxDecoration(
+        color: color ?? Colors.white.withOpacity(0.2),
+        borderRadius: borderRadius ?? BorderRadius.circular(20.r),
+        border: Border.all(color: Colors.white),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
-        gradient:
-            gradient ??
-            LinearGradient(
-              colors: [
-                startColor ?? Colors.white.withOpacity(0.65),
-                endColor ?? Colors.white.withOpacity(0.65),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-        color: color ?? Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(borderRadius ?? 22.r),
       ),
       child: child,
     );
