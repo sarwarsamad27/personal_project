@@ -6,6 +6,7 @@ import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/infoScre
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/userReviews.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customContainer.dart';
+import 'package:new_brand/widgets/customTextFeld.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -23,6 +24,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   );
   final TextEditingController _phoneController = TextEditingController(
     text: "+92 300 1234567",
+  );
+  final TextEditingController _addressController = TextEditingController(
+    text: "clifton karachi",
+  );
+  final TextEditingController _descriptionController = TextEditingController(
+    text:
+        "I/AssistStructure( 4158): Flattened final assist data: 500 bytes, containing 1 windows, 3 views",
   );
 
   // Sample Reviews Data
@@ -135,11 +143,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   CustomAppContainer(
                     child: Column(
                       children: [
-                        _buildTextField("Name", _nameController, false),
+                        CustomTextField(
+                          controller: _nameController,
+                          headerText: "Name",
+                          readOnly: true,
+                        ),
                         SizedBox(height: 15.h),
-                        _buildTextField("Email", _emailController, false),
+                        CustomTextField(
+                          controller: _emailController,
+                          headerText: "Email",
+                          readOnly: true,
+                        ),
                         SizedBox(height: 15.h),
-                        _buildTextField("Phone", _phoneController, false),
+                        CustomTextField(
+                          controller: _phoneController,
+                          headerText: "Phone",
+                          readOnly: true,
+                        ),
+                        SizedBox(height: 15.h),
+                        CustomTextField(
+                          controller: _addressController,
+                          headerText: "Address",
+                          readOnly: true,
+                        ),
+
+                        SizedBox(height: 15.h),
+                        CustomTextField(
+                          height: 110.h,
+                          controller: _descriptionController,
+                          headerText: "Description",
+                          readOnly: true,
+                        ),
                       ],
                     ),
                   ),
@@ -291,41 +325,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // 🔹 Custom text field card
-  Widget _buildTextField(
-    String label,
-    TextEditingController controller,
-    bool enabled,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        SizedBox(height: 5.h),
-        TextField(
-          controller: controller,
-          enabled: enabled,
-          style: TextStyle(color: Colors.black.withOpacity(.6)),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white.withOpacity(0.25),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15.r),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 15.w,
-              vertical: 12.h,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }

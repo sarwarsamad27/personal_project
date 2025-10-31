@@ -4,21 +4,24 @@ import 'package:new_brand/resources/appColor.dart';
 
 class CustomTextField extends StatefulWidget {
   final String? headerText;
-  final String hintText;
-  final TextEditingController controller;
+  final String? hintText;
+  final TextEditingController? controller;
   final bool isPassword;
   final TextInputType keyboardType;
   final IconData? prefixIcon;
+  final double? height;
+  final bool? readOnly;
 
   const CustomTextField({
     super.key,
     this.headerText,
-    required this.hintText,
-    required this.controller,
+    this.hintText,
+    this.controller,
     this.isPassword = false,
     this.keyboardType = TextInputType.text,
     this.prefixIcon,
-    int? maxLines,
+    this.readOnly,
+    this.height,
   });
 
   @override
@@ -27,6 +30,18 @@ class CustomTextField extends StatefulWidget {
 
 class _CustomTextFieldState extends State<CustomTextField> {
   bool obscure = true;
+  late FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+
+    // Disable focus when readOnly = true
+    if (widget.readOnly == true) {
+      _focusNode = AlwaysDisabledFocusNode();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,9 +61,11 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
         /// TextField Container
         Container(
+          height: widget.height,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(color: AppColor.primaryColor),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.08),
@@ -58,11 +75,17 @@ class _CustomTextFieldState extends State<CustomTextField> {
             ],
           ),
           child: TextField(
+            focusNode: _focusNode,
+            readOnly: widget.readOnly ?? false,
             controller: widget.controller,
             keyboardType: widget.keyboardType,
             obscureText: widget.isPassword ? obscure : false,
+            expands: widget.height != null,
+            maxLines: widget.height != null ? null : 1,
+            minLines: widget.height != null ? null : 1,
             style: TextStyle(color: AppColor.textPrimaryColor, fontSize: 15.sp),
             decoration: InputDecoration(
+              isCollapsed: true,
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 14.w,
                 vertical: 14.h,
@@ -99,4 +122,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
       ],
     );
   }
+}
+
+/// 👇 Custom focus node that disables focus completely
+class AlwaysDisabledFocusNode extends FocusNode {
+  @override
+  bool get hasFocus => false;
 }

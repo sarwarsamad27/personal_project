@@ -4,7 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/view/companySide/dashboard/dashboardScreen/dashboardScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/orderScreen.dart';
-import 'package:new_brand/view/companySide/dashboard/productScreen/productCategoryScreen.dart';
+import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/productCategoryScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/profileScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/reportScreen/reportScreen.dart';
 

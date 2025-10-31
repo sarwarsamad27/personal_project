@@ -235,7 +235,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             controller: _descriptionController,
                             hintText: "Enter product description",
                             headerText: 'Description',
-                            maxLines: 3,
                           ),
                           SizedBox(height: 20.h),
 
