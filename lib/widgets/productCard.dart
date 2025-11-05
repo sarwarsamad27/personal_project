@@ -7,12 +7,22 @@ class ProductCard extends StatelessWidget {
   final String imageUrl;
   final VoidCallback? onTap;
 
+  /// 👇 Optional badges
+  final String? discountText; // e.g. "20% OFF"
+  final String? saveText; // e.g. "Save Rs.100"
+
+  /// 👇 Optional original price (cut wali)
+  final String? originalPrice; // e.g. "Rs. 2000"
+
   const ProductCard({
     Key? key,
     required this.name,
     required this.price,
     required this.imageUrl,
     this.onTap,
+    this.discountText,
+    this.saveText,
+    this.originalPrice,
   }) : super(key: key);
 
   @override
@@ -36,29 +46,86 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ---------- Product Image ----------
-            ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(16.r),
-                topRight: Radius.circular(16.r),
-              ),
-              child: SizedBox(
-                height: 140.h, // ✅ fixed responsive image height
-                width: double.infinity,
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const Center(child: CircularProgressIndicator());
-                  },
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: Colors.grey[200],
-                    alignment: Alignment.center,
-                    child: const Icon(Icons.broken_image, color: Colors.grey),
+            // ---------- Product Image + Badges ----------
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16.r),
+                    topRight: Radius.circular(16.r),
+                  ),
+                  child: SizedBox(
+                    height: 140.h,
+                    width: double.infinity,
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const Center(child: CircularProgressIndicator());
+                      },
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey[200],
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.broken_image,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+
+                /// 👇 Discount Badge
+                if (discountText != null)
+                  Positioned(
+                    top: 8.h,
+                    left: 8.w,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 6.w,
+                        vertical: 3.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: Text(
+                        discountText!,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                /// 👇 Save Badge
+                if (saveText != null)
+                  Positioned(
+                    top: 8.h,
+                    right: 8.w,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 6.w,
+                        vertical: 3.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: Text(
+                        saveText!,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
 
             // ---------- Product Info ----------
@@ -79,17 +146,38 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 6.h),
+
+                  // ---------- Price Row ----------
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        price,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.deepPurpleAccent,
-                        ),
+                      Row(
+                        children: [
+                          /// Current Price
+                          Text(
+                            price,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurpleAccent,
+                            ),
+                          ),
+
+                          /// 👇 Original Price (Cut Wali)
+                          if (originalPrice != null) ...[
+                            SizedBox(width: 4.w),
+                            Text(
+                              originalPrice!,
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: Colors.grey,
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
+
                       Container(
                         height: 24.h,
                         width: 24.w,

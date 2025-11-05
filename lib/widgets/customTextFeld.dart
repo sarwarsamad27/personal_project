@@ -11,6 +11,7 @@ class CustomTextField extends StatefulWidget {
   final IconData? prefixIcon;
   final double? height;
   final bool? readOnly;
+  final Function(String)? onChanged; // ✅ optional onChanged added
 
   const CustomTextField({
     super.key,
@@ -22,6 +23,7 @@ class CustomTextField extends StatefulWidget {
     this.prefixIcon,
     this.readOnly,
     this.height,
+    this.onChanged, // ✅ optional parameter
   });
 
   @override
@@ -84,6 +86,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
             maxLines: widget.height != null ? null : 1,
             minLines: widget.height != null ? null : 1,
             style: TextStyle(color: AppColor.textPrimaryColor, fontSize: 15.sp),
+
+            // ✅ optional onChanged callback (safe call)
+            onChanged: widget.onChanged,
+
             decoration: InputDecoration(
               isCollapsed: true,
               contentPadding: EdgeInsets.symmetric(

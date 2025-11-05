@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
-import 'package:new_brand/view/companySide/dashboard/productScreen/addProductScreen.dart';
+import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/addProductScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productDetailScreen.dart';
 import 'package:new_brand/widgets/productCard.dart';
 
@@ -128,6 +128,8 @@ class CategoryProductsScreen extends StatelessWidget {
                       name: product['name']!,
                       price: product['price']!,
                       imageUrl: product['image']!,
+                      saveText: "Save Rs.1000",
+                      originalPrice: "Rs. 5,000",
                       onTap: () {
                         Navigator.push(
                           context,
