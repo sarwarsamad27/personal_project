@@ -10,6 +10,8 @@ class CustomButton extends StatelessWidget {
   final bool isGradient;
   final bool isDisabled;
   final Color? borderColor;
+  final Color? color;
+  final Widget? child;
 
   const CustomButton({
     super.key,
@@ -20,6 +22,8 @@ class CustomButton extends StatelessWidget {
     this.width = double.infinity,
     this.isGradient = true,
     this.isDisabled = false,
+    this.color,
+    this.child
   });
 
   @override
@@ -42,7 +46,7 @@ class CustomButton extends StatelessWidget {
                   end: Alignment.centerRight,
                 )
               : null,
-          color: isGradient ? null : AppColor.primaryColor,
+          color: color,
           borderRadius: BorderRadius.circular(14.r),
           boxShadow: [
             BoxShadow(

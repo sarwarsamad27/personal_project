@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
-import 'package:new_brand/view/companySide/dashboard/dashboardScreen/dashboardScreen.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
@@ -34,25 +33,6 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
     }
   }
 
-  void _saveProfile() {
-    if (_nameController.text.isNotEmpty &&
-        _emailController.text.isNotEmpty &&
-        _phoneController.text.isNotEmpty &&
-        _addressController.text.isNotEmpty &&
-        _descriptionController.text.isNotEmpty &&
-        _selectedImage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Profile saved successfully!")),
-      );
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please fill all fields and upload image"),
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
