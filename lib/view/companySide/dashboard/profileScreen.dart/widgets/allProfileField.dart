@@ -4,8 +4,8 @@ import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
 
 class AllField extends StatelessWidget {
-   AllField({super.key});
- final TextEditingController _nameController = TextEditingController(
+  AllField({super.key});
+  final TextEditingController _nameController = TextEditingController(
     text: "John Doe",
   );
   final TextEditingController _emailController = TextEditingController(
@@ -24,43 +24,42 @@ class AllField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  CustomAppContainer(
-                    child: Column(
-                      children: [
-                        CustomTextField(
-                          controller: _nameController,
-                          headerText: "Name",
-                          readOnly: true,
-                        ),
-                        SizedBox(height: 15.h),
-                        CustomTextField(
-                          controller: _emailController,
-                          headerText: "Email",
-                          readOnly: true,
-                        ),
-                        SizedBox(height: 15.h),
-                        CustomTextField(
-                          controller: _phoneController,
-                          headerText: "Phone",
-                          readOnly: true,
-                        ),
-                        SizedBox(height: 15.h),
-                        CustomTextField(
-                          controller: _addressController,
-                          headerText: "Address",
-                          readOnly: true,
-                        ),
+    return CustomAppContainer(
+      child: Column(
+        children: [
+          CustomTextField(
+            controller: _nameController,
+            headerText: "Name",
+            readOnly: true,
+          ),
+          SizedBox(height: 15.h),
+          CustomTextField(
+            controller: _emailController,
+            headerText: "Email",
+            readOnly: true,
+          ),
+          SizedBox(height: 15.h),
+          CustomTextField(
+            controller: _phoneController,
+            headerText: "Phone",
+            readOnly: true,
+          ),
+          SizedBox(height: 15.h),
+          CustomTextField(
+            controller: _addressController,
+            headerText: "Address",
+            readOnly: true,
+          ),
 
-                        SizedBox(height: 15.h),
-                        CustomTextField(
-                          height: 110.h,
-                          controller: _descriptionController,
-                          headerText: "Description",
-                          readOnly: true,
-                        ),
-                      ],
-                    ),
-                  )
-                  ;
+          SizedBox(height: 15.h),
+          CustomTextField(
+            height: 110.h,
+            controller: _descriptionController,
+            headerText: "Description",
+            readOnly: true,
+          ),
+        ],
+      ),
+    );
   }
 }

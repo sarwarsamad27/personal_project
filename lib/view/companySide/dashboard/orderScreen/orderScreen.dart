@@ -27,7 +27,7 @@ class OrderScreen extends StatelessWidget {
         'productName': 'Casual Hoodie',
         'quantity': 1,
         'totalPrice': 4999,
-        'status': 'Shipped',
+        'status': 'Dispatched',
         'address': 'Block H, DHA Phase 5, Lahore',
         'paymentMethod': 'Credit Card',
         'date': '28 Oct 2025',
@@ -82,18 +82,18 @@ class OrderScreen extends StatelessWidget {
         'productName': 'Shoes',
         'quantity': 1,
         'totalPrice': 8499,
-        'status': 'Shipped',
+        'status': 'Dispatched',
         'address': 'Street 9, sialkot',
         'paymentMethod': 'JazzCash',
         'date': '26 Oct 2025',
       },
     ];
 
-    Color _getStatusColor(String status) {
+    Color getStatusColor(String status) {
       switch (status) {
         case 'Pending':
-          return Colors.orangeAccent;
-        case 'Shipped':
+          return Colors.red;
+        case 'Dispatched':
           return Colors.blueAccent;
         case 'Delivered':
           return Colors.greenAccent;
@@ -130,7 +130,6 @@ class OrderScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                          
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -148,19 +147,19 @@ class OrderScreen extends StatelessWidget {
                                     vertical: 4.h,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: _getStatusColor(
+                                    color: getStatusColor(
                                       order['status'],
                                     ).withOpacity(0.25),
                                     borderRadius: BorderRadius.circular(20.r),
                                     border: Border.all(
-                                      color: _getStatusColor(order['status']),
+                                      color: getStatusColor(order['status']),
                                       width: 1.2,
                                     ),
                                   ),
                                   child: Text(
                                     order['status'],
                                     style: TextStyle(
-                                      color: _getStatusColor(order['status']),
+                                      color: getStatusColor(order['status']),
                                       fontSize: 13.sp,
                                       fontWeight: FontWeight.w600,
                                     ),

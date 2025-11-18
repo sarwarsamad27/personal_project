@@ -7,36 +7,6 @@ import 'package:new_brand/widgets/customTextFeld.dart';
 class ColorSelect extends StatelessWidget {
   ColorSelect({super.key});
   final TextEditingController _colorController = TextEditingController();
-  Color? _getColorFromName(String name) {
-    final colorName = name.toLowerCase().trim();
-    switch (colorName) {
-      case 'red':
-        return Colors.red;
-      case 'blue':
-        return Colors.blue;
-      case 'green':
-        return Colors.green;
-      case 'yellow':
-        return Colors.yellow;
-      case 'black':
-        return Colors.black;
-      case 'white':
-        return Colors.white;
-      case 'orange':
-        return Colors.orange;
-      case 'purple':
-        return Colors.purple;
-      case 'pink':
-        return Colors.pink;
-      case 'grey':
-      case 'gray':
-        return Colors.grey;
-      case 'brown':
-        return Colors.brown;
-      default:
-        return null;
-    }
-  }
 
   final ValueNotifier<List<Map<String, dynamic>>> selectedColorItems =
       ValueNotifier([]);
@@ -45,12 +15,13 @@ class ColorSelect extends StatelessWidget {
     final newEntries = <Map<String, dynamic>>[];
 
     for (final name in colorNames) {
-      final color = _getColorFromName(name);
       final alreadyExists = selectedColorItems.value.any(
         (item) => item["name"].toLowerCase() == name.toLowerCase(),
       );
       if (!alreadyExists) {
-        newEntries.add({"name": name, "color": color});
+        // ❌ color detect removed
+        // ✔ always store name only
+        newEntries.add({"name": name, "color": null});
       }
     }
 
@@ -72,7 +43,7 @@ class ColorSelect extends StatelessWidget {
             children: [
               Expanded(
                 child: CustomTextField(
-                  headerText: "Color",
+                  headerText: "Color (optional)",
                   controller: _colorController,
                   hintText: 'Type color & tap icon →',
                 ),
@@ -80,17 +51,20 @@ class ColorSelect extends StatelessWidget {
               SizedBox(width: 10.w),
               GestureDetector(
                 onTap: () => _addColorsFromText(_colorController.text),
-                child: Container(
-                  width: 48.w,
-                  height: 48.w,
-                  decoration: BoxDecoration(
-                    color: AppColor.primaryColor,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: const Icon(
-                    Icons.color_lens,
-                    color: Colors.white,
-                    size: 24,
+                child: Padding(
+                  padding: EdgeInsets.only(top: 28.h),
+                  child: Container(
+                    width: 45.w,
+                    height: 50.h,
+                    decoration: BoxDecoration(
+                      color: AppColor.primaryColor,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: const Icon(
+                      Icons.done,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                   ),
                 ),
               ),
@@ -114,11 +88,11 @@ class ColorSelect extends StatelessWidget {
                   return Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: 8.w,
-                      vertical: 4.h,
+                      vertical: 6.h,
                     ),
                     decoration: BoxDecoration(
                       color: color ?? AppColor.primaryColor,
-                      borderRadius: BorderRadius.circular(20.r),
+                      borderRadius: BorderRadius.circular(10.r),
                       border: Border.all(color: Colors.white),
                     ),
                     child: Row(

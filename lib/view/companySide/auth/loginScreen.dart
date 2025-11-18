@@ -2,20 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/auth/forgotScreen.dart';
 import 'package:new_brand/view/companySide/auth/signUpScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/profileForm.dart';
+import 'package:new_brand/viewModel/AuthProvider/login_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
 import 'package:new_brand/widgets/social_button.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<LoginProvider>(context);
+
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
 
@@ -112,15 +117,25 @@ class LoginScreen extends StatelessWidget {
                           /// Login Button
                           CustomButton(
                             text: "Login",
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => ProfileFormScreen(),
-                                ),
-                              );
-                              print("Login Pressed!");
-                            },
+                         onTap: () async {
+  provider.clearError();
+
+  await provider.loginProvider(
+    email: emailController.text.trim(),
+    password: passwordController.text.trim(),
+  );
+
+  // Yeh condition ab sahi kaam karegi
+  if (provider.loginData?.token != null && provider.loginData?.token?.isNotEmpty == true) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => ProfileFormScreen()),
+    );
+  } else {
+    AppToast.error(provider.errorMessage ?? "Invalid email or password");
+  }
+},
+
                           ),
 
                           SizedBox(height: 20.h),

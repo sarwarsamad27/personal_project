@@ -44,6 +44,15 @@ dependencies:
   smooth_page_indicator: ^1.2.1
   flutter_colorpicker: ^1.1.0
   pin_code_fields: ^8.0.1
+  path_provider: ^2.1.5
+  pdf: ^3.11.3
+  open_filex: ^4.7.0
+  qr_flutter: ^4.1.0
+  barcode_widget: ^2.0.4
+  permission_handler: ^12.0.1
+  provider: ^6.1.5+1
+  fluttertoast: ^9.0.0
+  connectivity_plus: ^7.0.0
 
 dev_dependencies:
   flutter_test:
