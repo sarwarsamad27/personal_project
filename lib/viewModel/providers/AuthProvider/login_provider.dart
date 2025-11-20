@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:new_brand/models/auth/login_model.dart';
+import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/viewModel/repository/authRepository/login_repository.dart';
 
 class LoginProvider with ChangeNotifier {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
   bool _loading = false;
   bool get loading => _loading;
 
@@ -57,8 +60,9 @@ class LoginProvider with ChangeNotifier {
     _loading = false;
     notifyListeners();
 
-    // API ERROR HANDLING
-    if (_loginData?.token == null) {
+    if (_loginData?.token != null && _loginData!.token!.isNotEmpty) {
+      await LocalStorage.saveToken(_loginData!.token!);
+    } else {
       _errorMessage = _loginData?.message ?? "Login failed";
       notifyListeners();
     }

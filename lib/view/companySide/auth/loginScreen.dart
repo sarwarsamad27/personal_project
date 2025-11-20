@@ -5,8 +5,10 @@ import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/auth/forgotScreen.dart';
 import 'package:new_brand/view/companySide/auth/signUpScreen.dart';
+import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/profileForm.dart';
-import 'package:new_brand/viewModel/AuthProvider/login_provider.dart';
+import 'package:new_brand/viewModel/providers/AuthProvider/login_provider.dart';
+import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
@@ -20,9 +22,6 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<LoginProvider>(context);
-
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
 
     return ScreenUtilInit(
       designSize: const Size(390, 844),
@@ -76,7 +75,7 @@ class LoginScreen extends StatelessWidget {
                           CustomTextField(
                             headerText: "Email Address",
                             hintText: "Enter your email",
-                            controller: emailController,
+                            controller: provider.emailController,
                             prefixIcon: Icons.email_outlined,
                           ),
                           SizedBox(height: 18.h),
@@ -84,7 +83,7 @@ class LoginScreen extends StatelessWidget {
                           CustomTextField(
                             headerText: "Password",
                             hintText: "Enter your password",
-                            controller: passwordController,
+                            controller: provider.passwordController,
                             isPassword: true,
                             prefixIcon: Icons.lock_outline,
                           ),
@@ -117,25 +116,58 @@ class LoginScreen extends StatelessWidget {
                           /// Login Button
                           CustomButton(
                             text: "Login",
-                         onTap: () async {
-  provider.clearError();
+                            onTap: () async {
+                              provider.clearError();
 
-  await provider.loginProvider(
-    email: emailController.text.trim(),
-    password: passwordController.text.trim(),
-  );
+                              await provider.loginProvider(
+                                email: provider.emailController.text.trim(),
+                                password: provider.passwordController.text
+                                    .trim(),
+                              );
 
-  // Yeh condition ab sahi kaam karegi
-  if (provider.loginData?.token != null && provider.loginData?.token?.isNotEmpty == true) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => ProfileFormScreen()),
-    );
-  } else {
-    AppToast.error(provider.errorMessage ?? "Invalid email or password");
-  }
-},
+                              if (provider.loginData?.token != null &&
+                                  provider.loginData!.token!.isNotEmpty) {
+                                final userEmail = provider.emailController.text
+                                    .trim();
 
+                                provider.emailController.clear();
+                                provider.passwordController.clear();
+
+                                final profileProvider =
+                                    Provider.of<ProfileFetchProvider>(
+                                      context,
+                                      listen: false,
+                                    );
+
+                                await profileProvider.getProfile();
+
+                                // Check the API message before navigation
+                                if (profileProvider.profileData != null &&
+                                    profileProvider.profileData!.message ==
+                                        "Profile fetched successfully") {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => CompanyHomeScreen(),
+                                    ),
+                                  );
+                                } else {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ProfileFormScreen(
+                                        email: userEmail,
+                                      ), // pass stored email
+                                    ),
+                                  );
+                                }
+                              } else {
+                                AppToast.error(
+                                  provider.errorMessage ??
+                                      "Invalid email or password",
+                                );
+                              }
+                            },
                           ),
 
                           SizedBox(height: 20.h),

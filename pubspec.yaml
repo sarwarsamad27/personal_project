@@ -53,6 +53,10 @@ dependencies:
   provider: ^6.1.5+1
   fluttertoast: ^9.0.0
   connectivity_plus: ^7.0.0
+  shared_preferences: ^2.5.3
+  http_parser: ^4.1.2
+  another_flushbar: ^1.12.32
+  flutter_spinkit: ^5.2.2
 
 dev_dependencies:
   flutter_test:

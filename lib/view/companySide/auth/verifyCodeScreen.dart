@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/auth/updatepasswordScreen.dart';
+import 'package:new_brand/viewModel/providers/AuthProvider/verifyCode_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:provider/provider.dart';
 
 class VerifyCodeScreen extends StatelessWidget {
-  VerifyCodeScreen({super.key});
+  final String email;
+  VerifyCodeScreen({super.key, required this.email});
 
   final TextEditingController otpController = TextEditingController();
 
@@ -117,13 +121,34 @@ class VerifyCodeScreen extends StatelessWidget {
                       SizedBox(height: 50.h),
                       CustomButton(
                         text: "Verify",
-                        onTap: () {
-                          Navigator.push(
+                        onTap: () async {
+                          final provider = Provider.of<VerifyCodeProvider>(
                             context,
-                            MaterialPageRoute(
-                              builder: (_) => UpdatePasswordScreen(),
-                            ),
+                            listen: false,
                           );
+
+                          await provider.verifyCode(
+                            email: email,
+                            verificationCode: otpController.text.trim(),
+                          );
+
+                          if (provider.verifyData != null &&
+                              provider.verifyData!.message ==
+                                  "Verification code is valid") {
+                            AppToast.success(provider.verifyData!.message!);
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    UpdatePasswordScreen(email: email),
+                              ),
+                            );
+                          } else {
+                            AppToast.error(
+                              provider.errorMessage ?? "Verification failed",
+                            );
+                          }
                         },
                       ),
                     ],

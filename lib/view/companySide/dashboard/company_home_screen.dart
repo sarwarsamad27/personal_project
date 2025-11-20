@@ -1,39 +1,80 @@
-  import 'package:flutter/material.dart';
-  import 'package:flutter_screenutil/flutter_screenutil.dart';
-  import 'package:lucide_icons/lucide_icons.dart';
-  import 'package:new_brand/resources/appColor.dart';
-  import 'package:new_brand/view/companySide/dashboard/dashboardScreen/dashboardScreen.dart';
-  import 'package:new_brand/view/companySide/dashboard/orderScreen/orderScreen.dart';
-  import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/productCategoryScreen.dart';
-  import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/profileScreen.dart';
+import 'dart:io'; // ✅ Needed for exit(0)
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/toast.dart';
+import 'package:new_brand/view/companySide/dashboard/dashboardScreen/dashboardScreen.dart';
+import 'package:new_brand/view/companySide/dashboard/orderScreen/orderScreen.dart';
+import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/productCategoryScreen.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/profileScreen.dart';
 
-  class CompanyHomeScreen extends StatefulWidget {
-    const CompanyHomeScreen({super.key});
+class CompanyHomeScreen extends StatefulWidget {
+  const CompanyHomeScreen({super.key});
 
-    @override
-    State<CompanyHomeScreen> createState() => _CompanyHomeScreenState();
+  @override
+  State<CompanyHomeScreen> createState() => _CompanyHomeScreenState();
+}
+
+class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
+  int _currentIndex = 0;
+  DateTime? lastPressed; // For double back press
+
+  final screens = [
+    const HomeDashboard(),
+    const CategoryScreen(),
+    const OrderScreen(),
+    const ProfileScreen(),
+  ];
+
+  Future<bool> _onWillPop() async {
+    DateTime now = DateTime.now();
+
+    if (lastPressed == null ||
+        now.difference(lastPressed!) > const Duration(seconds: 2)) {
+      lastPressed = now;
+      AppToast.error("Press again to exit");
+      return false;
+    }
+
+    bool exitApp =
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Do you want to quit?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false), // Don't exit
+                child: const Text("No"),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(true); // Confirm exit
+                },
+                child: const Text("Yes"),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (exitApp) {
+      exit(0); // ✅ Properly exit the app
+    }
+
+    return false;
   }
 
-  class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
-    int _currentIndex = 0;
-
-    final screens = [
-      const HomeDashboard(),
-      const CategoryScreen(),
-      const OrderScreen(),
-      const ProfileScreen(),
-    ];
-
-    @override
-    Widget build(BuildContext context) {
-      return ScreenUtilInit(
-        designSize: const Size(390, 844),
-        builder: (context, child) {
-          return Scaffold(
+  @override
+  Widget build(BuildContext context) {
+    return ScreenUtilInit(
+      designSize: const Size(390, 844),
+      builder: (context, child) {
+        return WillPopScope(
+          onWillPop: _onWillPop, // ✅ Handles back press
+          child: Scaffold(
             backgroundColor: const Color(0xFFF9FAFB),
             body: screens[_currentIndex],
-
-            /// 🔹 Animated Bottom Navbar
             bottomNavigationBar: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -60,45 +101,46 @@
                 ],
               ),
             ),
-          );
-        },
-      );
-    }
-
-    /// 🔸 Custom Navbar Item
-    Widget navItem(IconData icon, String label, int index) {
-      final isSelected = _currentIndex == index;
-      return GestureDetector(
-        onTap: () => setState(() => _currentIndex = index),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? AppColor.primaryColor.withOpacity(0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(12.r),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 24.sp,
-                color: isSelected ? AppColor.primaryColor : Colors.grey,
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: isSelected ? AppColor.primaryColor : Colors.grey,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+        );
+      },
+    );
   }
+
+  /// 🔸 Custom Navbar Item
+  Widget navItem(IconData icon, String label, int index) {
+    final isSelected = _currentIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _currentIndex = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColor.primaryColor.withOpacity(0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 24.sp,
+              color: isSelected ? AppColor.primaryColor : Colors.grey,
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: isSelected ? AppColor.primaryColor : Colors.grey,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

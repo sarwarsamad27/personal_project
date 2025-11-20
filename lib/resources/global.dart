@@ -1,9 +1,14 @@
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps
 
 class Global {
-  static var BaseUrl = "http://localhost:5000/api/auth";
+  static var BaseUrl = "http://10.0.2.2:5000/api/auth";
   static var SignUp = "${BaseUrl}/signup";
   static var Login = "${BaseUrl}/login";
+  static var CreateProfile = "${BaseUrl}/create/profile";
+  static var GetProfile = "${BaseUrl}/profile";
+  static var ForgotPassword = "${BaseUrl}/forgot-password";
+  static var VerifyCode = "${BaseUrl}/verifycode";
+  static var UpdatePassword = "${BaseUrl}/reset/password";
   // static var Explore = "${BaseUrl}/comprofile/all";
   // static var ProductEntry = "${BaseUrl}/productentry";
   // static var EditProductEntry = "${BaseUrl}/product/:id";

@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/connectivity_plus.dart';
 import 'package:new_brand/resources/toast.dart';
-import 'package:new_brand/viewModel/AuthProvider/signUp_provider.dart';
+import 'package:new_brand/viewModel/providers/AuthProvider/signUp_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';

@@ -38,14 +38,15 @@ class CustomTextField extends StatefulWidget {
 
 class _CustomTextFieldState extends State<CustomTextField> {
   bool obscure = true;
-  String? errorText; // ✅ local error message
+  String? errorText;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        /// Header
+        /// Header Text
+        /// 
         Text(
           widget.headerText ?? '',
           style: TextStyle(
@@ -71,7 +72,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             controller: widget.controller,
             obscureText: widget.isPassword ? obscure : false,
             keyboardType: widget.keyboardType,
-
+            readOnly: widget.readOnly ?? false,
             onChanged: (value) {
               if (widget.validator != null) {
                 final message = widget.validator!(value);

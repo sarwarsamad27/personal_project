@@ -2,14 +2,20 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
+import 'package:new_brand/viewModel/providers/AuthProvider/login_provider.dart';
+import 'package:new_brand/viewModel/providers/profileProvider/profile_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
+import 'package:provider/provider.dart';
 
 class ProfileFormScreen extends StatefulWidget {
-  const ProfileFormScreen({super.key});
+  final String email;
+  const ProfileFormScreen({super.key,required this.email});
 
   @override
   State<ProfileFormScreen> createState() => _ProfileFormScreenState();
@@ -23,6 +29,11 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
   final TextEditingController _descriptionController = TextEditingController();
 
   File? _selectedImage;
+@override
+void initState() {
+  super.initState();
+  _emailController.text = widget.email; // set readonly email
+}
 
   Future<void> _pickImage() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -33,9 +44,10 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<ProfileProvider>(context, listen: false);
+     final emailProvider = Provider.of<LoginProvider>(context);
     return Scaffold(
       body: CustomBgContainer(
         child: SafeArea(
@@ -92,7 +104,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                                       )
                                     : ClipRRect(
                                         borderRadius: BorderRadius.circular(
-                                          25.r,
+                                          12.r,
                                         ),
                                         child: Image.file(
                                           _selectedImage!,
@@ -117,8 +129,9 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                             // 🔹 Email
                             CustomTextField(
                               controller: _emailController,
-                              hintText: "Enter your email",
+                              
                               headerText: "Email Address",
+                              readOnly: true,
                             ),
                             SizedBox(height: 20.h),
 
@@ -151,16 +164,45 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                             // 🔹 Save Button
                             CustomButton(
                               text: "Save Profile",
-                              onTap:
-                                  //  _saveProfile,
-                                  () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => CompanyHomeScreen(),
+                              onTap: () async {
+                                provider.clearError();
+
+                                final token = await LocalStorage.getToken();
+
+                                await provider.createProfileProvider(
+                                  token: token ?? "",
+                                  name: _nameController.text,
+                                  email: _emailController.text,
+                                  phone: _phoneController.text,
+                                  address: _addressController.text,
+                                  description: _descriptionController.text,
+                                  image: _selectedImage,
+                                );
+
+                                if (provider.loading)
+                                  return;
+
+                                if (provider.profileData?.profile != null) {
+                                  AppToast.success(
+                                    "Profile create successfully",
+                                  );
+
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => CompanyHomeScreen(),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        provider.errorMessage ?? "Failed",
                                       ),
-                                    );
-                                  },
+                                    ),
+                                  );
+                                }
+                              },
                             ),
                           ],
                         ),

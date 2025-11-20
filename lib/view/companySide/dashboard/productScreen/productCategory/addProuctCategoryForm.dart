@@ -18,14 +18,24 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   final TextEditingController _nameController = TextEditingController();
   File? _selectedImage;
 
-  Future<void> _pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() {
-        _selectedImage = File(picked.path);
-      });
+Future<void> _pickImage() async {
+  final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+  if (picked != null) {
+    setState(() {
+      _selectedImage = File(picked.path);
+    });
+
+    // Check file type before proceeding
+    String? extension = picked.path.split('.').last.toLowerCase();
+    if (extension != 'png' && extension != 'jpg' && extension != 'jpeg') {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Only images are allowed (.png, .jpg, .jpeg)'),
+      ));
+      return;
     }
   }
+}
+
 
   void _saveCategory() {
     if (_nameController.text.isNotEmpty && _selectedImage != null) {

@@ -3,24 +3,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
 
+import '../../../../../models/profile/getSingleProfile_model.dart';
+
 class AllField extends StatelessWidget {
-  AllField({super.key});
-  final TextEditingController _nameController = TextEditingController(
-    text: "John Doe",
-  );
-  final TextEditingController _emailController = TextEditingController(
-    text: "johndoe@email.com",
-  );
-  final TextEditingController _phoneController = TextEditingController(
-    text: "+92 300 1234567",
-  );
-  final TextEditingController _addressController = TextEditingController(
-    text: "clifton karachi",
-  );
-  final TextEditingController _descriptionController = TextEditingController(
-    text:
-        "I/AssistStructure( 4158): Flattened final assist data: 500 bytes, containing 1 windows, 3 views",
-  );
+  final Profile profile;
+
+  AllField({super.key, required this.profile});
 
   @override
   Widget build(BuildContext context) {
@@ -28,33 +16,36 @@ class AllField extends StatelessWidget {
       child: Column(
         children: [
           CustomTextField(
-            controller: _nameController,
+            controller: TextEditingController(text: profile.name ?? ""),
             headerText: "Name",
             readOnly: true,
           ),
           SizedBox(height: 15.h),
+
           CustomTextField(
-            controller: _emailController,
+            controller: TextEditingController(text: profile.email ?? ""),
             headerText: "Email",
             readOnly: true,
           ),
           SizedBox(height: 15.h),
+
           CustomTextField(
-            controller: _phoneController,
+            controller: TextEditingController(text: profile.phone ?? ""),
             headerText: "Phone",
             readOnly: true,
           ),
           SizedBox(height: 15.h),
+
           CustomTextField(
-            controller: _addressController,
+            controller: TextEditingController(text: profile.address ?? ""),
             headerText: "Address",
             readOnly: true,
           ),
-
           SizedBox(height: 15.h),
+
           CustomTextField(
             height: 110.h,
-            controller: _descriptionController,
+            controller: TextEditingController(text: profile.description ?? ""),
             headerText: "Description",
             readOnly: true,
           ),
