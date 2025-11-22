@@ -115,31 +115,30 @@ class SignUpScreen extends StatelessWidget {
                                     return;
                                   }
 
-                                  await provider
-                                      .signUpProvider(
-                                        email: emailController.text.trim(),
-                                        password: passwordController.text
-                                            .trim(),
-                                        confirmPassword:
-                                            confirmPasswordController.text
-                                                .trim(),
-                                      )
-                                      .then(
-                                        (value) => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => const LoginScreen(),
-                                          ),
-                                        ),
-                                      );
+                                  await provider.signUpProvider(
+                                    email: emailController.text.trim(),
+                                    password: passwordController.text.trim(),
+                                    confirmPassword: confirmPasswordController
+                                        .text
+                                        .trim(),
+                                  );
 
-                                  if (provider.signUpData?.newUser != null) {
-                                    /// CLEAR ALL FIELDS
+                                  /// API RESPONSE CHECK
+                                  if (provider.signUpData?.message ==
+                                      "User registered successfully") {
+                                    /// CLEAR FIELDS
                                     emailController.clear();
                                     passwordController.clear();
                                     confirmPasswordController.clear();
 
-                                    AppToast.success("Signup Successful");
+                                    AppToast.success("User registered Successful");
+
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const LoginScreen(),
+                                      ),
+                                    );
                                   } else {
                                     AppToast.error(
                                       provider.errorMessage ?? "Signup Failed",

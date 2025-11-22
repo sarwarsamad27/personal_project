@@ -5,12 +5,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 
 class UploadImages extends StatelessWidget {
-  UploadImages({super.key});
+  final ValueNotifier<List<File>> selectedImages;
 
-  final ValueNotifier<List<File>> selectedImagesNotifier = ValueNotifier([]);
+  UploadImages({super.key, required this.selectedImages});
 
   Future<void> _pickImages(BuildContext context) async {
-    if (selectedImagesNotifier.value.length >= 5) {
+    if (selectedImages.value.length >= 5) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("You can only upload up to 5 images")),
       );
@@ -21,16 +21,19 @@ class UploadImages extends StatelessWidget {
     final picked = await picker.pickMultiImage();
     if (picked.isNotEmpty) {
       final newImages = picked.map((x) => File(x.path)).toList();
-      final updated = List<File>.from(selectedImagesNotifier.value)
-        ..addAll(newImages.take(5 - selectedImagesNotifier.value.length));
-      selectedImagesNotifier.value = updated;
+      final updated = List<File>.from(selectedImages.value)
+        ..addAll(newImages.take(5 - selectedImages.value.length));
+
+      selectedImages.value = updated;
+      print("Selected Images: ${selectedImages.value}");
+    } else {
+      print("No images selected.");
     }
   }
 
   void _removeImage(int index) {
-    final updated = List<File>.from(selectedImagesNotifier.value)
-      ..removeAt(index);
-    selectedImagesNotifier.value = updated;
+    final updated = List<File>.from(selectedImages.value)..removeAt(index);
+    selectedImages.value = updated;
   }
 
   @override
@@ -38,28 +41,26 @@ class UploadImages extends StatelessWidget {
     return GestureDetector(
       onTap: () => _pickImages(context),
       child: ValueListenableBuilder<List<File>>(
-        valueListenable: selectedImagesNotifier,
-        builder: (context, selectedImages, _) {
+        valueListenable: selectedImages,
+        builder: (context, images, _) {
           return CustomAppContainer(
             height: 140.h,
             width: double.infinity,
-            child: selectedImages.isEmpty
+            child: images.isEmpty
                 ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.add_a_photo, color: Colors.white, size: 40.sp),
                       SizedBox(height: 8.h),
-                      Text(
-                        "Upload Product Images",
-                        style: TextStyle(color: Colors.white, fontSize: 14.sp),
-                      ),
+                      Text("Upload Product Images",
+                          style: TextStyle(color: Colors.white, fontSize: 14.sp)),
                     ],
                   )
                 : SizedBox(
                     height: 140.h,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      itemCount: selectedImages.length,
+                      itemCount: images.length,
                       separatorBuilder: (_, __) => SizedBox(width: 10.w),
                       itemBuilder: (context, index) {
                         return Stack(
@@ -67,7 +68,7 @@ class UploadImages extends StatelessWidget {
                             ClipRRect(
                               borderRadius: BorderRadius.circular(20.r),
                               child: Image.file(
-                                selectedImages[index],
+                                images[index],
                                 fit: BoxFit.cover,
                                 width: 120.w,
                                 height: 140.h,
@@ -83,11 +84,8 @@ class UploadImages extends StatelessWidget {
                                     color: Colors.black.withOpacity(0.5),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
+                                  child: const Icon(Icons.close,
+                                      color: Colors.white, size: 18),
                                 ),
                               ),
                             ),

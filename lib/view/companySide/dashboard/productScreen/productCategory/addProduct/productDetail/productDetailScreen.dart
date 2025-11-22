@@ -1,25 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productImage.dart';
+import 'package:new_brand/viewModel/providers/productProvider/getSingleProduct_provider.dart';
 import 'package:new_brand/widgets/productCard.dart';
+import 'package:provider/provider.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  final List<String> imageUrls;
-  final String name;
-  final String description;
-  final String color;
-  final String size;
-  final String price;
+  final productId;
+  final categoryId;
 
   const ProductDetailScreen({
     super.key,
-    required this.imageUrls,
-    required this.name,
-    required this.description,
-    required this.color,
-    required this.size,
-    required this.price,
+    required this.productId,
+    required this.categoryId,
   });
 
   @override
@@ -55,9 +50,41 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       'reply': '',
     },
   ];
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() async {
+      final provider = Provider.of<GetSingleProductProvider>(
+        context,
+        listen: false,
+      );
+
+      final token = await LocalStorage.getToken() ?? "";
+
+      await provider.fetchSingleProducts(
+        token: token,
+        categoryId: widget.categoryId,
+        productId: widget.productId,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<GetSingleProductProvider>(context);
+
+    /// ---------------- NULL SAFE + LOADING ----------------
+    if (provider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (provider.productData == null || provider.productData!.product == null) {
+      return const Center(child: Text("No product data found"));
+    }
+
+    final prods = provider.productData!.product!;
+
     final relatedProducts = [
       {
         'name': 'Running Shoes',
@@ -92,17 +119,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ---------- Product Image ----------
+                /// ---------------- PRODUCT IMAGE ----------------
                 ProductImage(
-                  imageUrls: widget.imageUrls,
-                  name: widget.name,
-                  description: widget.description,
-                  color: widget.color,
-                  size: widget.size,
-                  price: widget.price,
+                  imageUrls: prods.images ?? [],
+                  name: prods.name ?? "",
+                  description: prods.description ?? "",
+                  color: (prods.color != null && prods.color!.isNotEmpty)
+                      ? prods.color!.first
+                      : "N/A",
+                  size: (prods.size != null && prods.size!.isNotEmpty)
+                      ? prods.size!.first
+                      : "N/A",
+                  price: "PKR ${prods.afterDiscountPrice ?? 0}",
+                  productId: prods.sId!,
+                  categoryId: prods.categoryId!,
                 ),
 
-                // ---------- Product Details ----------
+                /// ---------------- PRODUCT DETAILS ----------------
                 Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: 16.w,
@@ -111,31 +144,46 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      /// PRODUCT NAME
                       Text(
-                        widget.name,
+                        prods.name ?? "Unnamed Product",
                         style: TextStyle(
                           fontSize: 22.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+
                       SizedBox(height: 8.h),
+
+                      /// PRICE
                       Text(
-                        widget.price,
+                        prods.afterDiscountPrice != null
+                            ? "PKR ${prods.afterDiscountPrice}"
+                            : "Price Not Available",
                         style: TextStyle(
                           fontSize: 18.sp,
                           color: Colors.black87,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+
                       SizedBox(height: 12.h),
+
                       Row(
                         children: [
-                          _buildDetailChip('Color: ${widget.color}'),
+                          _buildDetailChip(
+                            'Color: ${(prods.color != null && prods.color!.isNotEmpty) ? prods.color!.first : "N/A"}',
+                          ),
                           SizedBox(width: 8.w),
-                          _buildDetailChip('Size: ${widget.size}'),
+                          _buildDetailChip(
+                            'Size: ${(prods.size != null && prods.size!.isNotEmpty) ? prods.size!.first : "N/A"}',
+                          ),
                         ],
                       ),
+
                       SizedBox(height: 20.h),
+
+                      /// DESCRIPTION TITLE
                       Text(
                         "Description",
                         style: TextStyle(
@@ -143,9 +191,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+
                       SizedBox(height: 8.h),
+
+                      /// DESCRIPTION TEXT
                       Text(
-                        widget.description,
+                        prods.description ?? "No Description Available",
                         style: TextStyle(
                           color: Colors.grey[700],
                           height: 1.5,
@@ -156,7 +207,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                 ),
 
-                // ---------- Product Reviews ----------
+                /// ---------------- REVIEWS (UNCHANGED) ----------------
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
                   child: Column(
@@ -197,9 +248,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ],
                   ),
                 ),
+
                 SizedBox(height: 20.h),
 
-                // ---------- Related Products ----------
+                /// ---------------- RELATED PRODUCTS (UNCHANGED) ----------------
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
                   child: Text(
@@ -210,7 +262,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
                   ),
                 ),
+
                 SizedBox(height: 8.h),
+
                 SizedBox(
                   height: 250.h,
                   child: ListView.separated(
@@ -227,6 +281,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           price: item['price']!,
                           imageUrl: item['imageUrl']!,
                           onTap: () {},
+                          description: '',
                         ),
                       );
                     },

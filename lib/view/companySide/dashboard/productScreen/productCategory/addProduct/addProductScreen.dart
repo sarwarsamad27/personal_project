@@ -1,17 +1,22 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:new_brand/models/categoryModel/getCategory_model.dart';
+import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/colorSelect.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/sizeSelect.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/uploadImages.dart';
+import 'package:new_brand/viewModel/providers/productProvider/addProduct_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
+import 'package:provider/provider.dart';
 
 // ignore: must_be_immutable
 class AddProductScreen extends StatelessWidget {
-  AddProductScreen({super.key});
+  final Categories category;
+  AddProductScreen({super.key, required this.category});
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -21,8 +26,9 @@ class AddProductScreen extends StatelessWidget {
   final TextEditingController _stockController = TextEditingController();
 
   final ValueNotifier<List<File>> selectedImagesNotifier = ValueNotifier([]);
-
-  List<String> availableSizes = ["Small", "Medium", "Large", "XL", "XXL"];
+  final ValueNotifier<List<String>> selectedSizesNotifier = ValueNotifier([]);
+  final ValueNotifier<List<Map<String, dynamic>>> selectedColorsNotifier =
+      ValueNotifier([]);
 
   void _calculateDiscount(BuildContext context) {
     final beforeText = _beforePriceController.text.trim();
@@ -42,7 +48,7 @@ class AddProductScreen extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            "After Discount Price must be less than Before Discount Price",
+            "After discount price must be less than before discount price",
           ),
         ),
       );
@@ -55,7 +61,11 @@ class AddProductScreen extends StatelessWidget {
     _discountController.text = "${discount.toStringAsFixed(1)}%";
   }
 
-  void _saveProduct(BuildContext context) {
+  void _saveProduct(BuildContext context) async {
+    final token = await LocalStorage.getToken(); // FIXED 💯
+
+    final provider = Provider.of<AddProductProvider>(context, listen: false);
+
     if (selectedImagesNotifier.value.isEmpty ||
         _nameController.text.isEmpty ||
         _beforePriceController.text.isEmpty ||
@@ -66,10 +76,31 @@ class AddProductScreen extends StatelessWidget {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Product added successfully!")),
+    provider.addProduct(
+      token: token,
+      categoryId: category.sId!,
+      name: _nameController.text.trim(),
+      description: _descriptionController.text.trim(),
+      images: selectedImagesNotifier.value,
+      beforePrice: int.tryParse(_beforePriceController.text),
+      afterPrice: int.tryParse(_afterPriceController.text),
+      size: selectedSizesNotifier.value,
+      color: selectedColorsNotifier.value
+          .map((e) => e["name"].toString())
+          .toList(),
+      stock: int.tryParse(_stockController.text),
+      onSuccess: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Product added successfully!")),
+        );
+        Navigator.pop(context);
+      },
+      onError: (msg) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(msg)));
+      },
     );
-    Navigator.pop(context);
   }
 
   @override
@@ -97,7 +128,7 @@ class AddProductScreen extends StatelessWidget {
                       padding: EdgeInsets.all(24.w),
                       child: Column(
                         children: [
-                          UploadImages(),
+                          UploadImages(selectedImages: selectedImagesNotifier),
                           SizedBox(height: 30.h),
 
                           CustomTextField(
@@ -132,7 +163,6 @@ class AddProductScreen extends StatelessWidget {
                           ),
                           SizedBox(height: 20.h),
 
-                          // Auto Discount %
                           CustomTextField(
                             controller: _discountController,
                             hintText: "Discount %",
@@ -141,10 +171,10 @@ class AddProductScreen extends StatelessWidget {
                           ),
                           SizedBox(height: 20.h),
 
-                          SizeSelect(),
+                          SizeSelect(selectedSizes: selectedSizesNotifier),
                           SizedBox(height: 20.h),
 
-                          ColorSelect(),
+                          ColorSelect(colorNotifier: selectedColorsNotifier),
                           SizedBox(height: 20.h),
 
                           CustomTextField(
@@ -157,7 +187,17 @@ class AddProductScreen extends StatelessWidget {
 
                           CustomButton(
                             text: "Add Product",
-                            onTap: () => _saveProduct(context),
+                            onTap: () {
+                              _saveProduct(context);
+
+                              print("NAME: ${_nameController.text}");
+                              print("DESC: ${_descriptionController.text}");
+                              print("Before: ${_beforePriceController.text}");
+                              print("After: ${_afterPriceController.text}");
+                              print("Sizes: ${selectedSizesNotifier.value}");
+                              print("Colors: ${selectedColorsNotifier.value}");
+                              print("Images: ${selectedImagesNotifier.value}");
+                            },
                           ),
                         ],
                       ),

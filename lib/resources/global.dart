@@ -9,29 +9,13 @@ class Global {
   static var ForgotPassword = "${BaseUrl}/forgot-password";
   static var VerifyCode = "${BaseUrl}/verifycode";
   static var UpdatePassword = "${BaseUrl}/reset/password";
-  // static var Explore = "${BaseUrl}/comprofile/all";
-  // static var ProductEntry = "${BaseUrl}/productentry";
-  // static var EditProductEntry = "${BaseUrl}/product/:id";
-  // static var DeleteProductEntry = "${BaseUrl}/product/:id";
-
-  // static var ProductDetailShow = "${BaseUrl}/productentry/productdetail";
-  // static var CompLogin = "${BaseUrl}/comlogin";
-  // static var CompRegister = "${BaseUrl}/comregister";
-  // static var CompForm = "${BaseUrl}/comprofile";
-  // static var CompProfile = "${BaseUrl}/comprofile";
-  // static var ComProductEntry = "${BaseUrl}/productentry";
-  // static var ComShowProductEntry = "${BaseUrl}/productentry";
-  // static var ComDashboard = "${BaseUrl}/company/dashboard";
-  // static var ComProduct = "${BaseUrl}/productentry/productdetail";
-  // static var CreateComProduct = "${BaseUrl}/productentry/productdetail";
-  // static var AddtoCart = "${BaseUrl}/favourites";
-  // static var FavouriteProduct = "${BaseUrl}/favourites";
-  // static var SearchProduct = "${BaseUrl}/allproducts";
-  // static var CreateOrder = "${BaseUrl}/orders";
-  // static var MyOrders = "${BaseUrl}/orders";
-
-  // static var DeleteFavouriteProduct = "${BaseUrl}/favourites";
-
-  // static String? loggedInCompanyId;
-  // static String? loggedInCompanyEmail;
+  static var CreateCategory = "${BaseUrl}/create/category";
+  static var GetCategory = "${BaseUrl}/category";
+  static var EditCategory = "${BaseUrl}/edit/category";
+  static var DeleteCategory = "${BaseUrl}/delete/category";
+  static var CreateProduct = "${BaseUrl}/create/product";
+  static var GetProduct = "${BaseUrl}/get/products";
+  static var GetSingleProduct = "${BaseUrl}/get/single/product";
+  static var UpdateSingleProduct = "${BaseUrl}/update/product";
+  static var DeleteSingleProduct = "${BaseUrl}/delete/product";
 }

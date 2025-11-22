@@ -1,68 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:new_brand/models/categoryModel/getCategory_model.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/addProductScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
+import 'package:new_brand/viewModel/providers/productProvider/getProductCategoryWise_provider.dart';
 import 'package:new_brand/widgets/productCard.dart';
-
-// A standalone Flutter screen that shows:
-// - Top half: a product category image (hero banner)
-// - Bottom half: a scrollable list of product cards (grid)
-// This is ready to paste into your project. Replace image URLs and product data as needed.
+import 'package:provider/provider.dart';
 
 class CategoryProductsScreen extends StatelessWidget {
-  const CategoryProductsScreen({Key? key}) : super(key: key);
-
-  // Example product data
-  final List<Map<String, String>> products = const [
-    {
-      'name': 'Running Shoes',
-      'price': '₹3,499',
-      'image':
-          'https://thumbs.dreamstime.com/b/beautiful-rain-forest-ang-ka-nature-trail-doi-inthanon-national-park-thailand-36703721.jpg',
-    },
-    {
-      'name': 'Casual Sneakers',
-      'price': '₹2,199',
-      'image':
-          'https://cdn.pixabay.com/photo/2025/04/28/19/59/female-model-9565629_640.jpg',
-    },
-    {
-      'name': 'Formal Shoes',
-      'price': '₹4,999',
-      'image':
-          'https://bkacontent.com/wp-content/uploads/2016/06/Depositphotos_31146757_l-2015.jpg',
-    },
-    {
-      'name': 'Sports Sandals',
-      'price': '₹1,299',
-      'image':
-          'https://image-processor-storage.s3.us-west-2.amazonaws.com/images/3cf61c1011912a2173ea4dfa260f1108/halo-of-neon-ring-illuminated-in-the-stunning-landscape-of-yosemite.jpg',
-    },
-    {
-      'name': 'High Tops',
-      'price': '₹3,799',
-      'image':
-          'https://ichef.bbci.co.uk/ace/standard/976/cpsprodpb/14235/production/_100058428_mediaitem100058424.jpg',
-    },
-    {
-      'name': 'Loafers',
-      'price': '₹2,899',
-      'image':
-          'https://ichef.bbci.co.uk/ace/standard/976/cpsprodpb/14235/production/_100058428_mediaitem100058424.jpg',
-    },
-  ];
+  final Categories category;
+  const CategoryProductsScreen({Key? key, required this.category})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context).size;
-    final halfHeight = media.height * 0.5; // top half for category image
+    final halfHeight = media.height * 0.5;
+    Future.microtask(() async {
+      final provider = Provider.of<GetProductCategoryWiseProvider>(
+        context,
+        listen: false,
+      );
 
+      provider.fetchProducts(
+        token: await LocalStorage.getToken() ?? "",
+        categoryId: category.sId!,
+      );
+    });
     return Scaffold(
       body: Column(
         children: [
-          // Top half: category image with overlay text
           SizedBox(
             height: halfHeight,
             width: double.infinity,
@@ -71,7 +41,7 @@ class CategoryProductsScreen extends StatelessWidget {
               children: [
                 // Replace this NetworkImage with your asset if needed
                 Image.network(
-                  'https://picsum.photos/id/1005/900/800',
+                  category.image!,
                   fit: BoxFit.cover,
                   loadingBuilder: (context, child, progress) {
                     if (progress == null) return child;
@@ -92,9 +62,9 @@ class CategoryProductsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Text(
-                        'Shoes',
+                        category.name!,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 34,
@@ -111,49 +81,59 @@ class CategoryProductsScreen extends StatelessWidget {
           // Bottom half: scrollable products grid
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: GridView.builder(
-                itemCount: products.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.72,
-                ),
-                itemBuilder: (context, index) {
-                  final product = products[index];
-                  return InkWell(
-                    onTap: () {},
-                    child: ProductCard(
-                      name: product['name']!,
-                      price: product['price']!,
-                      imageUrl: product['image']!,
-                      saveText: "Save Rs.1000",
-                      originalPrice: "Rs. 5,000",
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ProductDetailScreen(
-                              imageUrls: [
-                                'https://images.unsplash.com/photo-1526779259212-939e64788e3c?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8ZnJlZSUyMGltYWdlc3xlbnwwfHwwfHx8MA%3D%3D&fm=jpg&q=60&w=3000',
-                                'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNubLmqdOK9pZWU-2IiD20cuSIdUUDi9-NvQ&s',
-                                'https://cdn.pixabay.com/photo/2016/11/21/06/53/beautiful-natural-image-1844362_640.jpg',
-                              ],
-                              name: 'Nike Air Zoom Pegasus',
-                              description:
-                                  'Experience next-level comfort and performance with the Nike Air Zoom Pegasus. Designed for everyday runners with responsive cushioning and lightweight design.',
-                              color: 'Black',
-                              size: '42',
-                              price: 'PKR 11,999',
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Consumer<GetProductCategoryWiseProvider>(
+                builder: (context, provider, _) {
+                  if (provider.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (provider.productData == null ||
+                      provider.productData!.products == null ||
+                      provider.productData!.products!.isEmpty) {
+                    return const Center(child: Text("No products found"));
+                  }
+
+                  final prods = provider.productData!.products!;
+
+                  return GridView.builder(
+                    itemCount: prods.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.72,
+                        ),
+                    itemBuilder: (context, index) {
+                      final p = prods[index];
+
+                      return ProductCard(
+                        name: p.name ?? "",
+                        description: p.description ?? "",
+                        price: "Rs. ${p.afterDiscountPrice ?? 0}",
+                        originalPrice: p.beforeDiscountPrice != null
+                            ? "Rs. ${p.beforeDiscountPrice}"
+                            : null,
+                        imageUrl: (p.images != null && p.images!.isNotEmpty)
+                            ? p.images!.first
+                            : "",
+                        saveText: p.beforeDiscountPrice != null
+                            ? "Save Rs.${(p.beforeDiscountPrice! - p.afterDiscountPrice!).abs()}"
+                            : null,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ProductDetailScreen(
+                                productId: p.sId ?? '',
+                                categoryId: p.categoryId ?? '',
+                              ),
                             ),
-                          ),
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Tapped: ${product['name']}')),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      );
+                    },
                   );
                 },
               ),
@@ -188,7 +168,9 @@ class CategoryProductsScreen extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => AddProductScreen()),
+              MaterialPageRoute(
+                builder: (context) => AddProductScreen(category: category),
+              ),
             );
           },
           child: const Icon(LucideIcons.plus, color: Colors.white, size: 30),

@@ -7,25 +7,24 @@ import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
 
 class SizeSelect extends StatelessWidget {
-  SizeSelect({super.key});
+    final ValueNotifier<List<String>> selectedSizes;
+
+  SizeSelect({super.key, required this.selectedSizes});
 
   final TextEditingController _sizeController = TextEditingController();
-  final ValueNotifier<List<String>> selectedSizes = ValueNotifier([]);
 
-  void _addSizesFromText(String text) {
-    final names = text.split(RegExp(r'[ ,]+')).where((e) => e.isNotEmpty);
-
-    final updated = List<String>.from(selectedSizes.value);
-
-    for (var name in names) {
-      if (!updated.contains(name)) {
-        updated.add(name);
-      }
-    }
-
-    selectedSizes.value = updated;
-    _sizeController.clear();
+void _addSizesFromText(String text) {
+  final names = text.split(RegExp(r'[ ,]+')).where((e) => e.isNotEmpty);
+  final updated = List<String>.from(selectedSizes.value);
+  for (var name in names) {
+    if (!updated.contains(name)) updated.add(name);
   }
+  selectedSizes.value = updated;
+
+  // Debugging print to confirm the sizes
+  print("Selected Sizes: ${selectedSizes.value}");
+  _sizeController.clear();
+}
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +47,7 @@ class SizeSelect extends StatelessWidget {
               GestureDetector(
                 onTap: () => _addSizesFromText(_sizeController.text),
                 child: Padding(
-                  padding: EdgeInsets.only(top: 28.h),
+                  padding: EdgeInsets.only(top: 16.h),
                   child: Container(
                     width: 45.w,
                     height: 50.h,

@@ -23,8 +23,8 @@ class Routes {
         return pushTo(const CategoryScreen());
      case RoutesName.addCategoryScreen:
         return pushTo(const AddCategoryScreen());
-     case RoutesName.categoryDetailScreen:
-        return pushTo(const CategoryProductsScreen ());
+    //  case RoutesName.categoryDetailScreen:
+    //     return pushTo(const CategoryProductsScreen ());
     //  case RoutesName.splashScreen:
     //     return pushTo(const SplashScreen());
     //  case RoutesName.splashScreen:

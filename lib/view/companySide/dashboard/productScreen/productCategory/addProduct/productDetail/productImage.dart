@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/viewModel/providers/productProvider/deleteProduct_provider.dart';
+import 'package:new_brand/viewModel/providers/productProvider/getSingleProduct_provider.dart';
+import 'package:new_brand/viewModel/providers/productProvider/updateProduct_provider.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
+import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class ProductImage extends StatelessWidget {
@@ -15,46 +20,73 @@ class ProductImage extends StatelessWidget {
   final String color;
   final String size;
   final String price;
+  final String categoryId;
+  final String productId;
 
   ProductImage({
     super.key,
     required this.imageUrls,
     required this.name,
+    required this.productId,
     required this.description,
     required this.color,
     required this.size,
     required this.price,
+    required this.categoryId,
   });
 
   final PageController _pageController = PageController();
 
-  void _deleteProduct(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Delete Product"),
-        content: const Text(
-          "Are you sure you want to delete this product permanently?",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Product deleted successfully!")),
-              );
-              Navigator.pop(context);
-            },
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
-          ),
-        ],
+void _deleteProduct(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text("Delete Product"),
+      content: const Text(
+        "Are you sure you want to delete this product permanently?",
       ),
-    );
-  }
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancel"),
+        ),
+        TextButton(
+          onPressed: () async {
+            Navigator.pop(context); // Close dialog
+
+            final token = await LocalStorage.getToken() ?? "";
+
+            final provider = Provider.of<DeleteProductProvider>(
+              context,
+              listen: false,
+            );
+
+            await provider.deleteProduct(
+              productId: productId,
+              token: token,
+            );
+
+            if (provider.deleteProductModel?.message != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(provider.deleteProductModel!.message!),
+                ),
+              );
+              Navigator.pop(context); // Close product detail screen
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Failed to delete product"),
+                ),
+              );
+            }
+          },
+          child: const Text("Delete", style: TextStyle(color: Colors.red)),
+        ),
+      ],
+    ),
+  );
+}
 
   void _editProduct(BuildContext context) {
     String oldName = name;
@@ -333,13 +365,77 @@ class ProductImage extends StatelessWidget {
                               opacity: isChanged ? 1.0 : 0.5,
                               child: CustomButton(
                                 text: "Update",
-                                onTap: () {
-                                  if (isChanged) {
-                                    Navigator.pop(context);
+                                onTap: () async {
+                                  if (!isChanged) return;
+
+                                  final token =
+                                      await LocalStorage.getToken() ?? "";
+
+                                  final provider =
+                                      Provider.of<UpdateProductProvider>(
+                                        context,
+                                        listen: false,
+                                      );
+
+                                  await provider.updateProduct(
+                                    productId: productId,
+                                    token: token,
+                                    name: nameController.text.trim(),
+                                    description: descriptionController.text
+                                        .trim(),
+                                    afterDiscountPrice:
+                                        int.tryParse(
+                                          priceController.text.trim(),
+                                        ) ??
+                                        0,
+                                    beforeDiscountPrice:
+                                        int.tryParse(
+                                          priceController.text.trim(),
+                                        ) ??
+                                        0,
+                                    size: sizeController.text.trim().split(','),
+                                    color: colorController.text.trim().split(
+                                      ',',
+                                    ),
+                                    stock: 10, // ya aapke input se
+                                    images: newImages, // List<File>
+                                  );
+
+                                  if (provider.updateProductModel?.product !=
+                                      null) {
+                                    Navigator.pop(context); // Close dialog
+
+                                    // Show success message
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text(
-                                          "Product updated successfully!",
+                                          "Product updated successfully",
+                                        ),
+                                      ),
+                                    );
+
+                                    // ------------------- RE-FETCH PRODUCT -------------------
+                                    final getProvider =
+                                        Provider.of<GetSingleProductProvider>(
+                                          context,
+                                          listen: false,
+                                        );
+                                    final token =
+                                        await LocalStorage.getToken() ?? "";
+                                    await getProvider.fetchSingleProducts(
+                                      token: token,
+                                      categoryId: categoryId,
+                                      productId: productId,
+                                    );
+                                    // ---------------------------------------------------------
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          provider
+                                                  .updateProductModel
+                                                  ?.message ??
+                                              "Update failed",
                                         ),
                                       ),
                                     );

@@ -6,6 +6,7 @@ class ProductCard extends StatelessWidget {
   final String price;
   final String imageUrl;
   final VoidCallback? onTap;
+  final String description;
 
   /// 👇 Optional badges
   final String? discountText; // e.g. "20% OFF"
@@ -23,6 +24,7 @@ class ProductCard extends StatelessWidget {
     this.discountText,
     this.saveText,
     this.originalPrice,
+    required this.description,
   }) : super(key: key);
 
   @override
@@ -146,6 +148,17 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 6.h),
+                  Text(
+  description,
+  maxLines: 1,
+  overflow: TextOverflow.ellipsis,
+  style: TextStyle(
+    fontSize: 11.sp,
+    color: Colors.grey[600],
+  ),
+),
+SizedBox(height: 4.h),
+
 
                   // ---------- Price Row ----------
                   Row(
@@ -178,19 +191,7 @@ class ProductCard extends StatelessWidget {
                         ],
                       ),
 
-                      Container(
-                        height: 24.h,
-                        width: 24.w,
-                        decoration: BoxDecoration(
-                          color: Colors.deepPurpleAccent.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: const Icon(
-                          Icons.favorite_border,
-                          color: Colors.deepPurpleAccent,
-                          size: 16,
-                        ),
-                      ),
+                   
                     ],
                   ),
                 ],

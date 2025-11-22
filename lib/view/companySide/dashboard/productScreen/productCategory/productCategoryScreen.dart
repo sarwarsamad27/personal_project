@@ -3,44 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:new_brand/models/categoryModel/getCategory_model.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/CategoryDetailScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProuctCategoryForm.dart';
+import 'package:new_brand/viewModel/providers/categoryProvider/getcategory_provider.dart';
+import 'package:new_brand/viewModel/providers/categoryProvider/updateAndDeleteCategory_provider.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
 import 'package:new_brand/widgets/productContainer.dart';
+import 'package:provider/provider.dart';
 
-class CategoryScreen extends StatefulWidget {
+class CategoryScreen extends StatelessWidget {
   const CategoryScreen({super.key});
-
-  @override
-  State<CategoryScreen> createState() => _CategoryScreenState();
-}
-
-class _CategoryScreenState extends State<CategoryScreen> {
-  List<Map<String, dynamic>> categories = [
-    {
-      "name": "Shoes",
-      "image":
-          "https://cdn.pixabay.com/photo/2016/10/02/22/17/t-shirt-1710578_1280.jpg",
-    },
-    {
-      "name": "Shirts",
-      "image":
-          "https://cdn.pixabay.com/photo/2016/10/02/22/17/t-shirt-1710578_1280.jpg",
-    },
-    {
-      "name": "Watches",
-      "image":
-          "https://cdn.pixabay.com/photo/2016/10/02/22/17/t-shirt-1710578_1280.jpg",
-    },
-    {
-      "name": "Bags",
-      "image":
-          "https://cdn.pixabay.com/photo/2016/10/02/22/17/t-shirt-1710578_1280.jpg",
-    },
-  ];
 
   Future<File?> _pickImage() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -48,7 +24,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return null;
   }
 
-  void _deleteCategory(int index) {
+  void _deleteCategory(BuildContext context, String id) async {
+    final provider = Provider.of<UpdateDeleteCategoryProvider>(
+      context,
+      listen: false,
+    );
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -60,12 +41,24 @@ class _CategoryScreenState extends State<CategoryScreen> {
             child: const Text("Cancel"),
           ),
           TextButton(
-            onPressed: () {
-              setState(() => categories.removeAt(index));
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Category deleted successfully")),
-              );
+              final success = await provider.deleteCategory(categoryId: id);
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Category deleted successfully"),
+                  ),
+                );
+                Provider.of<GetCategoryProvider>(
+                  context,
+                  listen: false,
+                ).getCategories();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Failed to delete category")),
+                );
+              }
             },
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
           ),
@@ -74,9 +67,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
     );
   }
 
-  void _editCategory(int index) {
-    final oldName = categories[index]['name'];
-    final oldImage = categories[index]['image'];
+  void _editCategory(BuildContext context, Categories cat) {
+    final provider = Provider.of<UpdateDeleteCategoryProvider>(
+      context,
+      listen: false,
+    );
+    final oldName = cat.name ?? "";
+    final oldImage = cat.image ?? "";
+
     final nameController = TextEditingController(text: oldName);
     File? newImageFile;
     bool isChanged = false;
@@ -102,10 +100,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   });
                 }
 
-                // 🔹 Listen to name changes live
-                nameController.addListener(() {
-                  checkChanges();
-                });
+                nameController.addListener(checkChanges);
 
                 return Column(
                   mainAxisSize: MainAxisSize.min,
@@ -119,8 +114,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       ),
                     ),
                     SizedBox(height: 20.h),
-
-                    // 🔹 Full-width Image picker
                     GestureDetector(
                       onTap: () async {
                         final img = await _pickImage();
@@ -147,23 +140,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         ),
                         clipBehavior: Clip.hardEdge,
                         child: newImageFile != null
-                            ? Image.file(
-                                newImageFile!,
-                                fit: BoxFit.cover, // ✅ fills full container
-                                width: double.infinity,
-                                height: double.infinity,
-                              )
-                            : Image.network(
-                                oldImage,
-                                fit: BoxFit.cover, // ✅ fills full container
-                                width: double.infinity,
-                                height: double.infinity,
-                              ),
+                            ? Image.file(newImageFile!, fit: BoxFit.cover)
+                            : Image.network(oldImage, fit: BoxFit.cover),
                       ),
                     ),
                     SizedBox(height: 20.h),
-
-                    // 🔹 Category name field
                     CustomTextField(
                       controller: nameController,
                       headerText: "Category Name",
@@ -171,8 +152,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       prefixIcon: Icons.edit,
                     ),
                     SizedBox(height: 25.h),
-
-                    // 🔹 Buttons row
                     Row(
                       children: [
                         Expanded(
@@ -182,38 +161,37 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           ),
                         ),
                         SizedBox(width: 12.w),
-                        Expanded(
-                          child: Opacity(
-                            opacity: isChanged ? 1.0 : 0.5,
-                            child: CustomButton(
-                              text: "Update",
-                              onTap: () {
-                                isChanged
-                                    ? () {
-                                        setState(() {
-                                          categories[index]['name'] =
-                                              nameController.text.trim();
-                                          if (newImageFile != null) {
-                                            categories[index]['image'] =
-                                                newImageFile!.path;
-                                          }
-                                        });
-                                        Navigator.pop(context);
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              "Category updated successfully!",
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    : null;
-                              },
-                            ),
-                          ),
-                        ),
+                       Expanded(
+  child: Opacity(
+    opacity: isChanged ? 1 : 0.5,
+    child: CustomButton(
+      text: provider.isLoading ? "Please wait..." : "Update",
+      onTap: isChanged
+          ? () async {
+              final success = await provider.updateCategory(
+                categoryId: cat.sId ?? "",
+                name: nameController.text.trim(),
+                image: newImageFile,
+              );
+
+              if (success) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Category updated!")),
+                );
+                Provider.of<GetCategoryProvider>(context, listen: false)
+                    .getCategories();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Failed to update category")),
+                );
+              }
+            }
+          : null,
+    ),
+  ),
+),
+
                       ],
                     ),
                   ],
@@ -228,6 +206,15 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<GetCategoryProvider>(context);
+
+    /// Load API on first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (provider.categoryData == null) {
+        provider.getCategories();
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -251,96 +238,101 @@ class _CategoryScreenState extends State<CategoryScreen> {
         ),
       ),
 
-      // 🔹 Premium Grid Body
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        child: GridView.builder(
-          physics: const BouncingScrollPhysics(),
-          itemCount: categories.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisExtent: 260.h,
-            crossAxisSpacing: 14.w,
-            mainAxisSpacing: 14.h,
-          ),
-          itemBuilder: (context, index) {
-            final item = categories[index];
-            return Stack(
-              children: [
-                CategoryTile(
-                  name: item["name"]!,
-                  image: item["image"]!,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CategoryProductsScreen(),
-                      ),
-                    );
-                  },
+      body: provider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : provider.categoryData == null ||
+                provider.categoryData!.categories == null
+          ? const Center(child: Text("No categories found"))
+          : Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              child: GridView.builder(
+                physics: const BouncingScrollPhysics(),
+                itemCount: provider.categoryData!.categories!.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisExtent: 260.h,
+                  crossAxisSpacing: 14.w,
+                  mainAxisSpacing: 14.h,
                 ),
+                itemBuilder: (context, index) {
+                  final item = provider.categoryData!.categories![index];
 
-                // 🔹 Edit/Delete floating options
-                Positioned(
-                  right: 10,
-                  top: 10,
-                  child: Column(
+                  return Stack(
                     children: [
-                      GestureDetector(
-                        onTap: () => _editCategory(index),
-                        child: Container(
-                          padding: EdgeInsets.all(6.w),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            LucideIcons.edit,
-                            color: AppColor.primaryColor,
-                            size: 20,
-                          ),
-                        ),
+                      CategoryTile(
+                        name: item.name ?? "",
+                        image: item.image ?? "",
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                   CategoryProductsScreen(category: item),
+                            ),
+                          );
+                        },
                       ),
-                      SizedBox(height: 10.h),
-                      GestureDetector(
-                        onTap: () => _deleteCategory(index),
-                        child: Container(
-                          padding: EdgeInsets.all(6.w),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
+
+                      Positioned(
+                        right: 10,
+                        top: 10,
+                        child: Column(
+                          children: [
+                            GestureDetector(
+                              onTap: () => _editCategory(context, item),
+                              child: Container(
+                                padding: EdgeInsets.all(6.w),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.9),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 5,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  LucideIcons.edit,
+                                  color: AppColor.primaryColor,
+                                  size: 20,
+                                ),
                               ),
-                            ],
-                          ),
-                          child: const Icon(
-                            LucideIcons.trash2,
-                            color: Colors.redAccent,
-                            size: 20,
-                          ),
+                            ),
+                            SizedBox(height: 10.h),
+                            GestureDetector(
+                              onTap: () =>
+                                  _deleteCategory(context, item.sId ?? ""),
+                              child: Container(
+                                padding: EdgeInsets.all(6.w),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.9),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 5,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  LucideIcons.trash2,
+                                  color: Colors.redAccent,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
+                  );
+                },
+              ),
+            ),
 
-      // 🔹 Floating Add Button
       floatingActionButton: Container(
         height: 70.h,
         width: 70.h,
@@ -371,7 +363,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
               MaterialPageRoute(
                 builder: (context) => const AddCategoryScreen(),
               ),
-            );
+            ).then((_) {
+              Provider.of<GetCategoryProvider>(
+                context,
+                listen: false,
+              ).getCategories();
+            });
           },
           child: const Icon(LucideIcons.plus, color: Colors.white, size: 30),
         ),

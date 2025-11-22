@@ -53,64 +53,152 @@ class NetworkApiServices extends BaseApiServices {
   @override
   Future<Map<String, dynamic>> putApi(
     String url,
-    Map<String, dynamic> body,
-  ) async {
+    Map<String, dynamic> body, {
+    File? image,
+    String fileFieldName = "image",
+  }) async {
     try {
-      final response = await http.put(
-        Uri.parse(url),
-        headers: await getHeaders(),
-        body: jsonEncode(body),
-      );
+      // If image is provided, use multipart PUT
+      if (image != null) {
+        var request = http.MultipartRequest('PUT', Uri.parse(url));
 
-      return _handleResponse(url, response, body: body);
+        // Headers
+        final token = await LocalStorage.getToken();
+        request.headers.addAll({
+          "Accept": "application/json",
+          if (token != null && token.isNotEmpty)
+            "Authorization": "Bearer $token",
+        });
+
+        // Add text fields
+        body.forEach((key, value) {
+          request.fields[key] = value.toString();
+        });
+
+        // Add image
+        final mimeType = image.path.split('.').last.toLowerCase(); // jpg/png
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            fileFieldName,
+            image.path,
+            contentType: MediaType("image", mimeType),
+          ),
+        );
+
+        // Send request
+        var streamed = await request.send();
+        var response = await http.Response.fromStream(streamed);
+
+        print("PUT Multipart Response: ${response.body}");
+        return jsonDecode(response.body);
+      } else {
+        // Plain JSON PUT
+        final response = await http.put(
+          Uri.parse(url),
+          headers: await getHeaders(),
+          body: jsonEncode(body),
+        );
+
+        return _handleResponse(url, response, body: body);
+      }
     } catch (e) {
       return _handleError(e);
     }
   }
 
-Future<Map<String, dynamic>> postSingleImageApi(
-  String url,
-  Map<String, String> fields,
-  File? image, {
-  String fileFieldName = "image",
-}) async {
-  try {
-    var request = http.MultipartRequest('POST', Uri.parse(url));
+  Future<Map<String, dynamic>> putMultiPart({
+    required String url,
+    required Map<String, String> fields,
+    required List<File> files,
+    String fileFieldName = "images",
+  }) async {
+    try {
+      var request = http.MultipartRequest('PUT', Uri.parse(url));
 
-    // Correct Headers
-    final token = await LocalStorage.getToken();
-    request.headers.addAll({
-      "Accept": "application/json",
-      if (token != null && token.isNotEmpty)
-        "Authorization": "Bearer $token",
-    });
+      // Add headers
+      final token = await LocalStorage.getToken();
+      request.headers.addAll({
+        "Accept": "application/json",
+        if (token != null && token.isNotEmpty) "Authorization": "Bearer $token",
+      });
 
-    // Add Text Fields
-    request.fields.addAll(fields);
+      // Add text fields
+      request.fields.addAll(fields);
 
-    // Add Image Properly
-    if (image != null) {
-      final mimeType = image.path.split(".").last.toLowerCase(); // jpg/png/jpeg
+      // Add files
+      for (var file in files) {
+        final mimeType = file.path.split(".").last.toLowerCase();
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            fileFieldName,
+            file.path,
+            contentType: MediaType("image", mimeType),
+          ),
+        );
+      }
 
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          fileFieldName,
-          image.path,
-          contentType: MediaType("image", mimeType), // <-- IMPORTANT
-        ),
-      );
+      // Send request
+      var streamed = await request.send();
+      var response = await http.Response.fromStream(streamed);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          'code_status': false,
+          'message': 'Server Error: ${response.body}',
+        };
+      }
+    } catch (e) {
+      return {'code_status': false, 'message': 'Exception: $e'};
     }
-
-    var streamed = await request.send();
-    var response = await http.Response.fromStream(streamed);
-
-    print("Upload Response: ${response.body}");
-
-    return jsonDecode(response.body);
-  } catch (e) {
-    return {'code_status': false, 'message': 'Exception: $e'};
   }
-}
+
+  Future<Map<String, dynamic>> postSingleImageApi(
+    String url,
+    Map<String, String> fields,
+    File? image, {
+    String fileFieldName = "image",
+  }) async {
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse(url));
+
+      // Correct Headers
+      final token = await LocalStorage.getToken();
+      request.headers.addAll({
+        "Accept": "application/json",
+        if (token != null && token.isNotEmpty) "Authorization": "Bearer $token",
+      });
+
+      // Add Text Fields
+      request.fields.addAll(fields);
+
+      // Add Image Properly
+      if (image != null) {
+        final mimeType = image.path
+            .split(".")
+            .last
+            .toLowerCase(); // jpg/png/jpeg
+
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            fileFieldName,
+            image.path,
+            contentType: MediaType("image", mimeType), // <-- IMPORTANT
+          ),
+        );
+      }
+
+      var streamed = await request.send();
+      var response = await http.Response.fromStream(streamed);
+
+      print("Upload Response: ${response.body}");
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'code_status': false, 'message': 'Exception: $e'};
+    }
+  }
 
   Future<Map<String, dynamic>> postMultipartApi(
     String url,

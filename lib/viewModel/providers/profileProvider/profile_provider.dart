@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:new_brand/models/profile/createProfile_model.dart';
-import 'package:new_brand/viewModel/repository/profileRepository/profile_repository.dart';
+import 'package:new_brand/viewModel/repository/profileRepository/Createprofile_repository.dart';
 
 class ProfileProvider with ChangeNotifier {
   bool _loading = false;
