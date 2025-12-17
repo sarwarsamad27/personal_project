@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:new_brand/resources/appColor.dart';
 
 class ProductCard extends StatelessWidget {
   final String name;
@@ -64,7 +66,10 @@ class ProductCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       loadingBuilder: (context, child, progress) {
                         if (progress == null) return child;
-                        return const Center(child: CircularProgressIndicator());
+                        return  Center(child: SpinKitThreeBounce(
+                  color: AppColor.primaryColor,
+                  size: 30.0,
+                ),);
                       },
                       errorBuilder: (context, error, stackTrace) => Container(
                         color: Colors.grey[200],
@@ -78,7 +83,6 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
 
-                /// 👇 Discount Badge
                 if (discountText != null)
                   Positioned(
                     top: 8.h,

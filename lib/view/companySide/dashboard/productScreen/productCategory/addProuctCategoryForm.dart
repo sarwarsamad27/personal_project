@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/createCategory_provider.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
@@ -105,25 +106,13 @@ class AddCategoryScreen extends StatelessWidget {
                               );
 
                               if (success) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Category added successfully!",
-                                    ),
-                                  ),
-                                );
+                                AppToast.success("Category added successfully!");
 
                                 provider.resetFields();
 
                                 Navigator.pop(context);
                               } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Please select image and name",
-                                    ),
-                                  ),
-                                );
+                                AppToast.warning("Please select image and name");
                               }
                             },
                           ),

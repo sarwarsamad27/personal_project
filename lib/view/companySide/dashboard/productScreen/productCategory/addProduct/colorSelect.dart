@@ -16,7 +16,9 @@ class ColorSelect extends StatelessWidget {
     final updated = List<Map<String, dynamic>>.from(colorNotifier.value);
 
     for (final name in names) {
-      final exists = updated.any((e) => e["name"].toLowerCase() == name.toLowerCase());
+      final exists = updated.any(
+        (e) => e["name"].toLowerCase() == name.toLowerCase(),
+      );
       if (!exists) {
         updated.add({"name": name, "color": null});
       }
@@ -45,14 +47,17 @@ class ColorSelect extends StatelessWidget {
               SizedBox(width: 10.w),
               GestureDetector(
                 onTap: () => _addColorsFromText(_colorController.text),
-                child: Container(
-                  width: 45.w,
-                  height: 50.h,
-                  decoration: BoxDecoration(
-                    color: AppColor.primaryColor,
-                    borderRadius: BorderRadius.circular(12.r),
+                child: Padding(
+                  padding: EdgeInsets.only(top: 16.h),
+                  child: Container(
+                    width: 45.w,
+                    height: 50.h,
+                    decoration: BoxDecoration(
+                      color: AppColor.primaryColor,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: const Icon(Icons.done, color: Colors.white),
                   ),
-                  child: const Icon(Icons.done, color: Colors.white),
                 ),
               ),
             ],
@@ -70,7 +75,10 @@ class ColorSelect extends StatelessWidget {
                 runSpacing: 8,
                 children: colors.map((e) {
                   return Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 6.h,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColor.primaryColor,
                       borderRadius: BorderRadius.circular(10.r),
@@ -83,10 +91,15 @@ class ColorSelect extends StatelessWidget {
                         SizedBox(width: 5.w),
                         GestureDetector(
                           onTap: () {
-                            colorNotifier.value =
-                                colors.where((x) => x != e).toList();
+                            colorNotifier.value = colors
+                                .where((x) => x != e)
+                                .toList();
                           },
-                          child: Icon(Icons.close, size: 18, color: Colors.white),
+                          child: Icon(
+                            Icons.close,
+                            size: 18,
+                            color: Colors.white,
+                          ),
                         ),
                       ],
                     ),
@@ -94,7 +107,7 @@ class ColorSelect extends StatelessWidget {
                 }).toList(),
               );
             },
-          )
+          ),
         ],
       ),
     );

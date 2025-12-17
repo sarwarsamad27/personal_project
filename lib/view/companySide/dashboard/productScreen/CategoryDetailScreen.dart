@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/models/categoryModel/getCategory_model.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/addProductScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
@@ -41,11 +43,14 @@ class CategoryProductsScreen extends StatelessWidget {
               children: [
                 // Replace this NetworkImage with your asset if needed
                 Image.network(
-                  category.image!,
+                  Global.imageUrl + category.image!,
                   fit: BoxFit.cover,
                   loadingBuilder: (context, child, progress) {
                     if (progress == null) return child;
-                    return const Center(child: CircularProgressIndicator());
+                    return const Center(child: SpinKitThreeBounce(
+                  color: AppColor.primaryColor,
+                  size: 30.0,
+                ),);
                   },
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: Colors.grey[300],
@@ -85,7 +90,10 @@ class CategoryProductsScreen extends StatelessWidget {
               child: Consumer<GetProductCategoryWiseProvider>(
                 builder: (context, provider, _) {
                   if (provider.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const Center(child: SpinKitThreeBounce(
+                  color: AppColor.primaryColor,
+                  size: 30.0,
+                ),);
                   }
 
                   if (provider.productData == null ||
@@ -116,7 +124,7 @@ class CategoryProductsScreen extends StatelessWidget {
                             ? "Rs. ${p.beforeDiscountPrice}"
                             : null,
                         imageUrl: (p.images != null && p.images!.isNotEmpty)
-                            ? p.images!.first
+                            ? Global.imageUrl + p.images!.first
                             : "",
                         saveText: p.beforeDiscountPrice != null
                             ? "Save Rs.${(p.beforeDiscountPrice! - p.afterDiscountPrice!).abs()}"

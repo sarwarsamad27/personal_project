@@ -57,6 +57,9 @@ dependencies:
   http_parser: ^4.1.2
   another_flushbar: ^1.12.32
   flutter_spinkit: ^5.2.2
+  device_info_plus: ^12.3.0
+  jwt_decoder: ^2.0.1
+  pdf_image_renderer: ^1.0.1
 
 dev_dependencies:
   flutter_test:

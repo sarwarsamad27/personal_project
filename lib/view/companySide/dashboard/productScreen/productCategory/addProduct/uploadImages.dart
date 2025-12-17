@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 
 class UploadImages extends StatelessWidget {
@@ -11,9 +12,7 @@ class UploadImages extends StatelessWidget {
 
   Future<void> _pickImages(BuildContext context) async {
     if (selectedImages.value.length >= 5) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("You can only upload up to 5 images")),
-      );
+       AppToast.show("You can only upload up to 5 images");
       return;
     }
 

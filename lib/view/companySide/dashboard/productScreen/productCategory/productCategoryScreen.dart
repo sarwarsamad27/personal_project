@@ -1,10 +1,14 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/models/categoryModel/getCategory_model.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/global.dart';
+import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/CategoryDetailScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProuctCategoryForm.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/getcategory_provider.dart';
@@ -45,19 +49,13 @@ class CategoryScreen extends StatelessWidget {
               Navigator.pop(context);
               final success = await provider.deleteCategory(categoryId: id);
               if (success) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Category deleted successfully"),
-                  ),
-                );
+                AppToast.success("Category deleted successfully!");
                 Provider.of<GetCategoryProvider>(
                   context,
                   listen: false,
                 ).getCategories();
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Failed to delete category")),
-                );
+                AppToast.error("Failed to delete category");
               }
             },
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
@@ -161,37 +159,37 @@ class CategoryScreen extends StatelessWidget {
                           ),
                         ),
                         SizedBox(width: 12.w),
-                       Expanded(
-  child: Opacity(
-    opacity: isChanged ? 1 : 0.5,
-    child: CustomButton(
-      text: provider.isLoading ? "Please wait..." : "Update",
-      onTap: isChanged
-          ? () async {
-              final success = await provider.updateCategory(
-                categoryId: cat.sId ?? "",
-                name: nameController.text.trim(),
-                image: newImageFile,
-              );
+                        Expanded(
+                          child: Opacity(
+                            opacity: isChanged ? 1 : 0.5,
+                            child: CustomButton(
+                              text: provider.isLoading
+                                  ? "Please wait..."
+                                  : "Update",
+                              onTap: isChanged
+                                  ? () async {
+                                      final success = await provider
+                                          .updateCategory(
+                                            categoryId: cat.sId ?? "",
+                                            name: nameController.text.trim(),
+                                            image: newImageFile,
+                                          );
 
-              if (success) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Category updated!")),
-                );
-                Provider.of<GetCategoryProvider>(context, listen: false)
-                    .getCategories();
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Failed to update category")),
-                );
-              }
-            }
-          : null,
-    ),
-  ),
-),
-
+                                      if (success) {
+                                        Navigator.pop(context);
+                                       AppToast.show("Category updated!");
+                                        Provider.of<GetCategoryProvider>(
+                                          context,
+                                          listen: false,
+                                        ).getCategories();
+                                      } else {
+                                         AppToast.show("Failed to update category");
+                                      }
+                                    }
+                                  : null,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -239,7 +237,10 @@ class CategoryScreen extends StatelessWidget {
       ),
 
       body: provider.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: SpinKitThreeBounce(
+                  color: AppColor.primaryColor,
+                  size: 30.0,
+                ),)
           : provider.categoryData == null ||
                 provider.categoryData!.categories == null
           ? const Center(child: Text("No categories found"))
@@ -256,18 +257,18 @@ class CategoryScreen extends StatelessWidget {
                 ),
                 itemBuilder: (context, index) {
                   final item = provider.categoryData!.categories![index];
-
+                  log(item.image.toString());
                   return Stack(
                     children: [
                       CategoryTile(
                         name: item.name ?? "",
-                        image: item.image ?? "",
+                        image: Global.imageUrl + item.image! ?? "",
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                   CategoryProductsScreen(category: item),
+                                  CategoryProductsScreen(category: item),
                             ),
                           );
                         },

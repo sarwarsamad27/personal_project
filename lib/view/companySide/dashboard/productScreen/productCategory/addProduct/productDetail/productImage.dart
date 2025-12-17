@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/viewModel/providers/productProvider/deleteProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getSingleProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/updateProduct_provider.dart';
@@ -37,56 +39,45 @@ class ProductImage extends StatelessWidget {
 
   final PageController _pageController = PageController();
 
-void _deleteProduct(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (_) => AlertDialog(
-      title: const Text("Delete Product"),
-      content: const Text(
-        "Are you sure you want to delete this product permanently?",
+  void _deleteProduct(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Delete Product"),
+        content: const Text(
+          "Are you sure you want to delete this product permanently?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+
+              final token = await LocalStorage.getToken() ?? "";
+
+              final provider = Provider.of<DeleteProductProvider>(
+                context,
+                listen: false,
+              );
+
+              await provider.deleteProduct(productId: productId, token: token);
+
+              if (provider.deleteProductModel?.message != null) {
+                 AppToast.show(provider.deleteProductModel!.message!);
+                Navigator.pop(context); // Close product detail screen
+              } else {
+                AppToast.show("Failed to delete product");
+              }
+            },
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel"),
-        ),
-        TextButton(
-          onPressed: () async {
-            Navigator.pop(context); // Close dialog
-
-            final token = await LocalStorage.getToken() ?? "";
-
-            final provider = Provider.of<DeleteProductProvider>(
-              context,
-              listen: false,
-            );
-
-            await provider.deleteProduct(
-              productId: productId,
-              token: token,
-            );
-
-            if (provider.deleteProductModel?.message != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(provider.deleteProductModel!.message!),
-                ),
-              );
-              Navigator.pop(context); // Close product detail screen
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Failed to delete product"),
-                ),
-              );
-            }
-          },
-          child: const Text("Delete", style: TextStyle(color: Colors.red)),
-        ),
-      ],
-    ),
-  );
-}
+    );
+  }
 
   void _editProduct(BuildContext context) {
     String oldName = name;
@@ -109,9 +100,7 @@ void _deleteProduct(BuildContext context) {
 
     Future<void> _pickImages(StateSetter setModalState) async {
       if (existingImages.length + newImages.length >= 5) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("You can only upload up to 5 images")),
-        );
+         AppToast.show("You can only upload up to 5 images");
         return;
       }
 
@@ -223,7 +212,7 @@ void _deleteProduct(BuildContext context) {
                                       borderRadius: BorderRadius.circular(14.r),
                                     ),
                                     child: Image.network(
-                                      existingImages[i],
+                                      Global.imageUrl + existingImages[i],
                                       fit: BoxFit.cover,
                                     ),
                                   ),
@@ -397,8 +386,8 @@ void _deleteProduct(BuildContext context) {
                                     color: colorController.text.trim().split(
                                       ',',
                                     ),
-                                    stock: 10, // ya aapke input se
-                                    images: newImages, // List<File>
+                                    stock: 10, 
+                                    images: newImages,
                                   );
 
                                   if (provider.updateProductModel?.product !=
@@ -406,13 +395,7 @@ void _deleteProduct(BuildContext context) {
                                     Navigator.pop(context); // Close dialog
 
                                     // Show success message
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          "Product updated successfully",
-                                        ),
-                                      ),
-                                    );
+                                    AppToast.show("Product updated successfully");
 
                                     // ------------------- RE-FETCH PRODUCT -------------------
                                     final getProvider =
@@ -429,16 +412,7 @@ void _deleteProduct(BuildContext context) {
                                     );
                                     // ---------------------------------------------------------
                                   } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          provider
-                                                  .updateProductModel
-                                                  ?.message ??
-                                              "Update failed",
-                                        ),
-                                      ),
-                                    );
+                                   AppToast.error("Update failed");
                                   }
                                 },
                               ),
@@ -475,7 +449,7 @@ void _deleteProduct(BuildContext context) {
                   bottomRight: Radius.circular(24.r),
                 ),
                 child: Image.network(
-                  imageUrls[index],
+                  Global.imageUrl + imageUrls[index],
                   fit: BoxFit.cover,
                   width: double.infinity,
                 ),

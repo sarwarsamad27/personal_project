@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/editProfileScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/allConditions.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/allProfileField.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/myWallet.dart';
@@ -21,7 +23,10 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // FETCH on build only one time using Future.microtask
     Future.microtask(() {
-      Provider.of<ProfileFetchProvider>(context, listen: false).fetchProfile();
+      Provider.of<ProfileFetchProvider>(
+        context,
+        listen: false,
+      ).getProfileOnce();
     });
 
     return Scaffold(
@@ -34,7 +39,10 @@ class ProfileScreen extends StatelessWidget {
                 // LOADING
                 if (provider.loading) {
                   return const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
+                    child: SpinKitThreeBounce(
+                  color: AppColor.whiteColor,
+                  size: 30.0,
+                ),
                   );
                 }
 
@@ -69,7 +77,7 @@ class ProfileScreen extends StatelessWidget {
                           Container(
                             width: 124.r,
                             height: 124.r,
-                            padding: EdgeInsets.all(4.r),
+                            padding: EdgeInsets.all(2.r),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: AppColor.primaryColor,
@@ -78,46 +86,48 @@ class ProfileScreen extends StatelessWidget {
                               radius: 60.r,
                               backgroundImage: profile.image != null
                                   ? NetworkImage(
-                                      "${Global.BaseUrl}${profile.image}",
+                                      "${Global.imageUrl}${profile.image}",
                                     )
                                   : const NetworkImage(
                                       "https://i.pravatar.cc/300",
                                     ),
                             ),
                           ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: GestureDetector(
-                              onTap: () {},
-                              child: Container(
-                                padding: EdgeInsets.all(6.w),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  LucideIcons.edit3,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ),
-                            ),
-                          ),
                         ],
                       ),
 
                       SizedBox(height: 20.h),
-
-                      // --------- ALL FIELDS (DYNAMIC) ----------
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  EditProfileScreen(profile: profile),
+                            ),
+                          );
+                        },
+                        child: CustomAppContainer(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Edit Profile",
+                                style: TextStyle(fontSize: 15.sp),
+                              ),
+                              Icon(Icons.edit, color: AppColor.appimagecolor),
+                            ],
+                          ),
+                          height: 40.h,
+                          width: 150,
+                          borderRadius: BorderRadius.all(Radius.circular(10.r)),
+                        ),
+                      ),
+                      SizedBox(height: 20.h),
                       AllField(profile: profile),
                       SizedBox(height: 25.h),
 
-                      // ---------------- WALLET CARD ----------------
                       GestureDetector(
                         onTap: () {
                           Navigator.push(

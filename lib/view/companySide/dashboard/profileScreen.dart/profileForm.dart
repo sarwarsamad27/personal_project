@@ -194,13 +194,7 @@ void initState() {
                                     ),
                                   );
                                 } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        provider.errorMessage ?? "Failed",
-                                      ),
-                                    ),
-                                  );
+                                  AppToast.error(provider.errorMessage ?? "Failed");
                                 }
                               },
                             ),

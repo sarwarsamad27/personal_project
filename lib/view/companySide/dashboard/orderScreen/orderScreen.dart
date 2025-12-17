@@ -1,223 +1,460 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:new_brand/view/companySide/dashboard/orderScreen/orderDetailScreen.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/global.dart';
+import 'package:new_brand/resources/toast.dart';
+import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/pendingToDispatched_provider.dart';
+import 'package:new_brand/widgets/paymentTabbar.dart';
+import 'package:provider/provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customContainer.dart';
+import 'orderDetailScreen.dart';
 
-class OrderScreen extends StatelessWidget {
+class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> orders = [
-      {
-        'orderId': '#A001',
-        'customerName': 'Ali Khan',
-        'productName': 'Premium Shoes',
-        'quantity': 2,
-        'totalPrice': 9998,
-        'status': 'Pending',
-        'address': 'House 23, Street 12, Karachi',
-        'paymentMethod': 'Cash on Delivery',
-        'date': '29 Oct 2025',
-      },
-      {
-        'orderId': '#A002',
-        'customerName': 'Sara Malik',
-        'productName': 'Casual Hoodie',
-        'quantity': 1,
-        'totalPrice': 4999,
-        'status': 'Dispatched',
-        'address': 'Block H, DHA Phase 5, Lahore',
-        'paymentMethod': 'Credit Card',
-        'date': '28 Oct 2025',
-      },
-      {
-        'orderId': '#A003',
-        'customerName': 'Usman Tariq',
-        'productName': 'Leather Jacket',
-        'quantity': 1,
-        'totalPrice': 8499,
-        'status': 'Delivered',
-        'address': 'Street 9, Islamabad',
-        'paymentMethod': 'JazzCash',
-        'date': '26 Oct 2025',
-      },
-      {
-        'orderId': '#A004',
-        'customerName': 'saif hussain',
-        'productName': 'shirt',
-        'quantity': 1,
-        'totalPrice': 8499,
-        'status': 'Delivered',
-        'address': 'Street 9, Islamabad',
-        'paymentMethod': 'JazzCash',
-        'date': '26 Oct 2025',
-      },
-      {
-        'orderId': '#A004',
-        'customerName': 'gufran Tariq',
-        'productName': ' Jacket',
-        'quantity': 1,
-        'totalPrice': 8499,
-        'status': 'Pending',
-        'address': 'Street 9, Karachi',
-        'paymentMethod': 'JazzCash',
-        'date': '21 Oct 2025',
-      },
-      {
-        'orderId': '#A005',
-        'customerName': 'Usman taha',
-        'productName': 'Leather',
-        'quantity': 1,
-        'totalPrice': 8499,
-        'status': 'Delivered',
-        'address': 'Street 9, lahore',
-        'paymentMethod': 'JazzCash',
-        'date': '24 Oct 2025',
-      },
-      {
-        'orderId': '#A006',
-        'customerName': 'siddique',
-        'productName': 'Shoes',
-        'quantity': 1,
-        'totalPrice': 8499,
-        'status': 'Dispatched',
-        'address': 'Street 9, sialkot',
-        'paymentMethod': 'JazzCash',
-        'date': '26 Oct 2025',
-      },
-    ];
+  State<OrderScreen> createState() => _OrderScreenState();
+}
 
-    Color getStatusColor(String status) {
-      switch (status) {
-        case 'Pending':
-          return Colors.red;
-        case 'Dispatched':
-          return Colors.blueAccent;
-        case 'Delivered':
-          return Colors.greenAccent;
-        default:
-          return Colors.grey;
+class _OrderScreenState extends State<OrderScreen>
+    with SingleTickerProviderStateMixin {
+  final ScrollController _scrollController = ScrollController();
+  bool _isFirstBuild = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      Provider.of<GetMyOrdersProvider>(context, listen: false).fetchOrders();
+    });
+
+    _scrollController.addListener(() {
+      final provider = Provider.of<GetMyOrdersProvider>(context, listen: false);
+
+      if (_scrollController.position.pixels ==
+              _scrollController.position.maxScrollExtent &&
+          !provider.loading &&
+          !provider.loadMore) {
+        provider.fetchOrders(isLoadMore: true);
       }
-    }
+    });
+  }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // ------------ FIRST TAB (DISPATCHED) ------------
+  Widget firstTab(GetMyOrdersProvider provider) {
+    final orders = provider.orderModel?.orders ?? [];
+    final dispatched = orders.where((e) => e.status == "Dispatched").toList();
+
+    return _buildOrderList(
+      list: dispatched,
+      provider: provider,
+      scrollController: null,
+    );
+  }
+
+  Widget secondTab(GetMyOrdersProvider provider) {
+    final orders = provider.orderModel?.orders ?? [];
+    final pending = orders.where((e) => e.status == "Pending").toList();
+
+    return _buildOrderList(
+      list: pending,
+      provider: provider,
+      scrollController: _scrollController,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: CustomBgContainer(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 30.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ListView.separated(
-                  itemCount: orders.length,
-                  separatorBuilder: (_, __) => SizedBox(height: 16.h),
-                  itemBuilder: (context, index) {
-                    final order = orders[index];
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => OrderDetailScreen(order: order),
-                          ),
-                        );
+        child: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Consumer2<GetMyOrdersProvider, GetDispatchedOrderProvider>(
+                  builder: (context, pendingProvider, dispatchedProvider, _) {
+                    return PaymentTabBar(
+                      onTabChanged: (index) {
+                        if (index == 0) {
+                          Provider.of<GetMyOrdersProvider>(
+                            context,
+                            listen: false,
+                          ).fetchOrders(isRefresh: true); // Pending
+                        } else {
+                          Provider.of<GetDispatchedOrderProvider>(
+                            context,
+                            listen: false,
+                          ).fetchDispatchedOrders(
+                            isRefresh: true,
+                          ); // Dispatched
+                        }
                       },
-                      child: CustomAppContainer(
-                        padding: EdgeInsets.all(20.w),
 
+                      firstTab: pendingTab(pendingProvider),
+                      secondTab: dispatchedTab(dispatchedProvider),
+                      firstTabbarName: "Pending Orders",
+                      secondTabbarName: "Dispatched Orders",
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderList({
+    required List list,
+    GetMyOrdersProvider? provider,
+    bool isApiLoading = false,
+    ScrollController? scrollController,
+  }) {
+    bool isLoading = provider?.loading == true && list.isEmpty;
+
+    // 🔥 Loader jab API loading ho rahi ho
+    if (isApiLoading && list.isEmpty) {
+      return const Center(
+        child: SpinKitThreeBounce(color: AppColor.whiteColor, size: 30),
+      );
+    }
+
+    return RefreshIndicator(
+      color: Colors.white,
+      backgroundColor: AppColor.primaryColor,
+      onRefresh: () async {
+        if (provider != null) {
+          await provider.fetchOrders(isRefresh: true);
+        }
+      },
+
+      child: list.isEmpty
+          ? ListView(
+              children: const [
+                SizedBox(
+                  height: 300,
+                  child: Center(
+                    child: Text(
+                      "No Orders Found",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : ListView.separated(
+              controller: scrollController,
+              itemCount: list.length + ((provider?.loadMore ?? false) ? 1 : 0),
+
+              separatorBuilder: (_, __) => SizedBox(height: 16.h),
+
+              itemBuilder: (context, index) {
+                if (index == list.length && (provider?.loadMore ?? false)) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(10),
+                      child: SpinKitThreeBounce(
+                        color: AppColor.whiteColor,
+                        size: 30.0,
+                      ),
+                    ),
+                  );
+                }
+
+                final order = list[index];
+                final product = order.products!.first;
+
+                Color getStatusColor(String status) {
+                  switch (status) {
+                    case 'Pending':
+                      return AppColor.errorColor;
+                    case 'Dispatched':
+                      return AppColor.successColor;
+                    default:
+                      return Colors.grey;
+                  }
+                }
+
+                return CustomAppContainer(
+                  padding: EdgeInsets.all(20.w),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // -------------------- PRODUCT IMAGE + VIEW PRODUCT BUTTON --------------------
+                      Column(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12.r),
+                            child: Image.network(
+                              product.images!.isNotEmpty
+                                  ? Global.imageUrl + product.images!.first
+                                  : "",
+                              height: 75.h,
+                              width: 75.w,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  const Icon(Icons.image, color: Colors.white),
+                            ),
+                          ),
+
+                          SizedBox(height: 6.h),
+
+                          // VIEW PRODUCT BUTTON
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ProductDetailScreen(
+                                    productId: product.productId,
+                                    categoryId: product.categoryId,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              "View Product",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(width: 12.w),
+
+                      // -------------------- RIGHT SIDE CONTENT --------------------
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Top Row - Order ID + Status
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  order['orderId'],
+                                  "#${order.sId!.substring(0, 6)}",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 16.sp,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 10.w,
-                                    vertical: 4.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: getStatusColor(
-                                      order['status'],
-                                    ).withOpacity(0.25),
-                                    borderRadius: BorderRadius.circular(20.r),
-                                    border: Border.all(
-                                      color: getStatusColor(order['status']),
-                                      width: 1.2,
+
+                                // ---------------- Pending Tab Dropdown ----------------
+                                if (provider != null) // pending tab
+                                  _buildPendingStatusDropdown(order),
+
+                                // ---------------- Dispatched Tab Simple Badge ----------------
+                                if (provider == null) // dispatched tab
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 10.w,
+                                      vertical: 5.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      color: Colors.green.withOpacity(.2),
+                                      border: Border.all(color: Colors.green),
+                                    ),
+                                    child: Text(
+                                      "Dispatched",
+                                      style: TextStyle(
+                                        color: Colors.green,
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
-                                  child: Text(
-                                    order['status'],
-                                    style: TextStyle(
-                                      color: getStatusColor(order['status']),
-                                      fontSize: 13.sp,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
                               ],
                             ),
-                            SizedBox(height: 10.h),
+
+                            SizedBox(height: 8.h),
 
                             Text(
-                              order['productName'],
+                              product.name ?? "",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 17.sp,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 4.h),
+
+                            SizedBox(height: 6.h),
 
                             Text(
-                              "Customer: ${order['customerName']}",
+                              "Customer: ${order.buyerDetails!.name}",
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.85),
+                                color: Colors.white.withOpacity(0.8),
                                 fontSize: 14.sp,
                               ),
                             ),
-                            SizedBox(height: 4.h),
 
+                            SizedBox(height: 6.h),
+
+                            // ---------------- QTY + PRICE (price moved below qty) ----------------
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  "Quantity: ${order['quantity']}",
+                                  "Qty: ${product.quantity}",
                                   style: TextStyle(
                                     color: Colors.white.withOpacity(0.85),
                                     fontSize: 14.sp,
                                   ),
                                 ),
-                                Text(
-                                  "Rs ${order['totalPrice']}",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15.sp,
+                                if (provider == null)
+                                  Text(
+                                    "Rs: ${order.grandTotal}",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15.sp,
+                                    ),
                                   ),
-                                ),
+                              ],
+                            ),
+
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                if (provider != null)
+                                  Text(
+                                    "Rs: ${order.grandTotal}",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15.sp,
+                                    ),
+                                  ),
+                                if (provider != null)
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              OrderDetailScreen(order: order),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text(
+                                      "View Detail",
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
                               ],
                             ),
                           ],
                         ),
                       ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  Widget dispatchedTab(GetDispatchedOrderProvider provider) {
+    final list = (provider.dispatchedModel?.orders ?? [])
+        .where((e) => e.status == "Dispatched")
+        .toList();
+
+    return _buildOrderList(
+      list: list,
+      provider: null,
+      isApiLoading: provider.loading,
+      scrollController: null,
+    );
+  }
+
+  Widget pendingTab(GetMyOrdersProvider provider) {
+    final list = (provider.orderModel?.orders ?? [])
+        .where((e) => e.status == "Pending")
+        .toList();
+
+    return _buildOrderList(
+      list: list,
+      provider: provider,
+      isApiLoading: provider.loading,
+      scrollController: _scrollController,
+    );
+  }
+
+  Widget _buildPendingStatusDropdown(order) {
+    Color getStatusColor(String status) {
+      switch (status) {
+        case 'Pending':
+          return AppColor.errorColor;
+        case 'Dispatched':
+          return AppColor.successColor;
+        default:
+          return Colors.grey;
+      }
+    }
+
+    return Container(
+      height: 30.h,
+      padding: EdgeInsets.symmetric(horizontal: 4.w),
+      decoration: BoxDecoration(
+        color: getStatusColor(order.status!).withOpacity(0.2),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: getStatusColor(order.status!)),
+      ),
+      child: DropdownButton<String>(
+        value: order.status,
+        underline: const SizedBox(),
+        icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+        dropdownColor: AppColor.primaryColor,
+        style: TextStyle(color: Colors.white, fontSize: 13.sp),
+        items: [
+          "Pending",
+          "Dispatched",
+        ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+        onChanged: (newStatus) async {
+          if (newStatus == "Dispatched") {
+            final dispatchProvider = Provider.of<PendingToDispatchedProvider>(
+              context,
+              listen: false,
+            );
+
+            bool success = await dispatchProvider.updateOrderStatus(
+              orderId: order.sId!,
+              status: "dispatched",
+            );
+
+            if (success) {
+              Provider.of<GetMyOrdersProvider>(
+                context,
+                listen: false,
+              ).updateStatusAndRefresh();
+
+              Provider.of<GetDispatchedOrderProvider>(
+                context,
+                listen: false,
+              ).fetchDispatchedOrders(isRefresh: true);
+
+              AppToast.success("Order moved to Dispatched");
+            } else {
+              AppToast.error("Failed to update");
+            }
+          }
+        },
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productImage.dart';
@@ -76,7 +77,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     /// ---------------- NULL SAFE + LOADING ----------------
     if (provider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: SpinKitThreeBounce(
+                  color: AppColor.primaryColor,
+                  size: 30.0,
+                ),);
     }
 
     if (provider.productData == null || provider.productData!.product == null) {
@@ -121,7 +125,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               children: [
                 /// ---------------- PRODUCT IMAGE ----------------
                 ProductImage(
-                  imageUrls: prods.images ?? [],
+                  imageUrls:  prods.images ?? [],
                   name: prods.name ?? "",
                   description: prods.description ?? "",
                   color: (prods.color != null && prods.color!.isNotEmpty)
@@ -183,7 +187,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                       SizedBox(height: 20.h),
 
-                      /// DESCRIPTION TITLE
                       Text(
                         "Description",
                         style: TextStyle(
@@ -194,7 +197,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                       SizedBox(height: 8.h),
 
-                      /// DESCRIPTION TEXT
                       Text(
                         prods.description ?? "No Description Available",
                         style: TextStyle(

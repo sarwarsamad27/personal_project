@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/view/companySide/auth/loginScreen.dart';
-
+import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -19,33 +21,56 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // 🔄 Rotation controller (1 rotation every 3 seconds)
+    // Rotation controller
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat();
 
-    // ⏳ Navigate to Login after 5 sec (optional)
-    Timer(const Duration(seconds: 5), () {
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 800),
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const LoginScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            final tween = Tween(
-              begin: const Offset(0, 1),
-              end: Offset.zero,
-            ).chain(CurveTween(curve: Curves.easeOut));
-            return SlideTransition(
-              position: animation.drive(tween),
-              child: FadeTransition(opacity: animation, child: child),
-            );
-          },
-        ),
-      );
-    });
+    // Check token and navigate
+    checkLoginStatus();
+  }
+
+  // Check token and navigate accordingly
+ void checkLoginStatus() async {
+  final token = await LocalStorage.getToken();
+
+  await Future.delayed(const Duration(seconds: 2));
+
+  // Token missing?
+  if (token == null || token.isEmpty) {
+    navigateTo(const LoginScreen());
+    return;
+  }
+
+  // Check if token expired
+  bool isExpired = JwtDecoder.isExpired(token);
+
+  if (isExpired) {
+    await LocalStorage.clearToken();
+    navigateTo(const LoginScreen());
+  } else {
+    navigateTo(CompanyHomeScreen());
+  }
+}
+
+  // Navigation with slide + fade transition
+  void navigateTo(Widget screen) {
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 800),
+        pageBuilder: (context, animation, secondaryAnimation) => screen,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final tween = Tween(begin: const Offset(0, 1), end: Offset.zero)
+              .chain(CurveTween(curve: Curves.easeOut));
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: FadeTransition(opacity: animation, child: child),
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -63,12 +88,12 @@ class _SplashScreenState extends State<SplashScreen>
         return Scaffold(
           body: Stack(
             children: [
-              // 🔹 Background Image
+              // Background image
               Positioned.fill(
                 child: Image.asset("assets/images/shookoo_image.png"),
               ),
 
-              // 🔹 Gradient Overlay
+              // Gradient overlay
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -82,7 +107,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
 
-              // 🔹 Center Content
+              // Center content
               Center(
                 child: SafeArea(
                   child: Column(
@@ -90,7 +115,7 @@ class _SplashScreenState extends State<SplashScreen>
                     children: [
                       SizedBox(height: 100.h),
 
-                      // 🔄 Rotating Icon
+                      // Rotating icon
                       RotationTransition(
                         turns: _controller,
                         child: Container(

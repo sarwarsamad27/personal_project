@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons/lucide_icons.dart';
-import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTabBar.dart';
-import 'package:new_brand/widgets/dashboardContainer.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class HomeDashboard extends StatefulWidget {

@@ -18,7 +18,7 @@ class CompanyHomeScreen extends StatefulWidget {
 
 class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   int _currentIndex = 0;
-  DateTime? lastPressed; // For double back press
+  DateTime? lastPressed;
 
   final screens = [
     const HomeDashboard(),
@@ -44,12 +44,12 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
             title: const Text("Do you want to quit?"),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false), // Don't exit
+                onPressed: () => Navigator.of(context).pop(false),
                 child: const Text("No"),
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop(true); // Confirm exit
+                  Navigator.of(context).pop(true);
                 },
                 child: const Text("Yes"),
               ),
@@ -59,7 +59,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
         false;
 
     if (exitApp) {
-      exit(0); // ✅ Properly exit the app
+      exit(0);
     }
 
     return false;
@@ -71,8 +71,13 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       designSize: const Size(390, 844),
       builder: (context, child) {
         return WillPopScope(
-          onWillPop: _onWillPop, // ✅ Handles back press
+          onWillPop: _onWillPop,
           child: Scaffold(
+            extendBody: _currentIndex == 3
+                ? true
+                : _currentIndex == 2
+                ? true
+                : false,
             backgroundColor: const Color(0xFFF9FAFB),
             body: screens[_currentIndex],
             bottomNavigationBar: Container(
@@ -107,7 +112,6 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     );
   }
 
-  /// 🔸 Custom Navbar Item
   Widget navItem(IconData icon, String label, int index) {
     final isSelected = _currentIndex == index;
     return GestureDetector(

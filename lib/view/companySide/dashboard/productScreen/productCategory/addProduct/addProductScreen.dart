@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/models/categoryModel/getCategory_model.dart';
 import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/colorSelect.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/sizeSelect.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/uploadImages.dart';
@@ -45,13 +46,7 @@ class AddProductScreen extends StatelessWidget {
     if (before == null || after == null) return;
 
     if (after > before) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "After discount price must be less than before discount price",
-          ),
-        ),
-      );
+      AppToast.show("After discount price must be less than before discount price");
       _afterPriceController.clear();
       _discountController.text = "";
       return;
@@ -70,9 +65,7 @@ class AddProductScreen extends StatelessWidget {
         _nameController.text.isEmpty ||
         _beforePriceController.text.isEmpty ||
         _afterPriceController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all required fields")),
-      );
+      AppToast.show("Please fill all required fields");
       return;
     }
 
@@ -90,15 +83,11 @@ class AddProductScreen extends StatelessWidget {
           .toList(),
       stock: int.tryParse(_stockController.text),
       onSuccess: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Product added successfully!")),
-        );
+        AppToast.show("Product added successfully!");
         Navigator.pop(context);
       },
       onError: (msg) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(msg)));
+         AppToast.show(msg);
       },
     );
   }

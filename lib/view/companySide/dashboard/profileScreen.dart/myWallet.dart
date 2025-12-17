@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/getDeleiveredOrder/getDeliveredOrder_screen.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/getReturnOrder/getReturnedOrder_screen.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/getTransactionHistory/getTransactionHistory_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/wallet.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customContainer.dart';
@@ -34,26 +37,6 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
     },
   ];
 
-  List<Map<String, dynamic>> orders = [
-    {
-      'orderId': '#2024',
-      'status': 'Delivered',
-      'date': '6 Nov 2025',
-      'amount': 'Rs. 2,100',
-    },
-    {
-      'orderId': '#2025',
-      'status': 'Pending',
-      'date': '8 Nov 2025',
-      'amount': 'Rs. 900',
-    },
-    {
-      'orderId': '#2026',
-      'status': 'Returned',
-      'date': '10 Nov 2025',
-      'amount': 'Rs. 1,400',
-    },
-  ];
 
   Widget buildTransactionTab() {
     return ListView.separated(
@@ -115,64 +98,6 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
     );
   }
 
-  Widget buildOrdersTab() {
-    return ListView.separated(
-      itemCount: orders.length,
-      separatorBuilder: (_, __) => Divider(color: Colors.white24, height: 15.h),
-      itemBuilder: (context, index) {
-        final order = orders[index];
-        Color statusColor;
-        if (order['status'] == 'Delivered') {
-          statusColor = Colors.green;
-        } else if (order['status'] == 'Pending') {
-          statusColor = Colors.yellow;
-        } else {
-          statusColor = Colors.red;
-        }
-
-        return CustomAppContainer(
-          padding: EdgeInsets.all(12.w),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Order ${order['orderId']}",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    order['date'],
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    order['amount'],
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    order['status'],
-                    style: TextStyle(color: statusColor, fontSize: 13),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -188,10 +113,14 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
           child: Column(
             children: [
               Wallet(),
-              SizedBox(height: 25.h),
+              SizedBox(height: 25.h), 
               PaymentTabBar(
-                firstTab: buildTransactionTab(),
-                secondTab: buildOrdersTab(),
+                firstTab: TransactionHistoryScreen  (),
+                secondTab: GetdeliveredorderScreen(),
+                thirdTab: GetReturnedorderScreen(),
+                secondTabbarName: 'Delivered',
+                firstTabbarName: 'Transaction',
+                thirdTabbarName: 'Returned',
               ),
             ],
           ),
