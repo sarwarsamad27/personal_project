@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:new_brand/models/productModel/relatedProduct_model.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productImage.dart';
+import 'package:new_brand/viewModel/providers/productProvider/getRelatedProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getSingleProduct_provider.dart';
+import 'package:new_brand/viewModel/providers/reviewProvider/replyReview_provider.dart';
 import 'package:new_brand/widgets/productCard.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../../../../models/productModel/getSingleProduct_model.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final productId;
@@ -24,33 +30,9 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool showAllReviews = false;
+  Set<String> repliedReviews = {}; // Already replied reviews
+  Map<String, bool> showReplyButton = {};
 
-  List<Map<String, dynamic>> reviews = [
-    {
-      'user': 'Ali Khan',
-      'rating': 5,
-      'comment': 'Excellent product! The quality is top-notch.',
-      'reply': '',
-    },
-    {
-      'user': 'Sara Malik',
-      'rating': 4,
-      'comment': 'Loved it! But delivery took a bit long.',
-      'reply': '',
-    },
-    {
-      'user': 'Hassan Raza',
-      'rating': 5,
-      'comment': 'Perfect fit and great color.',
-      'reply': '',
-    },
-    {
-      'user': 'Fatima Noor',
-      'rating': 3,
-      'comment': 'Nice product but packaging could be better.',
-      'reply': '',
-    },
-  ];
   @override
   void initState() {
     super.initState();
@@ -68,280 +50,389 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         categoryId: widget.categoryId,
         productId: widget.productId,
       );
+      final relatedProvider = Provider.of<GetRelatedProductProvider>(
+        context,
+        listen: false,
+      );
+
+      await relatedProvider.fetchRelatedProducts(
+        token: token,
+        categoryId: widget.categoryId,
+        productId: widget.productId,
+      );
     });
+  }
+
+  String getEmailPrefix(String email) {
+    if (email.contains("@")) {
+      return email.split("@")[0];
+    }
+    return email;
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<GetSingleProductProvider>(context);
+    final relatedProvider = Provider.of<GetRelatedProductProvider>(context);
 
-    /// ---------------- NULL SAFE + LOADING ----------------
+    /// ---------------- LOADING ----------------
     if (provider.isLoading) {
-      return const Center(child: SpinKitThreeBounce(
-                  color: AppColor.primaryColor,
-                  size: 30.0,
-                ),);
+      return const Scaffold(
+        body: Center(
+          child: SpinKitThreeBounce(color: AppColor.primaryColor, size: 30),
+        ),
+      );
     }
 
+    /// ---------------- NULL SAFE ----------------
     if (provider.productData == null || provider.productData!.product == null) {
-      return const Center(child: Text("No product data found"));
+      return const Scaffold(body: Center(child: Text("No product data found")));
     }
 
     final prods = provider.productData!.product!;
-
-    final relatedProducts = [
-      {
-        'name': 'Running Shoes',
-        'price': 'PKR 4,999',
-        'imageUrl':
-            'https://i.pinimg.com/736x/60/a6/e2/60a6e2b0776d1d6735fce5ae7dc9b175.jpg',
-      },
-      {
-        'name': 'Sneakers',
-        'price': 'PKR 6,499',
-        'imageUrl':
-            'https://i.pinimg.com/736x/60/a6/e2/60a6e2b0776d1d6735fce5ae7dc9b175.jpg',
-      },
-      {
-        'name': 'Sports Jacket',
-        'price': 'PKR 8,999',
-        'imageUrl':
-            'https://i.pinimg.com/736x/60/a6/e2/60a6e2b0776d1d6735fce5ae7dc9b175.jpg',
-      },
-    ];
+    final List<Reviews> reviews = provider.productData!.reviews ?? [];
 
     final displayedReviews = showAllReviews
         ? reviews
         : reviews.take(3).toList();
+    final List<RelatedProducts> relatedProducts =
+        relatedProvider.productData?.relatedProducts ?? [];
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF6F7F9),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.only(bottom: 20.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                /// ---------------- PRODUCT IMAGE ----------------
-                ProductImage(
-                  imageUrls:  prods.images ?? [],
-                  name: prods.name ?? "",
-                  description: prods.description ?? "",
-                  color: (prods.color != null && prods.color!.isNotEmpty)
-                      ? prods.color!.first
-                      : "N/A",
-                  size: (prods.size != null && prods.size!.isNotEmpty)
-                      ? prods.size!.first
-                      : "N/A",
-                  price: "PKR ${prods.afterDiscountPrice ?? 0}",
-                  productId: prods.sId!,
-                  categoryId: prods.categoryId!,
-                ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// IMAGE (unchanged)
+              ProductImage(
+                imageUrls: prods.images ?? [],
+                name: prods.name ?? "",
+                description: prods.description ?? "",
+                color: (prods.color != null && prods.color!.isNotEmpty)
+                    ? prods.color!.first
+                    : "N/A",
+                size: (prods.size != null && prods.size!.isNotEmpty)
+                    ? prods.size!.first
+                    : "N/A",
+                price: "PKR ${prods.afterDiscountPrice ?? 0}",
+                productId: prods.sId!,
+                categoryId: prods.categoryId!,
+              ),
 
-                /// ---------------- PRODUCT DETAILS ----------------
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 18.h,
-                  ),
+              SizedBox(height: 12.h),
+
+              /// DETAILS CARD (premium)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: _PremiumCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      /// PRODUCT NAME
                       Text(
                         prods.name ?? "Unnamed Product",
                         style: TextStyle(
-                          fontSize: 22.sp,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w800,
+                          height: 1.15,
+                          color: const Color(0xFF111827),
                         ),
                       ),
-
-                      SizedBox(height: 8.h),
-
-                      /// PRICE
-                      Text(
-                        prods.afterDiscountPrice != null
-                            ? "PKR ${prods.afterDiscountPrice}"
-                            : "Price Not Available",
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-
-                      SizedBox(height: 12.h),
+                      SizedBox(height: 10.h),
 
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          _buildDetailChip(
-                            'Color: ${(prods.color != null && prods.color!.isNotEmpty) ? prods.color!.first : "N/A"}',
+                          Text(
+                            prods.afterDiscountPrice != null
+                                ? "PKR ${prods.afterDiscountPrice}"
+                                : "Price Not Available",
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF0F172A),
+                            ),
                           ),
-                          SizedBox(width: 8.w),
-                          _buildDetailChip(
-                            'Size: ${(prods.size != null && prods.size!.isNotEmpty) ? prods.size!.first : "N/A"}',
+                          const Spacer(),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10.w,
+                              vertical: 6.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: const Color(0xFFBFDBFE),
+                              ),
+                            ),
+                            child: Text(
+                              "In Stock",
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1D4ED8),
+                              ),
+                            ),
                           ),
                         ],
                       ),
 
-                      SizedBox(height: 20.h),
+                      SizedBox(height: 14.h),
 
-                      Text(
-                        "Description",
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      Wrap(
+                        spacing: 10.w,
+                        runSpacing: 10.h,
+                        children: [
+                          _buildMetaChip(
+                            icon: Icons.palette_outlined,
+                            text:
+                                "Color: ${(prods.color != null && prods.color!.isNotEmpty) ? prods.color!.first : "N/A"}",
+                          ),
+                          _buildMetaChip(
+                            icon: Icons.straighten_outlined,
+                            text:
+                                "Size: ${(prods.size != null && prods.size!.isNotEmpty) ? prods.size!.first : "N/A"}",
+                          ),
+                        ],
                       ),
 
+                      SizedBox(height: 18.h),
+
+                      _SectionTitle(title: "Description"),
                       SizedBox(height: 8.h),
 
                       Text(
                         prods.description ?? "No Description Available",
                         style: TextStyle(
-                          color: Colors.grey[700],
-                          height: 1.5,
                           fontSize: 14.sp,
+                          height: 1.55,
+                          color: const Color(0xFF4B5563),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ),
+              ),
 
-                /// ---------------- REVIEWS (UNCHANGED) ----------------
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Customer Reviews",
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(height: 10.h),
+              SizedBox(height: 14.h),
 
-                      ...displayedReviews.map((review) {
-                        return _buildReviewCard(review);
-                      }),
+              /// REVIEWS SECTION
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: _SectionTitle(title: "Customer Reviews"),
+              ),
+              SizedBox(height: 8.h),
 
-                      if (reviews.length > 3)
-                        Align(
-                          alignment: Alignment.center,
-                          child: TextButton(
-                            onPressed: () {
-                              setState(() {
-                                showAllReviews = !showAllReviews;
-                              });
-                            },
-                            child: Text(
-                              showAllReviews ? "View Less" : "View More",
-                              style: TextStyle(
-                                color: AppColor.primaryColor,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15.sp,
-                              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: Column(
+                  children: [
+                    ...displayedReviews.map(
+                      (review) => _buildReviewCard(review),
+                    ),
+                    if (reviews.length > 3)
+                      Align(
+                        alignment: Alignment.center,
+                        child: TextButton(
+                          onPressed: () {
+                            setState(() => showAllReviews = !showAllReviews);
+                          },
+                          child: Text(
+                            showAllReviews ? "View Less" : "View More",
+                            style: TextStyle(
+                              color: AppColor.primaryColor,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14.sp,
                             ),
                           ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
+              ),
 
-                SizedBox(height: 20.h),
+              SizedBox(height: 16.h),
 
-                /// ---------------- RELATED PRODUCTS (UNCHANGED) ----------------
-                Padding(
+              /// RELATED PRODUCTS
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: _SectionTitle(title: "Related Products"),
+              ),
+              SizedBox(height: 10.h),
+
+              SizedBox(
+                height: 250.h,
+                child: ListView.separated(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  child: Text(
-                    "Related Products",
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: relatedProducts.length,
+                  separatorBuilder: (_, __) => SizedBox(width: 8.w),
+                  itemBuilder: (context, index) {
+                    final product = relatedProducts[index];
+                    return SizedBox(
+                      width: 190.w,
+                      child: ProductCard(
+                        name: product.name ?? "Unnamed Product",
+                        price: product.afterDiscountPrice != null
+                            ? "PKR ${product.afterDiscountPrice}"
+                            : "Price N/A",
+                        originalPrice: product.beforeDiscountPrice != null
+                            ? "PKR ${product.beforeDiscountPrice}"
+                            : null,
+                        saveText: product.beforeDiscountPrice != null
+                            ? "Save Rs.${(product.beforeDiscountPrice! - product.afterDiscountPrice!).abs()}"
+                            : null,
+                        description: product.description ?? "No Description",
+                        imageUrl:
+                            (product.images != null &&
+                                product.images!.isNotEmpty)
+                            ? Global.imageUrl + product.images!.first
+                            : "",
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ProductDetailScreen(
+                                productId: product.sId,
+                                categoryId: product.categoryId,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
                 ),
+              ),
 
-                SizedBox(height: 8.h),
-
-                SizedBox(
-                  height: 250.h,
-                  child: ListView.separated(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: relatedProducts.length,
-                    separatorBuilder: (_, __) => SizedBox(width: 12.w),
-                    itemBuilder: (context, index) {
-                      final item = relatedProducts[index];
-                      return SizedBox(
-                        width: 160.w,
-                        child: ProductCard(
-                          name: item['name']!,
-                          price: item['price']!,
-                          imageUrl: item['imageUrl']!,
-                          onTap: () {},
-                          description: '',
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+              SizedBox(height: 24.h),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDetailChip(String text) {
+  Widget _buildMetaChip({required IconData icon, required String text}) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
       decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(20.r),
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      child: Text(
-        text,
-        style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16.sp, color: const Color(0xFF6B7280)),
+          SizedBox(width: 8.w),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12.5.sp,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF374151),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildReviewCard(Map<String, dynamic> review) {
-    TextEditingController replyController = TextEditingController(
-      text: review['reply'],
+  Widget _buildDetailChip(String text) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12.5.sp,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF374151),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReviewCard(Reviews review) {
+    final replyController = TextEditingController(
+      text: review.reply?.text ?? "",
     );
 
+    final userEmail = getEmailPrefix(review.userId?.email ?? "user");
+    final reviewId = review.sId ?? "";
+
+    showReplyButton.putIfAbsent(reviewId, () => true);
+
+    final hasReply =
+        review.reply != null && (review.reply!.text?.isNotEmpty ?? false);
+
     return Container(
-      margin: EdgeInsets.only(bottom: 14.h),
-      padding: EdgeInsets.all(12.w),
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A111827),
+            blurRadius: 14,
+            offset: Offset(0, 8),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Reviewer Info
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                review['user'],
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15.sp),
+              Container(
+                width: 34.w,
+                height: 34.w,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: Text(
+                  (userEmail.isNotEmpty ? userEmail[0].toUpperCase() : "U"),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF111827),
+                    fontSize: 14.sp,
+                  ),
+                ),
               ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Text(
+                  userEmail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14.sp,
+                    color: const Color(0xFF111827),
+                  ),
+                ),
+              ),
+              SizedBox(width: 10.w),
               Row(
                 children: List.generate(
                   5,
                   (index) => Icon(
-                    index < review['rating'] ? Icons.star : Icons.star_border,
+                    index < (review.stars ?? 0)
+                        ? Icons.star
+                        : Icons.star_border,
                     color: Colors.amber,
                     size: 18.sp,
                   ),
@@ -349,61 +440,53 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
             ],
           ),
-          SizedBox(height: 6.h),
-          Text(
-            review['comment'],
-            style: TextStyle(fontSize: 14.sp, color: Colors.grey[800]),
-          ),
+
           SizedBox(height: 10.h),
 
-          // Seller Reply Section
-          if (review['reply'].isNotEmpty)
+          Text(
+            review.text ?? "",
+            style: TextStyle(
+              fontSize: 13.5.sp,
+              height: 1.45,
+              color: const Color(0xFF374151),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+
+          SizedBox(height: 12.h),
+
+          if (hasReply)
             Container(
-              padding: EdgeInsets.all(10.w),
+              width: double.infinity,
+              padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(10.r),
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(14.r),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      "Seller Reply: ${review['reply']}",
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontSize: 13.sp,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ),
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'edit') {
-                        _editReplyDialog(review, replyController);
-                      } else if (value == 'delete') {
-                        setState(() {
-                          review['reply'] = '';
-                        });
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Text('Delete'),
-                      ),
-                    ],
-                  ),
-                ],
+              child: Text(
+                "Author reply: ${review.reply!.text}",
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  height: 1.45,
+                  color: const Color(0xFF111827),
+                  fontStyle: FontStyle.italic,
+                ),
               ),
-            )
-          else
+            ),
+
+          if (!hasReply &&
+              showReplyButton[reviewId]! &&
+              !repliedReviews.contains(reviewId))
             Align(
               alignment: Alignment.centerRight,
               child: TextButton.icon(
-                onPressed: () {
-                  _editReplyDialog(review, replyController);
+                onPressed: () async {
+                  _replyDialog(review, replyController);
+
+                  Future.delayed(const Duration(minutes: 1), () {
+                    setState(() => showReplyButton[reviewId] = false);
+                  });
                 },
                 icon: Icon(
                   Icons.reply,
@@ -415,6 +498,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: TextStyle(
                     color: AppColor.primaryColor,
                     fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -424,44 +508,122 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  void _editReplyDialog(
-    Map<String, dynamic> review,
-    TextEditingController controller,
-  ) {
+  void _replyDialog(Reviews review, TextEditingController controller) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15.r),
-        ),
+      builder: (_) => AlertDialog(
         title: const Text("Reply to Review"),
         content: TextField(
           controller: controller,
+          maxLines: 3,
           decoration: const InputDecoration(
             hintText: "Write your reply...",
             border: OutlineInputBorder(),
           ),
-          maxLines: 3,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text("Cancel"),
           ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                review['reply'] = controller.text;
-              });
-              Navigator.pop(context);
+          Consumer<ReplyReviewProvider>(
+            builder: (_, replyProvider, __) {
+              return ElevatedButton(
+                onPressed: replyProvider.isLoading
+                    ? null
+                    : () async {
+                        final success = await replyProvider.replyOnReview(
+                          reviewId: review.sId!,
+                          replyText: controller.text,
+                        );
+
+                        if (success) {
+                          // Mark as replied
+                          setState(() {
+                            repliedReviews.add(review.sId!);
+                            showReplyButton[review.sId!] = false;
+                          });
+
+                          // Refresh product
+                          final productProvider =
+                              Provider.of<GetSingleProductProvider>(
+                                context,
+                                listen: false,
+                              );
+
+                          final token = await LocalStorage.getToken() ?? "";
+                          await productProvider.fetchSingleProducts(
+                            token: token,
+                            categoryId: widget.categoryId,
+                            productId: widget.productId,
+                          );
+
+                          Navigator.pop(context);
+                        }
+                      },
+                child: replyProvider.isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("Save"),
+              );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.primaryColor,
-            ),
-            child: const Text("Save"),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PremiumCard extends StatelessWidget {
+  final Widget child;
+  const _PremiumCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0F111827),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  const _SectionTitle({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF111827),
+          ),
+        ),
+        const Spacer(),
+        Container(
+          width: 36.w,
+          height: 3.h,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE5E7EB),
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/models/orders/getDeliveredOrder_model.dart';
+import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 
@@ -12,7 +13,10 @@ class DeliveredOrderDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Delivered Order Detail")),
+      appBar: AppBar(
+        backgroundColor: AppColor.primaryColor,
+        title: const Text("Delivered Order Detail"),
+      ),
       body: CustomBgContainer(
         child: Padding(
           padding: EdgeInsets.all(16.w),

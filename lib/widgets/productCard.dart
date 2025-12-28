@@ -66,10 +66,12 @@ class ProductCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       loadingBuilder: (context, child, progress) {
                         if (progress == null) return child;
-                        return  Center(child: SpinKitThreeBounce(
-                  color: AppColor.primaryColor,
-                  size: 30.0,
-                ),);
+                        return Center(
+                          child: SpinKitThreeBounce(
+                            color: AppColor.primaryColor,
+                            size: 30.0,
+                          ),
+                        );
                       },
                       errorBuilder: (context, error, stackTrace) => Container(
                         color: Colors.grey[200],
@@ -153,16 +155,12 @@ class ProductCard extends StatelessWidget {
                   ),
                   SizedBox(height: 6.h),
                   Text(
-  description,
-  maxLines: 1,
-  overflow: TextOverflow.ellipsis,
-  style: TextStyle(
-    fontSize: 11.sp,
-    color: Colors.grey[600],
-  ),
-),
-SizedBox(height: 4.h),
-
+                    description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11.sp, color: Colors.grey[600]),
+                  ),
+                  SizedBox(height: 4.h),
 
                   // ---------- Price Row ----------
                   Row(
@@ -194,8 +192,6 @@ SizedBox(height: 4.h),
                           ],
                         ],
                       ),
-
-                   
                     ],
                   ),
                 ],

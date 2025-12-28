@@ -30,6 +30,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   Future<bool> _onWillPop() async {
     DateTime now = DateTime.now();
 
+    // 1️⃣ First back press → toast
     if (lastPressed == null ||
         now.difference(lastPressed!) > const Duration(seconds: 2)) {
       lastPressed = now;
@@ -37,20 +38,21 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       return false;
     }
 
-    bool exitApp =
-        await showDialog(
+    // 2️⃣ Second back press → dialog
+    bool shouldExit =
+        await showDialog<bool>(
           context: context,
+          barrierDismissible: false,
           builder: (context) => AlertDialog(
             title: const Text("Do you want to quit?"),
+            content: const Text("Are you sure you want to exit the app?"),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
+                onPressed: () => Navigator.pop(context, false),
                 child: const Text("No"),
               ),
               TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(true);
-                },
+                onPressed: () => Navigator.pop(context, true),
                 child: const Text("Yes"),
               ),
             ],
@@ -58,10 +60,12 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
         ) ??
         false;
 
-    if (exitApp) {
+    // 3️⃣ If YES → kill app
+    if (shouldExit) {
       exit(0);
     }
 
+    // Stay in app
     return false;
   }
 

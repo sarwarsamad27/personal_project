@@ -7,6 +7,8 @@ import 'package:new_brand/viewModel/providers/AuthProvider/verifyCode_provider.d
 import 'package:new_brand/viewModel/providers/categoryProvider/createCategory_provider.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/getcategory_provider.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/updateAndDeleteCategory_provider.dart';
+import 'package:new_brand/viewModel/providers/dashboardProvider/companySaleChart_provider.dart';
+import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDeliveredOrder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
@@ -17,11 +19,14 @@ import 'package:new_brand/viewModel/providers/orderProvider/transactionHIstory_p
 import 'package:new_brand/viewModel/providers/productProvider/addProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/deleteProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getProductCategoryWise_provider.dart';
+import 'package:new_brand/viewModel/providers/productProvider/getRelatedProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getSingleProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/updateProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/profile_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/updateProfile_provider.dart';
+import 'package:new_brand/viewModel/providers/reviewProvider/getAllReview_provider.dart';
+import 'package:new_brand/viewModel/providers/reviewProvider/replyReview_provider.dart';
 import 'package:provider/provider.dart';
 
 class AppMultiProvider extends StatelessWidget {
@@ -54,9 +59,14 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PendingToDispatchedProvider()),
         ChangeNotifierProvider(create: (_) => GetDeliveredOrderProvider()),
         ChangeNotifierProvider(create: (_) => CompanyWalletProvider()),
-         ChangeNotifierProvider(create: (_) => TransactionHistoryProvider()),
+        ChangeNotifierProvider(create: (_) => TransactionHistoryProvider()),
+        ChangeNotifierProvider(create: (_) => DashboardProvider()),
+        ChangeNotifierProvider(create: (_) => CompanySalesChartProvider()),
+        ChangeNotifierProvider(create: (_) => CompanyReviewProvider()),
+        ChangeNotifierProvider(create: (_) => ReplyReviewProvider()),
+        ChangeNotifierProvider(create: (_) => GetRelatedProductProvider()),
       ],
-      
+
       child: child,
     );
   }

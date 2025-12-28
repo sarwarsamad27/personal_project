@@ -32,4 +32,9 @@ class Global {
   static var PaymentRequest = "${BaseUrl}/withdraw/send/code";
   static var PaymentVerifycode = "${BaseUrl}/withdraw/verify";
   static var TransactionHistory = "${BaseUrl}/transactions";
+  static var GetDashboardData = "${BaseUrl}/get/dashboard/data";
+  static var GetCompanySalesChart = "${BaseUrl}/get/sales/chart";
+  static var GetCompanyReviews = "${BaseUrl}/get/reviews";
+  static var ReplyReviews = "${BaseUrl}/reply/reviews";
+  static var GetRelatedProduct = "${BaseUrl}/get/related/products";
 }

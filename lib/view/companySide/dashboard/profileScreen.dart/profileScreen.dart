@@ -8,7 +8,8 @@ import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/editProf
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/allConditions.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/allProfileField.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/myWallet.dart';
-import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/userReview.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/profileUserReview.dart';
+import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customContainer.dart';
@@ -23,12 +24,14 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // FETCH on build only one time using Future.microtask
     Future.microtask(() {
+      context.read<DashboardProvider>().getDashboardDataOnce();
       Provider.of<ProfileFetchProvider>(
         context,
         listen: false,
       ).getProfileOnce();
     });
-
+    final provider = context.watch<DashboardProvider>();
+    final data = provider.dashboardData?.data;
     return Scaffold(
       body: CustomBgContainer(
         child: SafeArea(
@@ -40,9 +43,9 @@ class ProfileScreen extends StatelessWidget {
                 if (provider.loading) {
                   return const Center(
                     child: SpinKitThreeBounce(
-                  color: AppColor.whiteColor,
-                  size: 30.0,
-                ),
+                      color: AppColor.whiteColor,
+                      size: 30.0,
+                    ),
                   );
                 }
 
@@ -108,7 +111,10 @@ class ProfileScreen extends StatelessWidget {
                           );
                         },
                         child: CustomAppContainer(
-                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          padding: EdgeInsets.symmetric(horizontal: 10.w),
+                          height: 40.h,
+                          width: 150.w,
+                          borderRadius: BorderRadius.all(Radius.circular(10.r)),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -119,9 +125,6 @@ class ProfileScreen extends StatelessWidget {
                               Icon(Icons.edit, color: AppColor.appimagecolor),
                             ],
                           ),
-                          height: 40.h,
-                          width: 150,
-                          borderRadius: BorderRadius.all(Radius.circular(10.r)),
                         ),
                       ),
                       SizedBox(height: 20.h),
@@ -164,7 +167,7 @@ class ProfileScreen extends StatelessWidget {
                                       ),
                                     ),
                                     Text(
-                                      "Balance: Rs. 12,450",
+                                      "Balance: Rs. ${data!.wallet?.currentBalance ?? 0}",
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 13.sp,

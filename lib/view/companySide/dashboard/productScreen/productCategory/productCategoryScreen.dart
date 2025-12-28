@@ -177,13 +177,15 @@ class CategoryScreen extends StatelessWidget {
 
                                       if (success) {
                                         Navigator.pop(context);
-                                       AppToast.show("Category updated!");
+                                        AppToast.show("Category updated!");
                                         Provider.of<GetCategoryProvider>(
                                           context,
                                           listen: false,
                                         ).getCategories();
                                       } else {
-                                         AppToast.show("Failed to update category");
+                                        AppToast.show(
+                                          "Failed to update category",
+                                        );
                                       }
                                     }
                                   : null,
@@ -215,7 +217,7 @@ class CategoryScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColor.appimagecolor,
         elevation: 4,
         shadowColor: Colors.black.withOpacity(0.08),
         centerTitle: true,
@@ -237,23 +239,26 @@ class CategoryScreen extends StatelessWidget {
       ),
 
       body: provider.isLoading
-          ? const Center(child: SpinKitThreeBounce(
-                  color: AppColor.primaryColor,
-                  size: 30.0,
-                ),)
+          ? const Center(
+              child: SpinKitThreeBounce(
+                color: AppColor.primaryColor,
+                size: 30.0,
+              ),
+            )
           : provider.categoryData == null ||
                 provider.categoryData!.categories == null
           ? const Center(child: Text("No categories found"))
           : Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
               child: GridView.builder(
+                padding: EdgeInsets.zero,
                 physics: const BouncingScrollPhysics(),
                 itemCount: provider.categoryData!.categories!.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   mainAxisExtent: 260.h,
                   crossAxisSpacing: 14.w,
-                  mainAxisSpacing: 14.h,
+                  mainAxisSpacing: 0.h,
                 ),
                 itemBuilder: (context, index) {
                   final item = provider.categoryData!.categories![index];

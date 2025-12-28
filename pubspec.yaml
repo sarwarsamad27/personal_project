@@ -60,6 +60,7 @@ dependencies:
   device_info_plus: ^12.3.0
   jwt_decoder: ^2.0.1
   pdf_image_renderer: ^1.0.1
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:

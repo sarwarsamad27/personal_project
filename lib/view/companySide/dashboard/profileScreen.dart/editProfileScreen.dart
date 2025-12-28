@@ -8,6 +8,8 @@ import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/updateProfile_provider.dart';
+import 'package:new_brand/widgets/customBgContainer.dart';
+import 'package:new_brand/widgets/customButton.dart';
 import 'package:provider/provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -55,7 +57,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColor.appbackgroundcolor,
+      backgroundColor: AppColor.appimagecolor,
       appBar: AppBar(
         title: Text(
           "Edit Profile",
@@ -64,96 +66,86 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         backgroundColor: AppColor.primaryColor,
       ),
 
-      body: Consumer<EditProfileProvider>(
-        builder: (context, provider, child) {
-          return SingleChildScrollView(
-            padding: EdgeInsets.all(20),
-            child: Column(
-              children: [
-                SizedBox(height: 10),
+      body: CustomBgContainer(
+        child: Consumer<EditProfileProvider>(
+          builder: (context, provider, child) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  SizedBox(height: 10),
 
-                // Image
-                GestureDetector(
-                  onTap: pickImage,
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundColor: AppColor.primaryColor.withOpacity(0.2),
-                    backgroundImage: imageFile != null
-                        ? FileImage(imageFile!)
-                        : NetworkImage(Global.imageUrl + widget.profile.image!),
+                  // Image
+                  GestureDetector(
+                    onTap: pickImage,
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundColor: AppColor.primaryColor.withOpacity(0.2),
+                      backgroundImage: imageFile != null
+                          ? FileImage(imageFile!)
+                          : NetworkImage(
+                              Global.imageUrl + widget.profile.image!,
+                            ),
+                    ),
                   ),
-                ),
 
-                SizedBox(height: 30),
+                  SizedBox(height: 30),
 
-                // Fields
-                TextField(controller: name, decoration: field("Full Name")),
+                  // Fields
+                  TextField(controller: name, decoration: field("Full Name")),
 
-                SizedBox(height: 15),
-                TextField(controller: phone, decoration: field("Phone")),
-                SizedBox(height: 15),
-                TextField(controller: address, decoration: field("Address")),
-                SizedBox(height: 15),
-                TextField(
-                  controller: description,
-                  maxLines: 3,
-                  decoration: field("Description"),
-                ),
+                  SizedBox(height: 15),
+                  TextField(controller: phone, decoration: field("Phone")),
+                  SizedBox(height: 15),
+                  TextField(controller: address, decoration: field("Address")),
+                  SizedBox(height: 15),
+                  TextField(
+                    controller: description,
+                    maxLines: 3,
+                    decoration: field("Description"),
+                  ),
 
-                SizedBox(height: 35),
+                  SizedBox(height: 35),
 
-                provider.loading
-                    ? SpinKitThreeBounce(
-                        color: AppColor.primaryColor,
-                        size: 30.0,
-                      )
-                    : SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColor.primaryColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          onPressed: () async {
-                            await provider.updateProfile(
-                              profileId: widget.profile.sId!,
-                              name: name.text,
-                              email: email.text,
-                              phone: phone.text,
-                              address: address.text,
-                              description: description.text,
-                              image: imageFile,
-                            );
+                  provider.loading
+                      ? SpinKitThreeBounce(
+                          color: AppColor.primaryColor,
+                          size: 30.0,
+                        )
+                      : SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: CustomButton(
+                            text: "Save Changes",
+                            onTap: () async {
+                              await provider.updateProfile(
+                                profileId: widget.profile.sId!,
+                                name: name.text,
+                                email: email.text,
+                                phone: phone.text,
+                                address: address.text,
+                                description: description.text,
+                                image: imageFile,
+                              );
 
-                            if (provider.error != null) {
-                              AppToast.error(provider.error.toString());
-                            } else {
-                              // FORCE PROFILE REFRESH (fresh API call)
-                              await Provider.of<ProfileFetchProvider>(
-                                context,
-                                listen: false,
-                              ).getProfileOnce(refresh: true);
+                              if (provider.error != null) {
+                                AppToast.error(provider.error.toString());
+                              } else {
+                                await Provider.of<ProfileFetchProvider>(
+                                  context,
+                                  listen: false,
+                                ).getProfileOnce(refresh: true);
 
-                              Navigator.pop(context);
-                            }
-                          },
-                          child: Text(
-                            "Save Changes",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                                Navigator.pop(context);
+                              }
+                            },
                           ),
                         ),
-                      ),
-              ],
-            ),
-          );
-        },
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/getTransactionHistory/transactionDetail_screen.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/transactionHIstory_provider.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:provider/provider.dart';
@@ -27,9 +30,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     return Consumer<TransactionHistoryProvider>(
       builder: (context, provider, _) {
         if (provider.isLoading) {
-          return const Center(
-            child: CircularProgressIndicator(color: Colors.orange),
-          );
+          return  Center(
+                              child: SpinKitThreeBounce(
+                    color: AppColor.primaryColor,
+                    size: 30.0,
+                  ),
+                            );
         }
 
         if (provider.transactions.isEmpty) {
@@ -47,68 +53,77 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               Divider(color: Colors.white24, height: 20.h),
           itemBuilder: (context, index) {
             final tx = provider.transactions[index];
-
             final isDebit = tx.type == "debit";
 
-            return Row(
-              children: [
-                CustomAppContainer(
-                  padding: EdgeInsets.all(10.w),
-                  child: Icon(
-                    isDebit
-                        ? LucideIcons.arrowDownCircle
-                        : LucideIcons.checkCircle,
-                    color: isDebit ? Colors.yellow : Colors.green,
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TransactionDetailScreen(tx: tx),
                   ),
-                ),
-                SizedBox(width: 15.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                );
+              },
+              child: Row(
+                children: [
+                  CustomAppContainer(
+                    padding: EdgeInsets.all(10.w),
+                    child: Icon(
+                      isDebit
+                          ? LucideIcons.arrowDownCircle
+                          : LucideIcons.checkCircle,
+                      color: isDebit ? Colors.yellow : Colors.green,
+                    ),
+                  ),
+                  SizedBox(width: 15.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isDebit
+                              ? "Withdrawal (${tx.method ?? '-'})"
+                              : "Amount Reversal",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          tx.createdAt ?? '',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        isDebit
-                            ? "Withdrawal (${tx.method ?? '-'})"
-                            : "Order Amount",
+                        "${isDebit ? '-' : '+'} Rs. ${tx.amount}",
                         style: TextStyle(
-                          color: Colors.white,
+                          color: isDebit ? Colors.yellow : Colors.green,
                           fontSize: 15.sp,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        tx.createdAt ?? '',
+                        tx.status ?? '',
                         style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12.sp,
+                          color: tx.status == "pending"
+                              ? Colors.yellow
+                              : Colors.green,
+                          fontSize: 12,
                         ),
                       ),
                     ],
                   ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      "${isDebit ? '-' : '+'} Rs. ${tx.amount}",
-                      style: TextStyle(
-                        color: isDebit ? Colors.yellow : Colors.green,
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      tx.status ?? '',
-                      style: TextStyle(
-                        color: tx.status == "pending"
-                            ? Colors.yellow
-                            : Colors.green,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             );
           },
         );

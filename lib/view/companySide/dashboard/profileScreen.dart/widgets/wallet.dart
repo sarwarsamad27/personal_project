@@ -237,7 +237,7 @@ class _WalletState extends State<Wallet> {
 
                                 final verified = await provider
                                     .verifyWithdrawCode(
-                                      code: codeController.text,
+                                      code: codeController.text, context: context,
                                     );
 
                                 setSheetState(() => isVerifying = false);
@@ -288,16 +288,17 @@ class _WalletState extends State<Wallet> {
                             );
 
                             if (nameController.text.isEmpty ||
-                                phoneController.text.isEmpty ||
-                                amount == null ||
-                                amount <= 0 ||
-                                amount > currentBalance ||
-                                selectedMethod == null) {
-                              AppToast.show(
-                                "Please fill all fields correctly!",
-                              );
-                              return;
-                            }
+    phoneController.text.isEmpty ||
+    amount == null ||
+    amount <= 0 ||
+    amount > provider.currentBalance || // ✅ REAL API BALANCE
+    selectedMethod == null) {
+  AppToast.show(
+    "Insufficient wallet balance or invalid input",
+  );
+  return;
+}
+
 
                             final success = await provider.sendWithdrawCode(
                               name: nameController.text,

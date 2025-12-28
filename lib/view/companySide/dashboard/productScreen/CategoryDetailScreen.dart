@@ -47,10 +47,12 @@ class CategoryProductsScreen extends StatelessWidget {
                   fit: BoxFit.cover,
                   loadingBuilder: (context, child, progress) {
                     if (progress == null) return child;
-                    return const Center(child: SpinKitThreeBounce(
-                  color: AppColor.primaryColor,
-                  size: 30.0,
-                ),);
+                    return const Center(
+                      child: SpinKitThreeBounce(
+                        color: AppColor.primaryColor,
+                        size: 30.0,
+                      ),
+                    );
                   },
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: Colors.grey[300],
@@ -90,10 +92,12 @@ class CategoryProductsScreen extends StatelessWidget {
               child: Consumer<GetProductCategoryWiseProvider>(
                 builder: (context, provider, _) {
                   if (provider.isLoading) {
-                    return const Center(child: SpinKitThreeBounce(
-                  color: AppColor.primaryColor,
-                  size: 30.0,
-                ),);
+                    return const Center(
+                      child: SpinKitThreeBounce(
+                        color: AppColor.primaryColor,
+                        size: 30.0,
+                      ),
+                    );
                   }
 
                   if (provider.productData == null ||
@@ -105,6 +109,7 @@ class CategoryProductsScreen extends StatelessWidget {
                   final prods = provider.productData!.products!;
 
                   return GridView.builder(
+                    padding: EdgeInsets.only(top: 12.h),
                     itemCount: prods.length,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
