@@ -12,26 +12,50 @@ import 'package:new_brand/viewModel/providers/productProvider/getProductCategory
 import 'package:new_brand/widgets/productCard.dart';
 import 'package:provider/provider.dart';
 
-class CategoryProductsScreen extends StatelessWidget {
+class CategoryProductsScreen extends StatefulWidget {
   final Categories category;
   const CategoryProductsScreen({Key? key, required this.category})
     : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final media = MediaQuery.of(context).size;
-    final halfHeight = media.height * 0.5;
+  State<CategoryProductsScreen> createState() => _CategoryProductsScreenState();
+}
+
+class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
+  @override
+  void initState() {
+    super.initState();
+
     Future.microtask(() async {
       final provider = Provider.of<GetProductCategoryWiseProvider>(
         context,
         listen: false,
       );
 
-      provider.fetchProducts(
+      await provider.fetchProducts(
         token: await LocalStorage.getToken() ?? "",
-        categoryId: category.sId!,
+        categoryId: widget.category.sId!,
       );
     });
+  }
+
+  Future<void> _refreshProducts() async {
+    final provider = Provider.of<GetProductCategoryWiseProvider>(
+      context,
+      listen: false,
+    );
+
+    await provider.fetchProducts(
+      token: await LocalStorage.getToken() ?? "",
+      categoryId: widget.category.sId!,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context).size;
+    final halfHeight = media.height * 0.5;
+
     return Scaffold(
       body: Column(
         children: [
@@ -41,9 +65,8 @@ class CategoryProductsScreen extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Replace this NetworkImage with your asset if needed
                 Image.network(
-                  Global.imageUrl + category.image!,
+                  Global.imageUrl + widget.category.image!,
                   fit: BoxFit.cover,
                   loadingBuilder: (context, child, progress) {
                     if (progress == null) return child;
@@ -60,8 +83,6 @@ class CategoryProductsScreen extends StatelessWidget {
                     child: const Icon(Icons.image_not_supported, size: 48),
                   ),
                 ),
-
-                // category title and short description
                 Positioned(
                   left: 16,
                   right: 16,
@@ -71,8 +92,8 @@ class CategoryProductsScreen extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        category.name!,
-                        style: TextStyle(
+                        widget.category.name!,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 34,
                           fontWeight: FontWeight.bold,
@@ -85,7 +106,6 @@ class CategoryProductsScreen extends StatelessWidget {
             ),
           ),
 
-          // Bottom half: scrollable products grid
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -108,45 +128,49 @@ class CategoryProductsScreen extends StatelessWidget {
 
                   final prods = provider.productData!.products!;
 
-                  return GridView.builder(
-                    padding: EdgeInsets.only(top: 12.h),
-                    itemCount: prods.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 0.72,
-                        ),
-                    itemBuilder: (context, index) {
-                      final p = prods[index];
+                  // ✅ Optional: pull-to-refresh (premium UX)
+                  return RefreshIndicator(
+                    onRefresh: _refreshProducts,
+                    child: GridView.builder(
+                      padding: EdgeInsets.only(top: 12.h),
+                      itemCount: prods.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            childAspectRatio: 0.72,
+                          ),
+                      itemBuilder: (context, index) {
+                        final p = prods[index];
 
-                      return ProductCard(
-                        name: p.name ?? "",
-                        description: p.description ?? "",
-                        price: "Rs. ${p.afterDiscountPrice ?? 0}",
-                        originalPrice: p.beforeDiscountPrice != null
-                            ? "Rs. ${p.beforeDiscountPrice}"
-                            : null,
-                        imageUrl: (p.images != null && p.images!.isNotEmpty)
-                            ? Global.imageUrl + p.images!.first
-                            : "",
-                        saveText: p.beforeDiscountPrice != null
-                            ? "Save Rs.${(p.beforeDiscountPrice! - p.afterDiscountPrice!).abs()}"
-                            : null,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ProductDetailScreen(
-                                productId: p.sId ?? '',
-                                categoryId: p.categoryId ?? '',
+                        return ProductCard(
+                          name: p.name ?? "",
+                          description: p.description ?? "",
+                          price: "Rs. ${p.afterDiscountPrice ?? 0}",
+                          originalPrice: p.beforeDiscountPrice != null
+                              ? "Rs. ${p.beforeDiscountPrice}"
+                              : null,
+                          imageUrl: (p.images != null && p.images!.isNotEmpty)
+                              ? Global.imageUrl + p.images!.first
+                              : "",
+                          saveText: p.beforeDiscountPrice != null
+                              ? "Save Rs.${(p.beforeDiscountPrice! - p.afterDiscountPrice!).abs()}"
+                              : null,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ProductDetailScreen(
+                                  productId: p.sId ?? '',
+                                  categoryId: p.categoryId ?? '',
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      );
-                    },
+                            );
+                          },
+                        );
+                      },
+                    ),
                   );
                 },
               ),
@@ -154,6 +178,7 @@ class CategoryProductsScreen extends StatelessWidget {
           ),
         ],
       ),
+
       floatingActionButton: Container(
         height: 70.h,
         width: 70.h,
@@ -178,13 +203,18 @@ class CategoryProductsScreen extends StatelessWidget {
         child: FloatingActionButton(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          onPressed: () {
-            Navigator.push(
+          onPressed: () async {
+            // ✅ IMPORTANT: wait for AddProductScreen to close
+            await Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => AddProductScreen(category: category),
+                builder: (context) =>
+                    AddProductScreen(category: widget.category),
               ),
             );
+
+            // ✅ Re-fetch immediately after returning
+            await _refreshProducts();
           },
           child: const Icon(LucideIcons.plus, color: Colors.white, size: 30),
         ),

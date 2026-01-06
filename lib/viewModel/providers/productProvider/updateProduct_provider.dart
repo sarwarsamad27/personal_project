@@ -18,7 +18,9 @@ class UpdateProductProvider with ChangeNotifier {
     required int beforeDiscountPrice,
     required List<String> size,
     required List<String> color,
-    required int stock,
+    required List<String> keepImages,
+    required List<String> deleteImages,
+    required String stock,
     required List<File> images,
   }) async {
     isLoading = true;
@@ -34,6 +36,8 @@ class UpdateProductProvider with ChangeNotifier {
         beforeDiscountPrice: beforeDiscountPrice,
         size: size,
         color: color,
+        keepImages: keepImages,
+        deleteImages: deleteImages,
         stock: stock,
         images: images,
       );

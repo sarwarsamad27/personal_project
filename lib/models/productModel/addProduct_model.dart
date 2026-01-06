@@ -31,7 +31,7 @@ class Product {
   int? discountPercentage;
   List<String>? size;
   List<String>? color;
-  int? stock;
+  String? stock;
   String? sId;
   String? createdAt;
   String? updatedAt;

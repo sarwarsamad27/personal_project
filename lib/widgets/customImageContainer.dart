@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class CustomAppContainer extends StatelessWidget {
+class CustomImageContainer extends StatelessWidget {
   final Widget? child;
   final EdgeInsetsGeometry? padding;
   final BorderRadius? borderRadius;
@@ -16,7 +16,7 @@ class CustomAppContainer extends StatelessWidget {
 
   final Border? border;
 
-  const CustomAppContainer({
+  const CustomImageContainer({
     super.key,
     this.child,
     this.padding,
@@ -37,8 +37,6 @@ class CustomAppContainer extends StatelessWidget {
     return Container(
       height: height,
       width: width,
-      padding:
-          padding ?? EdgeInsets.symmetric(vertical: 20.h, horizontal: 20.w),
       decoration: BoxDecoration(
         color: color ?? Colors.white.withOpacity(0.2),
         borderRadius: borderRadius ?? BorderRadius.circular(20.r),

@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/createCategory_provider.dart';
+import 'package:new_brand/widgets/customImageContainer.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 
@@ -48,38 +49,43 @@ class AddCategoryScreen extends StatelessWidget {
                             onTap: () {
                               provider.pickImage();
                             },
-                            child: CustomAppContainer(
-                              height: 140.h,
-                              width: 140.w,
-                              child: provider.image == null
-                                  ? Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.add_a_photo,
-                                          color: Colors.white,
-                                          size: 40.sp,
-                                        ),
-                                        SizedBox(height: 8.h),
-                                        Text(
-                                          "Upload Image",
-                                          style: TextStyle(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(25.r),
+                              child: CustomImageContainer(
+                                height: 140.h,
+                                width: 140.w,
+                                child: provider.image == null
+                                    ? Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.add_a_photo,
                                             color: Colors.white,
-                                            fontSize: 14.sp,
+                                            size: 40.sp,
                                           ),
+                                          SizedBox(height: 8.h),
+                                          Text(
+                                            "Upload Image",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14.sp,
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : ClipRRect(
+                                        borderRadius: BorderRadius.circular(
+                                          25.r,
                                         ),
-                                      ],
-                                    )
-                                  : ClipRRect(
-                                      borderRadius: BorderRadius.circular(25.r),
-                                      child: Image.file(
-                                        provider.image as File,
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                        height: double.infinity,
+                                        child: Image.file(
+                                          provider.image as File,
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                        ),
                                       ),
-                                    ),
+                              ),
                             ),
                           ),
 
@@ -106,13 +112,17 @@ class AddCategoryScreen extends StatelessWidget {
                               );
 
                               if (success) {
-                                AppToast.success("Category added successfully!");
+                                AppToast.success(
+                                  "Category added successfully!",
+                                );
 
                                 provider.resetFields();
 
                                 Navigator.pop(context);
                               } else {
-                                AppToast.warning("Please select image and name");
+                                AppToast.warning(
+                                  "Please select image and name",
+                                );
                               }
                             },
                           ),

@@ -6,14 +6,11 @@ class GetCategoryProvider with ChangeNotifier {
   final GetCategoryRepository _repo = GetCategoryRepository();
 
   bool isLoading = false;
-  bool isFetched = false; // <<--- ADD THIS
+  bool isFetched = false;
   GetCategoryModel? categoryData;
 
   Future<void> getCategories({bool forceRefresh = false}) async {
-    // Agar already fetched h or refresh nahi manga → API dobara mat chalao
-    if (isFetched && !forceRefresh) {
-      return;
-    }
+    if (isFetched && !forceRefresh) return;
 
     try {
       isLoading = true;
@@ -21,7 +18,7 @@ class GetCategoryProvider with ChangeNotifier {
 
       final response = await _repo.getCategory();
       categoryData = response;
-      isFetched = true; // <<--- Mark once fetched
+      isFetched = true;
     } catch (e) {
       print("Category Error: $e");
     } finally {

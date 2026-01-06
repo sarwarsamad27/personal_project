@@ -38,15 +38,16 @@ class PdfHelpers {
         ],
       );
 
-  static pw.TableRow productRow(product) => pw.TableRow(
-        children: [
-          _cell(product.name ?? ""),
-          _cell((product.selectedColor ?? []).join(", ")),
-          _cell((product.selectedSize ?? []).join(", ")),
-          _cell(product.quantity.toString()),
-          _cell("Rs ${product.totalPrice}"),
-        ],
-      );
+static pw.TableRow productRow(product) => pw.TableRow(
+  children: [
+    _cell(product.name ?? ""),
+    _cell((product.selectedColor ?? []).join(", ")),
+    _cell((product.selectedSize ?? []).join(", ")),
+    _cell((product.quantity ?? 0).toString()),
+    _cell("Rs ${product.totalPrice ?? 0}"),
+  ],
+);
+
 
   static pw.Widget _cell(String text, [bool bold = false]) => pw.Padding(
         padding: const pw.EdgeInsets.all(8),

@@ -39,7 +39,7 @@ class RelatedProducts {
   int? afterDiscountPrice;
   List<String>? size;
   List<String>? color;
-  int? stock;
+  String? stock;
   String? createdAt;
   String? updatedAt;
   int? iV;

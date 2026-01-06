@@ -5,7 +5,6 @@ import 'package:new_brand/route/routes.dart';
 import 'package:new_brand/view/companySide/auth/loginScreen.dart';
 import 'package:new_brand/view/companySide/auth/splashScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
-import 'package:new_brand/view/companySide/dashboard/productScreen/CategoryDetailScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProuctCategoryForm.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/productCategoryScreen.dart';
 

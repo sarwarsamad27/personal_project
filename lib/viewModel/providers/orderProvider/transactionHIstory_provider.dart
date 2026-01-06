@@ -5,23 +5,29 @@ import 'package:new_brand/viewModel/repository/orderRepository/paymentRepository
 class TransactionHistoryProvider with ChangeNotifier {
   final GetTransactionRepository _repo = GetTransactionRepository();
 
-  bool isLoading = false;
-  TransactionHistoryModel? historyData;
+  bool _isLoading = false;
+  TransactionHistoryModel? _historyData;
+  String? _error;
+
+  bool get isLoading => _isLoading;
+  TransactionHistoryModel? get historyData => _historyData;
+  String? get error => _error;
+
+  List<Transactions> get transactions => _historyData?.transactions ?? [];
 
   Future<void> fetchTransactions() async {
-    try {
-      isLoading = true;
-      notifyListeners();
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
 
-      historyData = await _repo.getTransaction();
+    try {
+      _historyData = await _repo.getTransaction();
     } catch (e) {
+      _error = e.toString();
       debugPrint("Transaction Error: $e");
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }
-
-  List<Transactions> get transactions =>
-      historyData?.transactions ?? [];
 }

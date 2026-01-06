@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/pdf/pdf_custom_session.dart';
-import 'package:new_brand/view/companySide/dashboard/orderScreen/pdf/pdf_header.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/pdf/pdf_helper.dart';
+import 'package:new_brand/view/companySide/dashboard/orderScreen/pdf/pdf_header.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/pdf/pdf_product_table.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/pdf/pdf_qe_section.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/pdf/pdf_seller_section.dart';
@@ -13,7 +13,10 @@ import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provide
 import 'package:provider/provider.dart';
 
 class PdfInvoiceService {
-  Future<void> generateInvoice(BuildContext context, Orders order) async {
+  Future<void> generateInvoice(
+    BuildContext context,
+    Orders order,
+  ) async {
     final profileProvider =
         Provider.of<ProfileFetchProvider>(context, listen: false);
 
@@ -25,11 +28,12 @@ class PdfInvoiceService {
 
     final pdf = pw.Document();
 
-    final shookooLogo = await PdfHelpers.loadAssetImage(
-        "assets/images/shookoo_image.png");
+    final shookooLogo =
+        await PdfHelpers.loadAssetImage("assets/images/shookoo_image.png");
 
     final sellerImg = await PdfHelpers.loadNetworkImage(
-        "${Global.imageUrl}${seller?.image}");
+      "${Global.imageUrl}${seller?.image}",
+    );
 
     final qr = await PdfQrSection.buildQrImage(order.sId ?? "");
 
@@ -44,7 +48,10 @@ class PdfInvoiceService {
               PdfHeader.build(shookooLogo),
               PdfCustomerSection.build(order),
               PdfSellerSection.build(seller, sellerImg, shookooLogo),
+
+              // ✅ ALL PRODUCTS in one table
               PdfProductTable.build(order),
+
               PdfQrSection.build(qr),
             ],
           );
@@ -52,6 +59,8 @@ class PdfInvoiceService {
       ),
     );
 
-    await PdfHelpers.saveAndOpen(pdf, order.sId!);
+    // ✅ Single invoice per order
+    final fileId = order.sId;
+    await PdfHelpers.saveAndOpen(pdf, fileId!);
   }
 }

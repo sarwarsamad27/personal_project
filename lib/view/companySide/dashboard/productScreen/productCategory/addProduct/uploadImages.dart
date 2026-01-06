@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/widgets/customContainer.dart';
+import 'package:new_brand/widgets/customImageContainer.dart';
 
 class UploadImages extends StatelessWidget {
   final ValueNotifier<List<File>> selectedImages;
@@ -12,7 +13,7 @@ class UploadImages extends StatelessWidget {
 
   Future<void> _pickImages(BuildContext context) async {
     if (selectedImages.value.length >= 5) {
-       AppToast.show("You can only upload up to 5 images");
+      AppToast.show("You can only upload up to 5 images");
       return;
     }
 
@@ -42,7 +43,7 @@ class UploadImages extends StatelessWidget {
       child: ValueListenableBuilder<List<File>>(
         valueListenable: selectedImages,
         builder: (context, images, _) {
-          return CustomAppContainer(
+          return CustomImageContainer(
             height: 140.h,
             width: double.infinity,
             child: images.isEmpty
@@ -51,8 +52,10 @@ class UploadImages extends StatelessWidget {
                     children: [
                       Icon(Icons.add_a_photo, color: Colors.white, size: 40.sp),
                       SizedBox(height: 8.h),
-                      Text("Upload Product Images",
-                          style: TextStyle(color: Colors.white, fontSize: 14.sp)),
+                      Text(
+                        "Upload Product Images",
+                        style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                      ),
                     ],
                   )
                 : SizedBox(
@@ -83,8 +86,11 @@ class UploadImages extends StatelessWidget {
                                     color: Colors.black.withOpacity(0.5),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.close,
-                                      color: Colors.white, size: 18),
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
                                 ),
                               ),
                             ),

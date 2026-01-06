@@ -1,4 +1,4 @@
-class GetMyOrders {
+class GetMyPendingOrders {
   String? message;
   String? profileId;
   int? page;
@@ -7,7 +7,7 @@ class GetMyOrders {
   int? totalPages;
   List<Orders>? orders;
 
-  GetMyOrders({
+  GetMyPendingOrders({
     this.message,
     this.profileId,
     this.page,
@@ -17,7 +17,7 @@ class GetMyOrders {
     this.orders,
   });
 
-  GetMyOrders.fromJson(Map<String, dynamic> json) {
+  GetMyPendingOrders.fromJson(Map<String, dynamic> json) {
     message = json['message'];
     profileId = json['profileId'];
     page = json['page'];
@@ -118,6 +118,7 @@ class Orders {
 
 class Products {
   String? productId;
+  String? status;
   String? name;
   int? quantity;
   int? price;
@@ -126,12 +127,12 @@ class Products {
   List<String>? selectedColor;
   List<String>? selectedSize;
   String? sId;
-  String? status;
   String? categoryId;
   String? profileId;
 
   Products({
     this.productId,
+    this.status,
     this.name,
     this.quantity,
     this.price,
@@ -140,13 +141,13 @@ class Products {
     this.selectedColor,
     this.selectedSize,
     this.sId,
-    this.status,
     this.categoryId,
     this.profileId,
   });
 
   Products.fromJson(Map<String, dynamic> json) {
     productId = json['productId'];
+    status = json['status'];
     name = json['name'];
     quantity = json['quantity'];
     price = json['price'];
@@ -155,7 +156,6 @@ class Products {
     selectedColor = json['selectedColor'].cast<String>();
     selectedSize = json['selectedSize'].cast<String>();
     sId = json['_id'];
-    status = json['status'];
     categoryId = json['categoryId'];
     profileId = json['profileId'];
   }
@@ -163,6 +163,7 @@ class Products {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['productId'] = this.productId;
+    data['status'] = this.status;
     data['name'] = this.name;
     data['quantity'] = this.quantity;
     data['price'] = this.price;
@@ -171,7 +172,6 @@ class Products {
     data['selectedColor'] = this.selectedColor;
     data['selectedSize'] = this.selectedSize;
     data['_id'] = this.sId;
-    data['status'] = this.status;
     data['categoryId'] = this.categoryId;
     data['profileId'] = this.profileId;
     return data;

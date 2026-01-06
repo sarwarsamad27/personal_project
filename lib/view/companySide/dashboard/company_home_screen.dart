@@ -1,5 +1,5 @@
-import 'dart:io'; // ✅ Needed for exit(0)
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
@@ -27,63 +27,57 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     const ProfileScreen(),
   ];
 
-  Future<bool> _onWillPop() async {
-    DateTime now = DateTime.now();
-
-    // 1️⃣ First back press → toast
-    if (lastPressed == null ||
-        now.difference(lastPressed!) > const Duration(seconds: 2)) {
-      lastPressed = now;
-      AppToast.error("Press again to exit");
-      return false;
-    }
-
-    // 2️⃣ Second back press → dialog
-    bool shouldExit =
-        await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            title: const Text("Do you want to quit?"),
-            content: const Text("Are you sure you want to exit the app?"),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text("No"),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text("Yes"),
-              ),
-            ],
-          ),
-        ) ??
-        false;
-
-    // 3️⃣ If YES → kill app
-    if (shouldExit) {
-      exit(0);
-    }
-
-    // Stay in app
-    return false;
-  }
-
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
       designSize: const Size(390, 844),
       builder: (context, child) {
-        return WillPopScope(
-          onWillPop: _onWillPop,
+        return PopScope(
+          canPop: false,
+          onPopInvoked: (didPop) async {
+            if (didPop) return;
+
+            final now = DateTime.now();
+
+            /// 1️⃣ First back → toast
+            if (lastPressed == null ||
+                now.difference(lastPressed!) > const Duration(seconds: 2)) {
+              lastPressed = now;
+              AppToast.error("Press again to exit");
+              return;
+            }
+
+            /// 2️⃣ Second back → dialog
+            final shouldExit = await showDialog<bool>(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                title: const Text("Do you want to quit?"),
+                content: const Text("Are you sure you want to exit the app?"),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text("No"),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text("Yes"),
+                  ),
+                ],
+              ),
+            );
+
+            /// 3️⃣ Exit app
+            if (shouldExit == true) {
+              SystemNavigator.pop(); // ✅ recommended
+              // exit(0); // ❌ force exit (avoid if possible)
+            }
+          },
           child: Scaffold(
-            extendBody: _currentIndex == 3
-                ? true
-                : _currentIndex == 2
-                ? true
-                : false,
+            extendBody: _currentIndex == 2 || _currentIndex == 3,
             backgroundColor: const Color(0xFFF9FAFB),
             body: screens[_currentIndex],
+
             bottomNavigationBar: Container(
               decoration: BoxDecoration(
                 color: Colors.white,

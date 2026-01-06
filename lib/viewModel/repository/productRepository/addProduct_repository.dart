@@ -17,9 +17,10 @@ class AddProductRepository {
     int? afterPrice,
     List<String>? size,
     List<String>? color,
-    int? stock,
+    String? stock,
   }) async {
     try {
+      
       final fields = <String, String>{
         'categoryId': categoryId,
         'name': name,

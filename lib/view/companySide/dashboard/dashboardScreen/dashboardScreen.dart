@@ -16,16 +16,74 @@ class HomeDashboard extends StatefulWidget {
   State<HomeDashboard> createState() => _HomeDashboardState();
 }
 
-class _HomeDashboardState extends State<HomeDashboard> {
+class _HomeDashboardState extends State<HomeDashboard>
+    with TickerProviderStateMixin {
   String selectedFilter = "Weekly";
+
+  late final AnimationController _cardController;
+  late final Animation<double> _cardFade;
+  late final Animation<Offset> _cardSlide;
+
+  late final AnimationController _chartController;
+  late final Animation<double> _chartScale;
 
   @override
   void initState() {
     super.initState();
+
+    _cardController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+    _cardFade = CurvedAnimation(
+      parent: _cardController,
+      curve: Curves.easeOutCubic,
+    );
+    _cardSlide = Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _cardController, curve: Curves.easeOutCubic),
+        );
+
+    _chartController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+    _chartScale = Tween<double>(begin: 0.985, end: 1.0).animate(
+      CurvedAnimation(parent: _chartController, curve: Curves.easeOutCubic),
+    );
+
     Future.microtask(() {
       context.read<DashboardProvider>().getDashboardDataOnce();
       context.read<CompanySalesChartProvider>().getChartData(type: "weekly");
     });
+
+    // run premium entry animation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _cardController.forward();
+      _chartController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _cardController.dispose();
+    _chartController.dispose();
+    super.dispose();
+  }
+
+  // ✅ Weekly range label ko 2 lines me split karna:
+  // "22 Dec - 28 Dec" -> ["22 Dec -", "28 Dec"]
+  List<String> _twoLineWeekLabel(String label) {
+    final t = label.trim();
+    if (!t.contains("-")) return [t, ""];
+
+    final parts = t.split("-");
+    final left = parts.first.trim();
+    final right = parts.length > 1 ? parts.sublist(1).join("-").trim() : "";
+
+    // line1: "22 Dec -"
+    // line2: "28 Dec"
+    return ["$left -", right];
   }
 
   @override
@@ -53,202 +111,346 @@ class _HomeDashboardState extends State<HomeDashboard> {
           /// ---------- Chart Card ----------
           Positioned(
             top: 50.h,
-            left: 16.w,
-            right: 16.w,
-            child: CustomAppContainer(
-              padding: EdgeInsets.all(18.w),
-              color: Colors.white,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// ---------- Header ----------
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            left: 3.w,
+            right: 3.w,
+            child: FadeTransition(
+              opacity: _cardFade,
+              child: SlideTransition(
+                position: _cardSlide,
+                child: CustomAppContainer(
+                  padding: EdgeInsets.all(18.w),
+                  color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        "📊 Sales Overview",
-                        style: TextStyle(
-                          fontSize: 20.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      CustomAppContainer(
-                        height: 40.h,
-                        padding: EdgeInsets.symmetric(horizontal: 12.w),
-                        color: const Color(0xFFEEF2FF),
-                        borderRadius: BorderRadius.circular(20.r),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: selectedFilter,
-                            icon: const Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              color: Color(0xFFFF6A00),
+                      /// ---------- Header ----------
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "📊 Sales Overview",
+                            style: TextStyle(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.bold,
                             ),
-                            items: ["Daily", "Weekly", "Monthly"]
-                                .map(
-                                  (e) => DropdownMenuItem(
-                                    value: e,
-                                    child: Text(
-                                      e,
-                                      style: const TextStyle(
-                                        color: Color(0xFFFF6A00),
-                                        fontWeight: FontWeight.w600,
+                          ),
+                          CustomAppContainer(
+                            height: 40.h,
+                            padding: EdgeInsets.symmetric(horizontal: 12.w),
+                            color: const Color(0xFFEEF2FF),
+                            borderRadius: BorderRadius.circular(20.r),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: selectedFilter,
+                                icon: const Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: Color(0xFFFF6A00),
+                                ),
+                                items: ["Daily", "Weekly", "Monthly"]
+                                    .map(
+                                      (e) => DropdownMenuItem(
+                                        value: e,
+                                        child: Text(
+                                          e,
+                                          style: const TextStyle(
+                                            color: Color(0xFFFF6A00),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                       ),
+                                    )
+                                    .toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    selectedFilter = value!;
+                                  });
+
+                                  // premium "refresh" feel on filter change
+                                  _chartController.forward(from: 0);
+
+                                  context
+                                      .read<CompanySalesChartProvider>()
+                                      .getChartData(type: value!.toLowerCase());
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: 20.h),
+
+                      /// ---------- Chart ----------
+                      SizedBox(
+                        height:
+                            260.h, // ✅ a bit more height to avoid label overlap
+                        child: ScaleTransition(
+                          scale: _chartScale,
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 350),
+                            switchInCurve: Curves.easeOutCubic,
+                            switchOutCurve: Curves.easeOutCubic,
+                            transitionBuilder: (child, anim) {
+                              // no theme/color change; only premium fade+slide
+                              final slide =
+                                  Tween<Offset>(
+                                    begin: const Offset(0, 0.02),
+                                    end: Offset.zero,
+                                  ).animate(
+                                    CurvedAnimation(
+                                      parent: anim,
+                                      curve: Curves.easeOutCubic,
+                                    ),
+                                  );
+                              return FadeTransition(
+                                opacity: anim,
+                                child: SlideTransition(
+                                  position: slide,
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: Consumer<CompanySalesChartProvider>(
+                              key: ValueKey<String>(selectedFilter),
+                              builder: (context, chartProvider, _) {
+                                final chart = chartProvider.chartData?.data;
+
+                                if (chartProvider.loading || chart == null) {
+                                  return Center(
+                                    child: SpinKitThreeBounce(
+                                      color: AppColor.primaryColor,
+                                      size: 30,
+                                    ),
+                                  );
+                                }
+
+                                final labels = chart.labels ?? [];
+                                final values = chart.values ?? [];
+
+                                final rawMax = values.isEmpty
+                                    ? 0
+                                    : values.reduce((a, b) => a > b ? a : b);
+
+                                final maxValue = rawMax == 0
+                                    ? 10
+                                    : rawMax * 1.2;
+                                final count = values.length;
+
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(14.r),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(14.r),
+                                      border: Border.all(
+                                        color: Colors.black.withOpacity(0.05),
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.04),
+                                          blurRadius: 14,
+                                          offset: const Offset(0, 8),
+                                        ),
+                                      ],
+                                    ),
+                                    padding: EdgeInsets.only(
+                                      top: 8.h,
+                                      left: 3.w,
+                                      right: 3.w,
+                                      bottom: 1.h,
+                                    ),
+                                    child: BarChart(
+                                      BarChartData(
+                                        maxY: maxValue.toDouble(),
+                                        alignment:
+                                            BarChartAlignment.spaceAround,
+                                        groupsSpace: 10.w,
+                                        barTouchData: BarTouchData(
+                                          enabled: true,
+                                          touchTooltipData: BarTouchTooltipData(
+                                            getTooltipColor: (_) =>
+                                                Colors.black87,
+                                            tooltipRoundedRadius: 10.r,
+                                            getTooltipItem: (group, _, rod, __) {
+                                              final idx = group.x.toInt();
+                                              final fullLabel =
+                                                  (idx >= 0 &&
+                                                      idx < labels.length)
+                                                  ? labels[idx]
+                                                  : "";
+
+                                              return BarTooltipItem(
+                                                "${fullLabel.isNotEmpty ? "$fullLabel\n" : ""}PKR ${rod.toY.toInt()}",
+                                                TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 12.sp,
+                                                  height: 1.25,
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                        gridData: FlGridData(
+                                          show: true,
+                                          drawVerticalLine: false,
+                                          horizontalInterval: maxValue == 0
+                                              ? 1
+                                              : maxValue / 4,
+                                          getDrawingHorizontalLine: (value) {
+                                            return FlLine(
+                                              color: Colors.grey.withOpacity(
+                                                0.15,
+                                              ),
+                                              strokeWidth: 1,
+                                            );
+                                          },
+                                        ),
+                                        borderData: FlBorderData(show: false),
+                                        titlesData: FlTitlesData(
+                                          leftTitles: const AxisTitles(
+                                            sideTitles: SideTitles(
+                                              showTitles: false,
+                                            ),
+                                          ),
+                                          rightTitles: const AxisTitles(
+                                            sideTitles: SideTitles(
+                                              showTitles: false,
+                                            ),
+                                          ),
+                                          topTitles: const AxisTitles(
+                                            sideTitles: SideTitles(
+                                              showTitles: false,
+                                            ),
+                                          ),
+                                          bottomTitles: AxisTitles(
+                                            sideTitles: SideTitles(
+                                              showTitles: true,
+                                              interval: 1,
+                                              reservedSize:
+                                                  58.h, // ✅ enough for 2 lines
+                                              getTitlesWidget: (value, meta) {
+                                                final i = value.toInt();
+                                                if (i < 0 || i >= count) {
+                                                  return const SizedBox.shrink();
+                                                }
+
+                                                final full = (i < labels.length)
+                                                    ? labels[i]
+                                                    : "";
+
+                                                final lines = _twoLineWeekLabel(
+                                                  full,
+                                                );
+
+                                                return SideTitleWidget(
+                                                  axisSide: meta.axisSide,
+                                                  space: 12.h,
+                                                  child: SizedBox(
+                                                    width:
+                                                        52.w, // per-bar width
+                                                    child: Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Text(
+                                                          lines[0],
+                                                          maxLines: 1,
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          style: TextStyle(
+                                                            fontSize: 10.sp,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                            color:
+                                                                Colors.black87,
+                                                            height: 1.1,
+                                                          ),
+                                                        ),
+                                                        SizedBox(height: 2.h),
+                                                        Text(
+                                                          lines[1],
+                                                          maxLines: 1,
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          style: TextStyle(
+                                                            fontSize: 10.sp,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color:
+                                                                Colors.black87,
+                                                            height: 1.1,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                        barGroups: List.generate(
+                                          count,
+                                          (i) => BarChartGroupData(
+                                            x: i,
+                                            barRods: [
+                                              BarChartRodData(
+                                                toY: values[i].toDouble(),
+                                                width: 14.w,
+                                                borderRadius:
+                                                    BorderRadius.circular(10.r),
+                                                gradient: const LinearGradient(
+                                                  colors: [
+                                                    Color(0xFFFF6A00),
+                                                    Color(0xFFFFD300),
+                                                  ],
+                                                  begin: Alignment.bottomCenter,
+                                                  end: Alignment.topCenter,
+                                                ),
+                                                backDrawRodData:
+                                                    BackgroundBarChartRodData(
+                                                      show: true,
+                                                      toY: maxValue.toDouble(),
+                                                      color: Colors.grey
+                                                          .withOpacity(0.08),
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      swapAnimationDuration: const Duration(
+                                        milliseconds: 600,
+                                      ),
+                                      swapAnimationCurve: Curves.easeOutCubic,
                                     ),
                                   ),
-                                )
-                                .toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                selectedFilter = value!;
-                              });
-                              context
-                                  .read<CompanySalesChartProvider>()
-                                  .getChartData(type: value!.toLowerCase());
-                            },
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
-
-                  SizedBox(height: 20.h),
-
-                  /// ---------- Chart ----------
-                  SizedBox(
-                    height: 220.h,
-                    child: Consumer<CompanySalesChartProvider>(
-                      builder: (context, chartProvider, _) {
-                        final chart = chartProvider.chartData?.data;
-
-                        if (chartProvider.loading || chart == null) {
-                          return Center(
-                            child: SpinKitThreeBounce(
-                              color: AppColor.primaryColor,
-                              size: 30,
-                            ),
-                          );
-                        }
-
-                        final rawMax = chart.values!.isEmpty
-                            ? 0
-                            : chart.values!.reduce((a, b) => a > b ? a : b);
-
-                        final maxValue = rawMax == 0 ? 10 : rawMax * 1.2;
-
-                        return BarChart(
-                          BarChartData(
-                            maxY: maxValue.toDouble(),
-                            alignment: BarChartAlignment.spaceAround,
-                            barTouchData: BarTouchData(
-                              enabled: true,
-                              touchTooltipData: BarTouchTooltipData(
-                                getTooltipColor: (_) => Colors.black87,
-                                // tooltipBgColor: Colors.black87,
-                                tooltipRoundedRadius: 8.r,
-                                getTooltipItem: (group, _, rod, __) {
-                                  return BarTooltipItem(
-                                    "PKR ${rod.toY.toInt()}",
-                                    const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            gridData: FlGridData(
-                              show: true,
-                              drawVerticalLine: false,
-                              horizontalInterval: maxValue == 0
-                                  ? 1
-                                  : maxValue / 4,
-                              getDrawingHorizontalLine: (value) {
-                                return FlLine(
-                                  color: Colors.grey.withOpacity(0.15),
-                                  strokeWidth: 1,
-                                );
-                              },
-                            ),
-
-                            borderData: FlBorderData(show: false),
-                            titlesData: FlTitlesData(
-                              leftTitles: const AxisTitles(
-                                sideTitles: SideTitles(showTitles: false),
-                              ),
-                              rightTitles: const AxisTitles(
-                                sideTitles: SideTitles(showTitles: false),
-                              ),
-                              topTitles: const AxisTitles(
-                                sideTitles: SideTitles(showTitles: false),
-                              ),
-                              bottomTitles: AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  getTitlesWidget: (value, meta) {
-                                    return Padding(
-                                      padding: EdgeInsets.only(top: 6.h),
-                                      child: Text(
-                                        chart.labels![value.toInt()],
-                                        style: TextStyle(
-                                          fontSize: 11.sp,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                            barGroups: List.generate(
-                              chart.values!.length,
-                              (i) => BarChartGroupData(
-                                x: i,
-                                barRods: [
-                                  BarChartRodData(
-                                    toY: chart.values![i].toDouble(),
-                                    width: 18.w,
-                                    borderRadius: BorderRadius.circular(10.r),
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFFFF6A00),
-                                        Color(0xFFFFD300),
-                                      ],
-                                      begin: Alignment.bottomCenter,
-                                      end: Alignment.topCenter,
-                                    ),
-                                    backDrawRodData: BackgroundBarChartRodData(
-                                      show: true,
-                                      toY: maxValue.toDouble(),
-                                      color: Colors.grey.withOpacity(0.08),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          swapAnimationDuration: const Duration(
-                            milliseconds: 600,
-                          ),
-                          swapAnimationCurve: Curves.easeOutCubic,
-                        );
-                      },
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
 
           /// ---------- Stats Section ----------
           Padding(
-            padding: EdgeInsets.only(top: 380.h),
+            padding: EdgeInsets.only(top: 410.h),
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 child: Column(
-                  children: const [SizedBox(height: 20), StatsView()],
+                  children: [
+                    SizedBox(height: 20.h),
+                    StatsView(),
+                  ],
                 ),
               ),
             ),

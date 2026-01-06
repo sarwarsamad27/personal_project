@@ -11,46 +11,49 @@ class GetMyOrdersProvider extends ChangeNotifier {
   int page = 1;
   int limit = 10;
 
-  GetMyOrders? orderModel;
+  GetMyPendingOrders? orderModel;
 
- Future<void> fetchOrders({bool isLoadMore = false, bool isRefresh = false}) async {
-  if (isLoadMore && loadMore) return; // 🚫 double call stop
-  if (!isLoadMore && loading) return;
+  Future<void> fetchOrders({
+    bool isLoadMore = false,
+    bool isRefresh = false,
+  }) async {
+    if (isLoadMore && loadMore) return; // 🚫 double call stop
+    if (!isLoadMore && loading) return;
 
-  if (isRefresh) {
-    page = 1;
-    orderModel = null;
-  }
-
-  isLoadMore ? loadMore = true : loading = true;
-  notifyListeners();
-
-  try {
-    final newOrders = await repository.getOrders(page: page, limit: limit);
-
-    if (newOrders.orders == null || newOrders.orders!.isEmpty) {
-      // 🚫 No more data → page increment mat karo
-      loading = false;
-      loadMore = false;
-      notifyListeners();
-      return;
+    if (isRefresh) {
+      page = 1;
+      orderModel = null;
     }
 
-    if (isLoadMore && orderModel != null) {
-      orderModel!.orders!.addAll(newOrders.orders!);
-    } else {
-      orderModel = newOrders;
+    isLoadMore ? loadMore = true : loading = true;
+    notifyListeners();
+
+    try {
+      final newOrders = await repository.getOrders(page: page, limit: limit);
+
+      if (newOrders.orders == null || newOrders.orders!.isEmpty) {
+        // 🚫 No more data → page increment mat karo
+        loading = false;
+        loadMore = false;
+        notifyListeners();
+        return;
+      }
+
+      if (isLoadMore && orderModel != null) {
+        orderModel!.orders!.addAll(newOrders.orders!);
+      } else {
+        orderModel = newOrders;
+      }
+
+      page++; // ✅ only when data exists
+    } catch (e) {
+      print("Order Fetch Error: $e");
     }
 
-    page++; // ✅ only when data exists
-  } catch (e) {
-    print("Order Fetch Error: $e");
+    loading = false;
+    loadMore = false;
+    notifyListeners();
   }
-
-  loading = false;
-  loadMore = false;
-  notifyListeners();
-}
 
   void updateStatusAndRefresh() async {
     page = 1;

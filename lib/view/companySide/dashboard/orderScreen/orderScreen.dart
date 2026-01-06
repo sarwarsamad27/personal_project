@@ -12,6 +12,11 @@ import 'package:new_brand/widgets/paymentTabbar.dart';
 import 'package:provider/provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customContainer.dart';
+
+// ✅ IMPORTANT: Alias imports to avoid Orders name clash
+import 'package:new_brand/models/orders/getMyOrders_model.dart' as my;
+import 'package:new_brand/models/orders/getDispatchedOrder_model.dart' as disp;
+
 import 'orderDetailScreen.dart';
 
 class OrderScreen extends StatefulWidget {
@@ -52,29 +57,6 @@ class _OrderScreenState extends State<OrderScreen>
     super.dispose();
   }
 
-  // ------------ FIRST TAB (DISPATCHED) ------------
-  Widget firstTab(GetMyOrdersProvider provider) {
-    final orders = provider.orderModel?.orders ?? [];
-    final dispatched = orders.where((e) => e.status == "Dispatched").toList();
-
-    return _buildOrderList(
-      list: dispatched,
-      provider: provider,
-      scrollController: null,
-    );
-  }
-
-  Widget secondTab(GetMyOrdersProvider provider) {
-    final orders = provider.orderModel?.orders ?? [];
-    final pending = orders.where((e) => e.status == "Pending").toList();
-
-    return _buildOrderList(
-      list: pending,
-      provider: provider,
-      scrollController: _scrollController,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -103,7 +85,6 @@ class _OrderScreenState extends State<OrderScreen>
                           ); // Dispatched
                         }
                       },
-
                       firstTab: pendingTab(pendingProvider),
                       secondTab: dispatchedTab(dispatchedProvider),
                       firstTabbarName: "Pending Orders",
@@ -119,15 +100,43 @@ class _OrderScreenState extends State<OrderScreen>
     );
   }
 
+  // -------------------- Pending Tab --------------------
+  Widget pendingTab(GetMyOrdersProvider provider) {
+    final list = (provider.orderModel?.orders ?? [])
+        .where((e) => e.status == "Pending")
+        .toList();
+
+    return _buildOrderList(
+      list: list,
+      isPendingTab: true,
+      pendingProvider: provider,
+      isApiLoading: provider.loading,
+      scrollController: _scrollController,
+    );
+  }
+
+  // -------------------- Dispatched Tab --------------------
+  Widget dispatchedTab(GetDispatchedOrderProvider provider) {
+    final list = (provider.dispatchedModel?.orders ?? [])
+        .where((e) => e.status == "Dispatched")
+        .toList();
+
+    return _buildOrderList(
+      list: list,
+      isPendingTab: false,
+      pendingProvider: null,
+      isApiLoading: provider.loading,
+      scrollController: null,
+    );
+  }
+
   Widget _buildOrderList({
     required List list,
-    GetMyOrdersProvider? provider,
+    required bool isPendingTab,
+    GetMyOrdersProvider? pendingProvider,
     bool isApiLoading = false,
     ScrollController? scrollController,
   }) {
-    bool isLoading = provider?.loading == true && list.isEmpty;
-
-    // 🔥 Loader jab API loading ho rahi ho
     if (isApiLoading && list.isEmpty) {
       return const Center(
         child: SpinKitThreeBounce(color: AppColor.whiteColor, size: 30),
@@ -138,11 +147,15 @@ class _OrderScreenState extends State<OrderScreen>
       color: Colors.white,
       backgroundColor: AppColor.primaryColor,
       onRefresh: () async {
-        if (provider != null) {
-          await provider.fetchOrders(isRefresh: true);
+        if (isPendingTab && pendingProvider != null) {
+          await pendingProvider.fetchOrders(isRefresh: true);
+        } else {
+          await Provider.of<GetDispatchedOrderProvider>(
+            context,
+            listen: false,
+          ).fetchDispatchedOrders(isRefresh: true);
         }
       },
-
       child: list.isEmpty
           ? ListView(
               children: const [
@@ -159,12 +172,12 @@ class _OrderScreenState extends State<OrderScreen>
             )
           : ListView.separated(
               controller: scrollController,
-              itemCount: list.length + ((provider?.loadMore ?? false) ? 1 : 0),
-
+              itemCount:
+                  list.length + ((pendingProvider?.loadMore ?? false) ? 1 : 0),
               separatorBuilder: (_, __) => SizedBox(height: 16.h),
-
               itemBuilder: (context, index) {
-                if (index == list.length && (provider?.loadMore ?? false)) {
+                if (index == list.length &&
+                    (pendingProvider?.loadMore ?? false)) {
                   return const Center(
                     child: Padding(
                       padding: EdgeInsets.all(10),
@@ -176,19 +189,16 @@ class _OrderScreenState extends State<OrderScreen>
                   );
                 }
 
-                final order = list[index];
-                final product = order.products!.first;
+                // ✅ order is dynamic (could be my.Orders OR disp.Orders)
+                final dynamic order = list[index];
 
-                Color getStatusColor(String status) {
-                  switch (status) {
-                    case 'Pending':
-                      return AppColor.errorColor;
-                    case 'Dispatched':
-                      return AppColor.successColor;
-                    default:
-                      return Colors.grey;
-                  }
-                }
+                // ✅ products list (works for both models if field names same)
+                final List<dynamic> products = (order.products ?? []);
+
+                // safe first product for image/title
+                final dynamic firstProduct = products.isNotEmpty
+                    ? products.first
+                    : null;
 
                 return CustomAppContainer(
                   padding: EdgeInsets.all(20.w),
@@ -201,8 +211,10 @@ class _OrderScreenState extends State<OrderScreen>
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12.r),
                             child: Image.network(
-                              product.images!.isNotEmpty
-                                  ? Global.imageUrl + product.images!.first
+                              (firstProduct != null &&
+                                      firstProduct.images != null &&
+                                      firstProduct.images.isNotEmpty)
+                                  ? Global.imageUrl + firstProduct.images.first
                                   : "",
                               height: 75.h,
                               width: 75.w,
@@ -211,18 +223,17 @@ class _OrderScreenState extends State<OrderScreen>
                                   const Icon(Icons.image, color: Colors.white),
                             ),
                           ),
-
                           SizedBox(height: 6.h),
 
-                          // VIEW PRODUCT BUTTON
                           TextButton(
                             onPressed: () {
+                              if (firstProduct == null) return;
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => ProductDetailScreen(
-                                    productId: product.productId,
-                                    categoryId: product.categoryId,
+                                    productId: firstProduct.productId,
+                                    categoryId: firstProduct.categoryId,
                                   ),
                                 ),
                               );
@@ -247,7 +258,7 @@ class _OrderScreenState extends State<OrderScreen>
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  "#${order.sId!.substring(0, 6)}",
+                                  "#${(order.sId ?? "").toString().substring(0, 6)}",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 16.sp,
@@ -255,12 +266,12 @@ class _OrderScreenState extends State<OrderScreen>
                                   ),
                                 ),
 
-                                // ---------------- Pending Tab Dropdown ----------------
-                                if (provider != null) // pending tab
-                                  _buildPendingStatusDropdown(order),
+                                if (isPendingTab)
+                                  _buildPendingStatusDropdown(
+                                    orderId: order.sId,
+                                  ),
 
-                                // ---------------- Dispatched Tab Simple Badge ----------------
-                                if (provider == null) // dispatched tab
+                                if (!isPendingTab)
                                   Container(
                                     padding: EdgeInsets.symmetric(
                                       horizontal: 10.w,
@@ -286,7 +297,7 @@ class _OrderScreenState extends State<OrderScreen>
                             SizedBox(height: 8.h),
 
                             Text(
-                              product.name ?? "",
+                              firstProduct?.name ?? "Multiple Items",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 17.sp,
@@ -297,7 +308,7 @@ class _OrderScreenState extends State<OrderScreen>
                             SizedBox(height: 6.h),
 
                             Text(
-                              "Customer: ${order.buyerDetails!.name}",
+                              "Customer: ${order.buyerDetails?.name ?? ""}",
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.8),
                                 fontSize: 14.sp,
@@ -306,57 +317,54 @@ class _OrderScreenState extends State<OrderScreen>
 
                             SizedBox(height: 6.h),
 
-                            // ---------------- QTY + PRICE (price moved below qty) ----------------
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "Qty: ${product.quantity}",
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.85),
-                                    fontSize: 14.sp,
-                                  ),
-                                ),
-                                if (provider == null)
-                                  Text(
-                                    "Rs: ${order.grandTotal}",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15.sp,
-                                    ),
-                                  ),
-                              ],
+                            // ✅ Premium line (minimal, no redesign)
+                            Text(
+                              "Items: ${products.length}",
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.85),
+                                fontSize: 14.sp,
+                              ),
                             ),
+
+                            SizedBox(height: 6.h),
 
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                if (provider != null)
-                                  Text(
-                                    "Rs: ${order.grandTotal}",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15.sp,
-                                    ),
+                                Text(
+                                  "Rs: ${order.grandTotal ?? 0}",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15.sp,
                                   ),
-                                if (provider != null)
-                                  TextButton(
-                                    onPressed: () {
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    // ✅ Navigate to detail screen (product list inside)
+                                    // For pending tab we have my.Orders model
+                                    if (isPendingTab) {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) =>
-                                              OrderDetailScreen(order: order),
+                                          builder: (_) => OrderDetailScreen(
+                                            order: order as my.Orders,
+                                          ),
                                         ),
                                       );
-                                    },
-                                    child: const Text(
-                                      "View Detail",
-                                      style: TextStyle(color: Colors.white),
-                                    ),
+                                    } else {
+                                      // Dispatched model currently not wired to detail in your snippet.
+                                      // If you want, create a DispatchedOrderDetailScreen similarly.
+                                      AppToast.error(
+                                        "Detail screen for dispatched not connected",
+                                      );
+                                    }
+                                  },
+                                  child: const Text(
+                                    "View Detail",
+                                    style: TextStyle(color: Colors.white),
                                   ),
+                                ),
                               ],
                             ),
                           ],
@@ -370,54 +378,33 @@ class _OrderScreenState extends State<OrderScreen>
     );
   }
 
-  Widget dispatchedTab(GetDispatchedOrderProvider provider) {
-    final list = (provider.dispatchedModel?.orders ?? [])
-        .where((e) => e.status == "Dispatched")
-        .toList();
-
-    return _buildOrderList(
-      list: list,
-      provider: null,
-      isApiLoading: provider.loading,
-      scrollController: null,
-    );
-  }
-
-  Widget pendingTab(GetMyOrdersProvider provider) {
-    final list = (provider.orderModel?.orders ?? [])
-        .where((e) => e.status == "Pending")
-        .toList();
-
-    return _buildOrderList(
-      list: list,
-      provider: provider,
-      isApiLoading: provider.loading,
-      scrollController: _scrollController,
-    );
-  }
-
-  Widget _buildPendingStatusDropdown(order) {
+  // ✅ Changed: pass orderId only (no Orders type dependency)
+  Widget _buildPendingStatusDropdown({required String orderId}) {
     Color getStatusColor(String status) {
       switch (status) {
         case 'Pending':
           return AppColor.errorColor;
         case 'Dispatched':
           return AppColor.successColor;
+        case 'Cancel':
+          return AppColor.primaryColor;
         default:
           return Colors.grey;
       }
     }
 
+    // Since it's pending tab, status is always Pending in list.
+    // Keep UI same: dropdown with value "Pending"
     return Container(
       height: 30.h,
       padding: EdgeInsets.symmetric(horizontal: 4.w),
       decoration: BoxDecoration(
-        color: getStatusColor(order.status!).withOpacity(0.2),
+        color: getStatusColor("Pending").withOpacity(0.2),
         borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: getStatusColor(order.status!)),
+        border: Border.all(color: getStatusColor("Pending")),
       ),
       child: DropdownButton<String>(
-        value: order.status,
+        value: "Pending",
         underline: const SizedBox(),
         icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
         dropdownColor: AppColor.primaryColor,
@@ -425,6 +412,7 @@ class _OrderScreenState extends State<OrderScreen>
         items: [
           "Pending",
           "Dispatched",
+          "Cancel",
         ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
         onChanged: (newStatus) async {
           if (newStatus == "Dispatched") {
@@ -434,7 +422,7 @@ class _OrderScreenState extends State<OrderScreen>
             );
 
             bool success = await dispatchProvider.updateOrderStatus(
-              orderId: order.sId!,
+              orderId: orderId,
               status: "dispatched",
             );
 

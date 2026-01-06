@@ -58,12 +58,6 @@ class StatsView extends StatelessWidget {
         'icon': LucideIcons.package,
         'gradient': [Color(0xFFFF512F), Color(0xFFF09819)],
       },
-      {
-        'title': 'Total Quantity',
-        'value': '${data.totalQuantity}',
-        'icon': LucideIcons.layers,
-        'gradient': [Color(0xFF36D1DC), Color(0xFF5B86E5)],
-      },
 
       // ===== WALLET =====
       {

@@ -19,8 +19,23 @@ import 'package:new_brand/widgets/customTextFeld.dart';
 import 'package:new_brand/widgets/productContainer.dart';
 import 'package:provider/provider.dart';
 
-class CategoryScreen extends StatelessWidget {
+class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key});
+
+  @override
+  State<CategoryScreen> createState() => _CategoryScreenState();
+}
+
+class _CategoryScreenState extends State<CategoryScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() async {
+      final provider = Provider.of<GetCategoryProvider>(context, listen: false);
+      await provider.getCategories(); // first load
+    });
+  }
 
   Future<File?> _pickImage() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -53,7 +68,7 @@ class CategoryScreen extends StatelessWidget {
                 Provider.of<GetCategoryProvider>(
                   context,
                   listen: false,
-                ).getCategories();
+                ).getCategories(forceRefresh: true); // ✅
               } else {
                 AppToast.error("Failed to delete category");
               }
@@ -181,7 +196,9 @@ class CategoryScreen extends StatelessWidget {
                                         Provider.of<GetCategoryProvider>(
                                           context,
                                           listen: false,
-                                        ).getCategories();
+                                        ).getCategories(
+                                          forceRefresh: true,
+                                        ); // ✅
                                       } else {
                                         AppToast.show(
                                           "Failed to update category",
@@ -208,13 +225,6 @@ class CategoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = Provider.of<GetCategoryProvider>(context);
 
-    /// Load API on first build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (provider.categoryData == null) {
-        provider.getCategories();
-      }
-    });
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColor.appimagecolor,
@@ -237,7 +247,6 @@ class CategoryScreen extends StatelessWidget {
           ],
         ),
       ),
-
       body: provider.isLoading
           ? const Center(
               child: SpinKitThreeBounce(
@@ -256,7 +265,7 @@ class CategoryScreen extends StatelessWidget {
                 itemCount: provider.categoryData!.categories!.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  mainAxisExtent: 260.h,
+                  mainAxisExtent: 240.h,
                   crossAxisSpacing: 14.w,
                   mainAxisSpacing: 0.h,
                 ),
@@ -267,7 +276,7 @@ class CategoryScreen extends StatelessWidget {
                     children: [
                       CategoryTile(
                         name: item.name ?? "",
-                        image: Global.imageUrl + item.image! ?? "",
+                        image: Global.imageUrl + (item.image ?? ""),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -278,7 +287,6 @@ class CategoryScreen extends StatelessWidget {
                           );
                         },
                       ),
-
                       Positioned(
                         right: 10,
                         top: 10,
@@ -338,7 +346,6 @@ class CategoryScreen extends StatelessWidget {
                 },
               ),
             ),
-
       floatingActionButton: Container(
         height: 70.h,
         width: 70.h,
@@ -363,18 +370,18 @@ class CategoryScreen extends StatelessWidget {
         child: FloatingActionButton(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          onPressed: () {
-            Navigator.push(
+          onPressed: () async {
+            await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const AddCategoryScreen(),
               ),
-            ).then((_) {
-              Provider.of<GetCategoryProvider>(
-                context,
-                listen: false,
-              ).getCategories();
-            });
+            );
+
+            Provider.of<GetCategoryProvider>(
+              context,
+              listen: false,
+            ).getCategories(forceRefresh: true); // ✅
           },
           child: const Icon(LucideIcons.plus, color: Colors.white, size: 30),
         ),

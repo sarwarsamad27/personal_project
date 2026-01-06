@@ -19,7 +19,10 @@ class AddProductProvider with ChangeNotifier {
     int? afterPrice,
     List<String>? size,
     List<String>? color,
-    int? stock,
+
+    // CHANGE: int? -> String?
+    String? stock,
+
     required VoidCallback onSuccess,
     required Function(String) onError,
   }) async {
@@ -29,7 +32,6 @@ class AddProductProvider with ChangeNotifier {
     try {
       final response = await repository.addProduct(
         token: token,
-       
         categoryId: categoryId,
         name: name,
         description: description,
@@ -38,6 +40,8 @@ class AddProductProvider with ChangeNotifier {
         afterPrice: afterPrice,
         size: size,
         color: color,
+
+        // CHANGE: send String stock
         stock: stock,
       );
 
