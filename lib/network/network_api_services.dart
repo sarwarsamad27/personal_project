@@ -8,6 +8,9 @@ import 'package:new_brand/resources/local_storage.dart';
 import 'package:http_parser/http_parser.dart';
 
 class NetworkApiServices extends BaseApiServices {
+
+
+  
   // ✅ Static headers (no token)
   Future<Map<String, String>> getHeaders({bool isMultipart = false}) async {
     final token = await LocalStorage.getToken();
@@ -295,4 +298,6 @@ class NetworkApiServices extends BaseApiServices {
     }
     return {'code_status': false, 'message': 'Exception: $e'};
   }
+
+
 }

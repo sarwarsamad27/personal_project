@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:new_brand/resources/appColor.dart';
-import 'package:new_brand/view/companySide/auth/loginScreen.dart';
-import 'package:new_brand/resources/local_storage.dart';
-import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/view/companySide/auth/loginScreen.dart';
+import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -21,40 +24,60 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Rotation controller
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat();
 
-    // Check token and navigate
     checkLoginStatus();
   }
 
-  // Check token and navigate accordingly
- void checkLoginStatus() async {
-  final token = await LocalStorage.getToken();
-
-  await Future.delayed(const Duration(seconds: 2));
-
-  // Token missing?
-  if (token == null || token.isEmpty) {
-    navigateTo(const LoginScreen());
-    return;
+  Future<void> requestNotifPermissionAndroid13Plus() async {
+    final status = await Permission.notification.status;
+    if (!status.isGranted) {
+      await Permission.notification.request();
+    }
   }
 
-  // Check if token expired
-  bool isExpired = JwtDecoder.isExpired(token);
+  Future<void> checkLoginStatus() async {
+    await requestNotifPermissionAndroid13Plus();
+    final token = await LocalStorage.getToken();
 
-  if (isExpired) {
-    await LocalStorage.clearToken();
-    navigateTo(const LoginScreen());
-  } else {
+    // Keep splash visible
+    await Future.delayed(const Duration(seconds: 2));
+
+    // Token missing?
+    if (token == null || token.isEmpty) {
+      if (!mounted) return;
+      navigateTo(const LoginScreen());
+      return;
+    }
+
+    // Token expired?
+    final isExpired = JwtDecoder.isExpired(token);
+    if (isExpired) {
+      await LocalStorage.clearToken();
+      if (!mounted) return;
+      navigateTo(const LoginScreen());
+      return;
+    }
+
+    // ✅ Token valid: register FCM token BEFORE going home
+    try {
+      // Don't block forever
+      await LocalStorage.initPushAndSaveToken(
+        jwtToken: token,
+      ).timeout(const Duration(seconds: 8));
+    } catch (e) {
+      // FCM failure should NOT stop login flow
+      // ignore: avoid_print
+      print("FCM init failed on splash: $e");
+    }
+
+    if (!mounted) return;
     navigateTo(CompanyHomeScreen());
   }
-}
 
-  // Navigation with slide + fade transition
   void navigateTo(Widget screen) {
     Navigator.pushReplacement(
       context,
@@ -62,8 +85,10 @@ class _SplashScreenState extends State<SplashScreen>
         transitionDuration: const Duration(milliseconds: 800),
         pageBuilder: (context, animation, secondaryAnimation) => screen,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          final tween = Tween(begin: const Offset(0, 1), end: Offset.zero)
-              .chain(CurveTween(curve: Curves.easeOut));
+          final tween = Tween(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).chain(CurveTween(curve: Curves.easeOut));
           return SlideTransition(
             position: animation.drive(tween),
             child: FadeTransition(opacity: animation, child: child),
@@ -88,12 +113,9 @@ class _SplashScreenState extends State<SplashScreen>
         return Scaffold(
           body: Stack(
             children: [
-              // Background image
               Positioned.fill(
                 child: Image.asset("assets/images/shookoo_image.png"),
               ),
-
-              // Gradient overlay
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -106,16 +128,12 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
               ),
-
-              // Center content
               Center(
                 child: SafeArea(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       SizedBox(height: 100.h),
-
-                      // Rotating icon
                       RotationTransition(
                         turns: _controller,
                         child: Container(
@@ -139,10 +157,7 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ),
                       ),
-
                       SizedBox(height: 30.h),
-
-                      // App Name
                       Text(
                         "Shookoo Store",
                         style: TextStyle(
@@ -152,10 +167,7 @@ class _SplashScreenState extends State<SplashScreen>
                           letterSpacing: 1.3,
                         ),
                       ),
-
                       SizedBox(height: 12.h),
-
-                      // Tagline
                       Text(
                         "Everything you need, in one place!",
                         style: TextStyle(

@@ -61,6 +61,9 @@ dependencies:
   jwt_decoder: ^2.0.1
   pdf_image_renderer: ^1.0.1
   intl: ^0.20.2
+  firebase_core: ^4.3.0
+  firebase_messaging: ^16.1.0
+  flutter_local_notifications: ^19.5.0
 
 dev_dependencies:
   flutter_test:
