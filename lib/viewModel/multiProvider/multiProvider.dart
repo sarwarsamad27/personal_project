@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/forgotPassword_provider.dart';
+import 'package:new_brand/viewModel/providers/AuthProvider/googleLogin_provider.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/login_provider.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/signUp_provider.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/updatePassword_provider.dart';
@@ -65,6 +66,7 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CompanyReviewProvider()),
         ChangeNotifierProvider(create: (_) => ReplyReviewProvider()),
         ChangeNotifierProvider(create: (_) => GetRelatedProductProvider()),
+        ChangeNotifierProvider(create: (_) => CompanyGoogleLoginProvider()),
       ],
 
       child: child,

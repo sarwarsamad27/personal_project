@@ -15,8 +15,6 @@ import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:provider/provider.dart';
 
-// import '../../../../models/profile/getSingleProfile_model.dart';
-
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -30,8 +28,10 @@ class ProfileScreen extends StatelessWidget {
         listen: false,
       ).getProfileOnce();
     });
+
     final provider = context.watch<DashboardProvider>();
     final data = provider.dashboardData?.data;
+
     return Scaffold(
       body: CustomBgContainer(
         child: SafeArea(
@@ -99,7 +99,170 @@ class ProfileScreen extends StatelessWidget {
                         ],
                       ),
 
+                      SizedBox(height: 12.h),
+
+                      // ✅ PROFILE NAME
+                      Text(
+                        profile.name ?? "Company Name",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22.sp,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+
+                      SizedBox(height: 8.h),
+
+                      // ✅ PREMIUM FOLLOWERS CARD (more premium)
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 18.w,
+                          vertical: 12.h,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16.r),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withOpacity(0.18),
+                              Colors.white.withOpacity(0.08),
+                            ],
+                          ),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.18),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.18),
+                              blurRadius: 18,
+                              offset: const Offset(0, 10),
+                            ),
+                            BoxShadow(
+                              color: AppColor.primaryColor.withOpacity(0.20),
+                              blurRadius: 28,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          children: [
+                            // ✨ Shine overlay (premium)
+                            Positioned(
+                              top: -30.h,
+                              left: -40.w,
+                              child: Transform.rotate(
+                                angle: -0.35,
+                                child: Container(
+                                  width: 140.w,
+                                  height: 90.h,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.white.withOpacity(0.22),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(18.r),
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Icon bubble
+                                Container(
+                                  width: 42.r,
+                                  height: 42.r,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        AppColor.primaryColor.withOpacity(0.95),
+                                        AppColor.primaryColor.withOpacity(0.55),
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColor.primaryColor
+                                            .withOpacity(0.35),
+                                        blurRadius: 18,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    LucideIcons.users,
+                                    color: Colors.white,
+                                    size: 18.sp,
+                                  ),
+                                ),
+
+                                SizedBox(width: 12.w),
+
+                                // Count + label
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _formatFollowersCount(
+                                        profile.followersCount ?? 0,
+                                      ),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 22.sp,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.2,
+                                        height: 1,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black.withOpacity(
+                                              0.25,
+                                            ),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          "Followers",
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(
+                                              0.85,
+                                            ),
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 0.2,
+                                          ),
+                                        ),
+
+                                        // tiny premium dot
+                                      ],
+                                    ),
+                                  ],
+                                ),
+
+                                SizedBox(width: 14.w),
+
+                                // Small badge (optional premium feel)
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                       SizedBox(height: 20.h),
+
+                      // ------------- EDIT PROFILE BUTTON -------------
                       GestureDetector(
                         onTap: () {
                           Navigator.push(
@@ -127,10 +290,12 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+
                       SizedBox(height: 20.h),
                       AllField(profile: profile),
                       SizedBox(height: 25.h),
 
+                      // ------------- MY WALLET -------------
                       GestureDetector(
                         onTap: () {
                           Navigator.push(
@@ -167,7 +332,7 @@ class ProfileScreen extends StatelessWidget {
                                       ),
                                     ),
                                     Text(
-                                      "Balance: Rs. ${data!.wallet?.currentBalance ?? 0}",
+                                      "Balance: Rs. ${data?.wallet?.currentBalance ?? 0}",
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 13.sp,
@@ -214,5 +379,16 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // ✅ Helper function to format followers count
+  String _formatFollowersCount(int count) {
+    if (count >= 1000000) {
+      return "${(count / 1000000).toStringAsFixed(1)}M";
+    } else if (count >= 1000) {
+      return "${(count / 1000).toStringAsFixed(1)}K";
+    } else {
+      return count.toString();
+    }
   }
 }

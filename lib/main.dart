@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:new_brand/resources/appNav.dart';
 import 'package:new_brand/view/companySide/auth/splashScreen.dart';
 import 'package:new_brand/resources/appTheme.dart';
 import 'package:new_brand/viewModel/multiProvider/multiProvider.dart';
@@ -22,22 +23,25 @@ Future<void> _initLocalNotifications() async {
   const AndroidInitializationSettings androidInit =
       AndroidInitializationSettings('@mipmap/ic_launcher');
 
-  const InitializationSettings initSettings =
-      InitializationSettings(android: androidInit);
+  const InitializationSettings initSettings = InitializationSettings(
+    android: androidInit,
+  );
 
   await flutterLocalNotificationsPlugin.initialize(initSettings);
 
   await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
       ?.createNotificationChannel(channel);
 }
 
 Future<void> _setupFirebaseForegroundHandler() async {
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     final notification = message.notification;
-    final android = message.notification?.android;
 
-    if (notification != null && android != null) {
+    // ✅ show even if android == null
+    if (notification != null) {
       flutterLocalNotificationsPlugin.show(
         notification.hashCode,
         notification.title,
@@ -56,18 +60,18 @@ Future<void> _setupFirebaseForegroundHandler() async {
     }
   });
 }
+
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // optional: do something with message.data
 }
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-   await _initLocalNotifications();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  await _initLocalNotifications();
   await _setupFirebaseForegroundHandler();
   runApp(const AppWrapper());
 }
@@ -77,9 +81,7 @@ class AppWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppMultiProvider(
-      child: const MyApp(),
-    );
+    return AppMultiProvider(child: const MyApp());
   }
 }
 
@@ -92,6 +94,7 @@ class MyApp extends StatelessWidget {
       designSize: const Size(390, 844),
       builder: (context, child) {
         return MaterialApp(
+          navigatorKey: appNavKey,
           debugShowCheckedModeBanner: false,
           title: 'SHOOKOO',
           theme: AppTheme.lightTheme,

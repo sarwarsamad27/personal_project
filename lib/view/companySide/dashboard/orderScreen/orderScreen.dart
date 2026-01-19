@@ -247,13 +247,10 @@ class _OrderScreenState extends State<OrderScreen>
                       ),
 
                       SizedBox(width: 12.w),
-
-                      // -------------------- RIGHT SIDE CONTENT --------------------
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Top Row - Order ID + Status
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [

@@ -8,6 +8,7 @@ class Global {
 
   static var SignUp = "${BaseUrl}/signup";
   static var Login = "${BaseUrl}/login";
+  static var GoogleLogin = "${BaseUrl}/google/login";
   static var CreateProfile = "${BaseUrl}/create/profile";
   static var GetProfile = "${BaseUrl}/profile";
   static var UpdateProfile = "${BaseUrl}/update/profile";
@@ -37,4 +38,5 @@ class Global {
   static var GetCompanyReviews = "${BaseUrl}/get/reviews";
   static var ReplyReviews = "${BaseUrl}/reply/reviews";
   static var GetRelatedProduct = "${BaseUrl}/get/related/products";
+  static var saveFcmToken = "${BaseUrl}/seller/save/fcm-token";
 }

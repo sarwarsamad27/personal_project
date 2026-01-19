@@ -7,30 +7,65 @@ class CompanySalesChartProvider with ChangeNotifier {
   bool _loading = false;
   bool get loading => _loading;
 
-  CompanySalesChartModel? _chartData;
-  CompanySalesChartModel? get chartData => _chartData;
+  String? _error;
+  String? get error => _error;
 
+  // ✅ selected type moved here (UI setState remove)
   String _selectedType = "weekly";
   String get selectedType => _selectedType;
+
+  // ✅ cache per type
+  final Map<String, CompanySalesChartModel> _cache = {};
+
+  // current data based on selectedType
+  CompanySalesChartModel? _chartData;
+  CompanySalesChartModel? get chartData => _chartData;
 
   final GetCompanySalesChartRepository repository =
       GetCompanySalesChartRepository();
 
+  /// ✅ Will NOT hit API again if already cached (unless refresh=true)
   Future<void> getChartData({
     required String type,
+    bool refresh = false,
   }) async {
-    _selectedType = type;
+    final normalized = type.toLowerCase();
+    _selectedType = normalized;
+
+    // ✅ serve from cache
+    if (!refresh && _cache.containsKey(normalized)) {
+      _chartData = _cache[normalized];
+      notifyListeners();
+      return;
+    }
+
     _loading = true;
+    _error = null;
     notifyListeners();
-final token = await LocalStorage.getToken();
+
+    final token = await LocalStorage.getToken();
+
     try {
-      _chartData = await repository.getCompanySalesChart(
-        type: type,
+      final res = await repository.getCompanySalesChart(
+        type: normalized,
         token: token ?? '',
       );
-    } catch (_) {}
 
-    _loading = false;
+      _cache[normalized] = res;
+      _chartData = res;
+    } catch (e) {
+      _error = "Failed to load chart";
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  /// ✅ Optional: clear cache (logout etc.)
+  void clearCache() {
+    _cache.clear();
+    _chartData = null;
+    _selectedType = "weekly";
     notifyListeners();
   }
 }

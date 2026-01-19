@@ -1,25 +1,86 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+
 import 'package:new_brand/exception/exceptions.dart';
 import 'package:new_brand/network/base_api_services.dart';
+import 'package:new_brand/resources/appNav.dart';
 import 'package:new_brand/resources/local_storage.dart';
-import 'package:http_parser/http_parser.dart';
+import 'package:new_brand/view/companySide/auth/loginScreen.dart';
 
 class NetworkApiServices extends BaseApiServices {
+  static bool _isRedirecting = false;
 
+  Future<void> _forceLogoutToLogin() async {
+    if (_isRedirecting) return;
+    _isRedirecting = true;
 
-  
-  // ✅ Static headers (no token)
+    try {
+      await LocalStorage.clearToken();
+    } catch (_) {}
+
+    final nav = appNavKey.currentState;
+    if (nav != null) {
+      nav.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    }
+
+    _isRedirecting = false;
+  }
+
+  // ✅ Static headers (with token)
   Future<Map<String, String>> getHeaders({bool isMultipart = false}) async {
     final token = await LocalStorage.getToken();
-    print("Token: $token"); // Debugging token value
+    if (kDebugMode) {
+      print("Token: $token");
+    }
+
+    // ✅ Token missing -> logout
+    if (token == null || token.isEmpty) {
+      await _forceLogoutToLogin();
+      return {
+        "Accept": "application/json",
+        if (!isMultipart) "Content-Type": "application/json",
+      };
+    }
+
+    // ✅ Token expired (local check) -> logout
+    try {
+      final expired = JwtDecoder.isExpired(token);
+      if (expired) {
+        await _forceLogoutToLogin();
+        return {
+          "Accept": "application/json",
+          if (!isMultipart) "Content-Type": "application/json",
+        };
+      }
+    } catch (_) {
+      // if token not a valid JWT, treat as invalid
+      await _forceLogoutToLogin();
+      return {
+        "Accept": "application/json",
+        if (!isMultipart) "Content-Type": "application/json",
+      };
+    }
 
     return {
       "Accept": "application/json",
       if (!isMultipart) "Content-Type": "application/json",
-      if (token != null && token.isNotEmpty) "Authorization": "Bearer $token",
+      "Authorization": "Bearer $token",
+    };
+  }
+
+  Future<Map<String, String>> getHeadersNoAuth({bool isMultipart = false}) async {
+    return {
+      "Accept": "application/json",
+      if (!isMultipart) "Content-Type": "application/json",
     };
   }
 
@@ -66,12 +127,8 @@ class NetworkApiServices extends BaseApiServices {
         var request = http.MultipartRequest('PUT', Uri.parse(url));
 
         // Headers
-        final token = await LocalStorage.getToken();
-        request.headers.addAll({
-          "Accept": "application/json",
-          if (token != null && token.isNotEmpty)
-            "Authorization": "Bearer $token",
-        });
+        final headers = await getHeaders(isMultipart: true);
+        request.headers.addAll(headers);
 
         // Add text fields
         body.forEach((key, value) {
@@ -92,8 +149,12 @@ class NetworkApiServices extends BaseApiServices {
         var streamed = await request.send();
         var response = await http.Response.fromStream(streamed);
 
-        print("PUT Multipart Response: ${response.body}");
-        return jsonDecode(response.body);
+        if (kDebugMode) {
+          print("PUT Multipart Response: ${response.body}");
+        }
+
+        // ✅ handle 401/403 same way
+        return _handleResponse(url, response, body: body);
       } else {
         // Plain JSON PUT
         final response = await http.put(
@@ -109,6 +170,22 @@ class NetworkApiServices extends BaseApiServices {
     }
   }
 
+  Future<Map<String, dynamic>> postApiNoAuth(
+    String url,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: await getHeadersNoAuth(),
+        body: jsonEncode(body),
+      );
+      return _handleResponse(url, response, body: body);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
   Future<Map<String, dynamic>> putMultiPart({
     required String url,
     required Map<String, String> fields,
@@ -119,11 +196,8 @@ class NetworkApiServices extends BaseApiServices {
       var request = http.MultipartRequest('PUT', Uri.parse(url));
 
       // Add headers
-      final token = await LocalStorage.getToken();
-      request.headers.addAll({
-        "Accept": "application/json",
-        if (token != null && token.isNotEmpty) "Authorization": "Bearer $token",
-      });
+      final headers = await getHeaders(isMultipart: true);
+      request.headers.addAll(headers);
 
       // Add text fields
       request.fields.addAll(fields);
@@ -144,14 +218,7 @@ class NetworkApiServices extends BaseApiServices {
       var streamed = await request.send();
       var response = await http.Response.fromStream(streamed);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return jsonDecode(response.body);
-      } else {
-        return {
-          'code_status': false,
-          'message': 'Server Error: ${response.body}',
-        };
-      }
+      return _handleResponse(url, response);
     } catch (e) {
       return {'code_status': false, 'message': 'Exception: $e'};
     }
@@ -167,27 +234,21 @@ class NetworkApiServices extends BaseApiServices {
       var request = http.MultipartRequest('POST', Uri.parse(url));
 
       // Correct Headers
-      final token = await LocalStorage.getToken();
-      request.headers.addAll({
-        "Accept": "application/json",
-        if (token != null && token.isNotEmpty) "Authorization": "Bearer $token",
-      });
+      final headers = await getHeaders(isMultipart: true);
+      request.headers.addAll(headers);
 
       // Add Text Fields
       request.fields.addAll(fields);
 
       // Add Image Properly
       if (image != null) {
-        final mimeType = image.path
-            .split(".")
-            .last
-            .toLowerCase(); // jpg/png/jpeg
+        final mimeType = image.path.split(".").last.toLowerCase(); // jpg/png/jpeg
 
         request.files.add(
           await http.MultipartFile.fromPath(
             fileFieldName,
             image.path,
-            contentType: MediaType("image", mimeType), // <-- IMPORTANT
+            contentType: MediaType("image", mimeType),
           ),
         );
       }
@@ -195,9 +256,11 @@ class NetworkApiServices extends BaseApiServices {
       var streamed = await request.send();
       var response = await http.Response.fromStream(streamed);
 
-      print("Upload Response: ${response.body}");
+      if (kDebugMode) {
+        print("Upload Response: ${response.body}");
+      }
 
-      return jsonDecode(response.body);
+      return _handleResponse(url, response);
     } catch (e) {
       return {'code_status': false, 'message': 'Exception: $e'};
     }
@@ -213,11 +276,8 @@ class NetworkApiServices extends BaseApiServices {
       var request = http.MultipartRequest('POST', Uri.parse(url));
 
       // Add Authorization Header (IMPORTANT)
-      final token = await LocalStorage.getToken();
-      request.headers.addAll({
-        "Accept": "application/json",
-        if (token != null && token.isNotEmpty) "Authorization": "Bearer $token",
-      });
+      final headers = await getHeaders(isMultipart: true);
+      request.headers.addAll(headers);
 
       // Add fields (text)
       request.fields.addAll(fields);
@@ -232,14 +292,7 @@ class NetworkApiServices extends BaseApiServices {
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return jsonDecode(response.body);
-      } else {
-        return {
-          'code_status': false,
-          'message': 'Server Error: ${response.body}',
-        };
-      }
+      return _handleResponse(url, response);
     } catch (e) {
       return {'code_status': false, 'message': 'Exception: $e'};
     }
@@ -273,6 +326,16 @@ class NetworkApiServices extends BaseApiServices {
       print('✅ Response Body: ${response.body}');
     }
 
+    // ✅ Unauthorized -> logout + return
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      // fire-and-forget (avoid making _handleResponse async)
+      unawaited(_forceLogoutToLogin());
+      return {
+        'code_status': false,
+        'message': 'Session expired. Please login again.',
+      };
+    }
+
     if (response.statusCode == 200 || response.statusCode == 201) {
       try {
         final decoded = jsonDecode(response.body);
@@ -298,6 +361,4 @@ class NetworkApiServices extends BaseApiServices {
     }
     return {'code_status': false, 'message': 'Exception: $e'};
   }
-
-
 }

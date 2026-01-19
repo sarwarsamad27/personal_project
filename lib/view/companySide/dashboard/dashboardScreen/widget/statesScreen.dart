@@ -20,7 +20,7 @@ class StatsView extends StatelessWidget {
     }
 
     final data = provider.dashboardData?.data;
-    if (data == null) return const SizedBox();
+    if (data == null) return Center(child: const Text("No data found"));
 
     final stats = [
       // ===== SALES =====

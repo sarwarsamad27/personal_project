@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/auth/forgotScreen.dart';
 import 'package:new_brand/view/companySide/auth/signUpScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/profileForm.dart';
+import 'package:new_brand/viewModel/providers/AuthProvider/googleLogin_provider.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/login_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
@@ -21,7 +23,7 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<LoginProvider>(context);
+    final provider = context.watch<LoginProvider>();
 
     return ScreenUtilInit(
       designSize: const Size(390, 844),
@@ -120,55 +122,71 @@ class LoginScreen extends StatelessWidget {
                             CustomButton(
                               text: "Login",
                               onTap: () async {
-                                provider.clearError();
+                                // ✅ cache references BEFORE await
+                                final loginProvider = context
+                                    .read<LoginProvider>();
+                                final profileProvider = context
+                                    .read<ProfileFetchProvider>();
+                                final nav = Navigator.of(context);
 
-                                await provider.loginProvider(
-                                  email: provider.emailController.text.trim(),
-                                  password: provider.passwordController.text
+                                loginProvider.clearError();
+
+                                await loginProvider.loginProvider(
+                                  email: loginProvider.emailController.text
+                                      .trim(),
+                                  password: loginProvider
+                                      .passwordController
+                                      .text
                                       .trim(),
                                 );
 
-                                if (provider.loginData?.token != null &&
-                                    provider.loginData!.token!.isNotEmpty) {
-                                  final userEmail = provider
+                                if (loginProvider.loginData?.token != null &&
+                                    loginProvider
+                                        .loginData!
+                                        .token!
+                                        .isNotEmpty) {
+                                  final jwt = loginProvider.loginData!.token!;
+                                  await LocalStorage.initPushAndSaveToken(
+                                    jwtToken: jwt,
+                                  );
+
+                                  final userEmail = loginProvider
                                       .emailController
                                       .text
                                       .trim();
 
-                                  provider.emailController.clear();
-                                  provider.passwordController.clear();
+                                  loginProvider.emailController.clear();
+                                  loginProvider.passwordController.clear();
 
-                                  final profileProvider =
-                                      Provider.of<ProfileFetchProvider>(
-                                        context,
-                                        listen: false,
-                                      );
+                                  // ✅ important: profile cache stale after logout
+                                  profileProvider.clearProfileCache();
+                                  await profileProvider.getProfileOnce(
+                                    refresh: true,
+                                  );
 
-                                  await profileProvider.getProfileOnce();
+                                  final ok =
+                                      profileProvider.profileData?.message ==
+                                      "Profile fetched successfully";
 
-                                  // Check the API message before navigation
-                                  if (profileProvider.profileData != null &&
-                                      profileProvider.profileData!.message ==
-                                          "Profile fetched successfully") {
-                                    Navigator.pushReplacement(
-                                      context,
+                                  if (!nav.mounted) return;
+
+                                  if (ok) {
+                                    nav.pushReplacement(
                                       MaterialPageRoute(
                                         builder: (_) => CompanyHomeScreen(),
                                       ),
                                     );
                                   } else {
-                                    Navigator.pushReplacement(
-                                      context,
+                                    nav.pushReplacement(
                                       MaterialPageRoute(
-                                        builder: (_) => ProfileFormScreen(
-                                          email: userEmail,
-                                        ), // pass stored email
+                                        builder: (_) =>
+                                            ProfileFormScreen(email: userEmail),
                                       ),
                                     );
                                   }
                                 } else {
                                   AppToast.error(
-                                    provider.errorMessage ??
+                                    loginProvider.errorMessage ??
                                         "Invalid email or password",
                                   );
                                 }
@@ -216,7 +234,71 @@ class LoginScreen extends StatelessWidget {
                                 socialButton(
                                   icon: FontAwesomeIcons.google,
                                   color: Colors.redAccent,
-                                  onTap: () => print("Google login"),
+                                  onTap: () async {
+                                    // ✅ cache references BEFORE await
+                                    final googleProvider = context
+                                        .read<CompanyGoogleLoginProvider>();
+                                    final profileProvider = context
+                                        .read<ProfileFetchProvider>();
+                                    final nav = Navigator.of(context);
+
+                                    googleProvider.clearError();
+
+                                    await googleProvider.loginWithGoogle();
+
+                                    // ✅ after await: do NOT call Provider.of(context) again
+                                    if (googleProvider.loginData?.token !=
+                                            null &&
+                                        googleProvider
+                                            .loginData!
+                                            .token!
+                                            .isNotEmpty) {
+                                      final jwt =
+                                          googleProvider.loginData!.token!;
+                                      await LocalStorage.initPushAndSaveToken(
+                                        jwtToken: jwt,
+                                      );
+                                      profileProvider.clearProfileCache();
+                                      await profileProvider.getProfileOnce(
+                                        refresh: true,
+                                      );
+
+                                      final ok =
+                                          profileProvider
+                                              .profileData
+                                              ?.message ==
+                                          "Profile fetched successfully";
+
+                                      if (!nav.mounted)
+                                        return; // ✅ prevents deactivated context crashes
+
+                                      if (ok) {
+                                        nav.pushReplacement(
+                                          MaterialPageRoute(
+                                            builder: (_) => CompanyHomeScreen(),
+                                          ),
+                                        );
+                                      } else {
+                                        final email =
+                                            googleProvider
+                                                .loginData
+                                                ?.user
+                                                ?.email ??
+                                            "";
+                                        nav.pushReplacement(
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                ProfileFormScreen(email: email),
+                                          ),
+                                        );
+                                      }
+                                    } else {
+                                      AppToast.error(
+                                        googleProvider.errorMessage ??
+                                            "Google login failed",
+                                      );
+                                    }
+                                  },
                                 ),
                                 SizedBox(width: 25.w),
                                 socialButton(

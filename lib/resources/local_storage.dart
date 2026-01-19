@@ -4,18 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 
-// ✅ Configure your API
-class ApiConfig {
-  // TODO: change this
-  static String baseUrl = Global.BaseUrl;
-}
-
-class ApiEndpoints {
-  // TODO: change this to your real endpoint
-  // Example: "/api/company/profile/saveFcmToken"
-  static const String saveFcmToken = "/seller/save/fcm-token";
-}
-
 class LocalStorage {
   // ------------------ TOKEN STORAGE ------------------
   static Future<void> saveToken(String token) async {
@@ -52,12 +40,12 @@ class LocalStorage {
     FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
       if (newToken.isEmpty) return;
       try {
-        await _saveFcmTokenToServer(jwtToken: jwtToken, fcmToken: newToken);
-        print("JWT (first 20): ${jwtToken.substring(0, 20)}");
-        final fcmToken = await messaging.getToken();
-        print("FCM token (first 20): ${fcmToken?.substring(0, 20)}");
+        final freshJwt = await LocalStorage.getToken(); // ✅ always latest
+        if (freshJwt == null || freshJwt.isEmpty) return;
+
+        await _saveFcmTokenToServer(jwtToken: freshJwt, fcmToken: newToken);
+        print("FCM token refreshed & saved");
       } catch (e) {
-        // ignore: avoid_print
         print("FCM refresh save failed: $e");
       }
     });
@@ -68,7 +56,7 @@ class LocalStorage {
     required String jwtToken,
     required String fcmToken,
   }) async {
-    final uri = Uri.parse("${ApiConfig.baseUrl}${ApiEndpoints.saveFcmToken}");
+    final uri = Uri.parse(Global.saveFcmToken);
 
     final resp = await http
         .post(

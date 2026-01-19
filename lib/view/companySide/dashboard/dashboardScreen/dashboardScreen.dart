@@ -134,50 +134,69 @@ class _HomeDashboardState extends State<HomeDashboard>
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          CustomAppContainer(
-                            height: 40.h,
-                            padding: EdgeInsets.symmetric(horizontal: 12.w),
-                            color: const Color(0xFFEEF2FF),
-                            borderRadius: BorderRadius.circular(20.r),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: selectedFilter,
-                                icon: const Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  color: Color(0xFFFF6A00),
-                                ),
-                                items: ["Daily", "Weekly", "Monthly"]
-                                    .map(
-                                      (e) => DropdownMenuItem(
-                                        value: e,
-                                        child: Text(
-                                          e,
-                                          style: const TextStyle(
-                                            color: Color(0xFFFF6A00),
-                                            fontWeight: FontWeight.w600,
+
+                          // ✅ Dropdown driven by Provider (no setState)
+                          Selector<CompanySalesChartProvider, String>(
+                            selector: (_, p) => p.selectedType,
+                            builder: (context, selectedType, _) {
+                              String uiValue;
+                              switch (selectedType) {
+                                case "daily":
+                                  uiValue = "Daily";
+                                  break;
+                                case "monthly":
+                                  uiValue = "Monthly";
+                                  break;
+                                default:
+                                  uiValue = "Weekly";
+                              }
+
+                              return CustomAppContainer(
+                                height: 40.h,
+                                padding: EdgeInsets.symmetric(horizontal: 12.w),
+                                color: const Color(0xFFEEF2FF),
+                                borderRadius: BorderRadius.circular(20.r),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: uiValue,
+                                    icon: const Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      color: Color(0xFFFF6A00),
+                                    ),
+                                    items: ["Daily", "Weekly", "Monthly"]
+                                        .map(
+                                          (e) => DropdownMenuItem(
+                                            value: e,
+                                            child: Text(
+                                              e,
+                                              style: const TextStyle(
+                                                color: Color(0xFFFF6A00),
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (value) {
-                                  setState(() {
-                                    selectedFilter = value!;
-                                  });
+                                        )
+                                        .toList(),
+                                    onChanged: (value) {
+                                      if (value == null) return;
 
-                                  // premium "refresh" feel on filter change
-                                  _chartController.forward(from: 0);
+                                      // premium refresh feel on filter change
+                                      _chartController.forward(from: 0);
 
-                                  context
-                                      .read<CompanySalesChartProvider>()
-                                      .getChartData(type: value!.toLowerCase());
-                                },
-                              ),
-                            ),
+                                      context
+                                          .read<CompanySalesChartProvider>()
+                                          .getChartData(
+                                            type: value.toLowerCase(),
+                                            // refresh: false (default) => cache use
+                                          );
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
-
                       SizedBox(height: 20.h),
 
                       /// ---------- Chart ----------
@@ -211,7 +230,6 @@ class _HomeDashboardState extends State<HomeDashboard>
                               );
                             },
                             child: Consumer<CompanySalesChartProvider>(
-                              key: ValueKey<String>(selectedFilter),
                               builder: (context, chartProvider, _) {
                                 final chart = chartProvider.chartData?.data;
 
