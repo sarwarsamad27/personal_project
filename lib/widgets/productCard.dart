@@ -138,7 +138,7 @@ class ProductCard extends StatelessWidget {
             ),
 
             Padding(
-              padding: EdgeInsets.fromLTRB(10.w, 10.h, 10.w, 10.h),
+              padding: EdgeInsets.fromLTRB(10.w, 1.h, 10.w, 10.h),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,7 +158,7 @@ class ProductCard extends StatelessWidget {
                   SizedBox(height: 6.h),
                   Text(
                     description,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 11.sp,
@@ -166,6 +166,7 @@ class ProductCard extends StatelessWidget {
                       height: 1.25,
                     ),
                   ),
+                  SizedBox(height: 6.h),
                   if (averageRating != null) ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,

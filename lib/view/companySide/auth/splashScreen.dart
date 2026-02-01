@@ -20,6 +20,8 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
+  bool _navigated = false;
+
   @override
   void initState() {
     super.initState();
@@ -39,42 +41,80 @@ class _SplashScreenState extends State<SplashScreen>
     }
   }
 
+  String _normalizeToken(String token) {
+    final t = token.trim();
+    if (t.toLowerCase().startsWith('bearer ')) {
+      return t.substring(7).trim();
+    }
+    return t;
+  }
+
+  bool _isTokenExpiredSafe(String token) {
+    try {
+      final t = _normalizeToken(token);
+      final decoded = JwtDecoder.decode(t);
+      if (!decoded.containsKey('exp') || decoded['exp'] == null) return true;
+      return JwtDecoder.isExpired(t);
+    } catch (_) {
+      return true;
+    }
+  }
+
   Future<void> checkLoginStatus() async {
     await requestNotifPermissionAndroid13Plus();
-    final token = await LocalStorage.getToken();
 
     // Keep splash visible
     await Future.delayed(const Duration(seconds: 2));
 
+    final tokenRaw = await LocalStorage.getToken();
+
     // Token missing?
-    if (token == null || token.isEmpty) {
+    if (tokenRaw == null || tokenRaw.trim().isEmpty) {
       if (!mounted) return;
-      navigateTo(const LoginScreen());
+      _goLogin();
       return;
     }
 
-    // Token expired?
-    final isExpired = JwtDecoder.isExpired(token);
-    if (isExpired) {
+    final token = _normalizeToken(tokenRaw);
+
+    // Token expired locally?
+    if (_isTokenExpiredSafe(token)) {
       await LocalStorage.clearToken();
       if (!mounted) return;
-      navigateTo(const LoginScreen());
+      _goLogin();
       return;
     }
 
-    // ✅ Token valid: register FCM token BEFORE going home
+    // ✅ Token looks valid locally BUT server may reject it
     try {
-      // Don't block forever
       await LocalStorage.initPushAndSaveToken(
         jwtToken: token,
       ).timeout(const Duration(seconds: 8));
+    } on AuthExpiredException {
+      // ✅ SERVER SAYS TOKEN INVALID -> logout
+      await LocalStorage.clearToken();
+      if (!mounted) return;
+      _goLogin();
+      return;
     } catch (e) {
-      // FCM failure should NOT stop login flow
+      // FCM failure should NOT stop login flow (network etc)
       // ignore: avoid_print
       print("FCM init failed on splash: $e");
     }
 
     if (!mounted) return;
+    _goHome();
+  }
+
+  void _goLogin() {
+    if (_navigated) return;
+    _navigated = true;
+    navigateTo(const LoginScreen());
+  }
+
+  void _goHome() {
+    if (_navigated) return;
+    _navigated = true;
     navigateTo(CompanyHomeScreen());
   }
 

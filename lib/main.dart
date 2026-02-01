@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appNav.dart';
+import 'package:new_brand/resources/internet_listeners.dart';
+import 'package:new_brand/resources/sessionGuard.dart';
 import 'package:new_brand/view/companySide/auth/splashScreen.dart';
 import 'package:new_brand/resources/appTheme.dart';
 import 'package:new_brand/viewModel/multiProvider/multiProvider.dart';
@@ -8,6 +10,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+ // ✅ ADD
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -31,8 +34,7 @@ Future<void> _initLocalNotifications() async {
 
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin
-      >()
+          AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
 }
 
@@ -40,7 +42,6 @@ Future<void> _setupFirebaseForegroundHandler() async {
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     final notification = message.notification;
 
-    // ✅ show even if android == null
     if (notification != null) {
       flutterLocalNotificationsPlugin.show(
         notification.hashCode,
@@ -64,7 +65,6 @@ Future<void> _setupFirebaseForegroundHandler() async {
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // optional: do something with message.data
 }
 
 void main() async {
@@ -73,6 +73,10 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await _initLocalNotifications();
   await _setupFirebaseForegroundHandler();
+
+  // ✅ start internet listener ONCE
+  await InternetListener.start();
+
   runApp(const AppWrapper());
 }
 
@@ -98,7 +102,11 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: 'SHOOKOO',
           theme: AppTheme.lightTheme,
-          home: SplashScreen(),
+
+          // ✅ wrap Splash with SessionGuard
+          home: SessionGuard(
+            child: SplashScreen(),
+          ),
         );
       },
     );

@@ -1,3 +1,4 @@
+import 'package:new_brand/models/auth/appleLogin_model.dart';
 import 'package:new_brand/models/auth/googleLogin_model.dart';
 import 'package:new_brand/models/auth/login_model.dart';
 import 'package:new_brand/network/base_api_services.dart';
@@ -8,6 +9,7 @@ class LoginRepository {
   final BaseApiServices apiService = NetworkApiServices();
   final String apiUrl = Global.Login;
   final String googleLoginAPI = Global.GoogleLogin;
+  final String appleLoginAPI = Global.AppleLogin;
 
 
   Future<LoginModel> login(String email, String password) async {
@@ -33,6 +35,23 @@ class LoginRepository {
       return GoogleLoginModel.fromJson(response);
     } catch (e) {
       return GoogleLoginModel(message: "Error occurred: $e");
+    }
+  }
+
+   Future<AppleLoginModel> appleLogin({
+    required String identityToken,
+    String? email,
+    String? fullName,
+  }) async {
+    try {
+      final response = await apiService.postApi(appleLoginAPI, {
+        "identityToken": identityToken,
+        "email": email,       // may be null after first login
+        "fullName": fullName, // optional
+      });
+      return AppleLoginModel.fromJson(response);
+    } catch (e) {
+      return AppleLoginModel(message: "Error occurred: $e");
     }
   }
 }

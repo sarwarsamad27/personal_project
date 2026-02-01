@@ -8,6 +8,7 @@ import 'package:new_brand/view/companySide/auth/forgotScreen.dart';
 import 'package:new_brand/view/companySide/auth/signUpScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/profileForm.dart';
+import 'package:new_brand/viewModel/providers/AuthProvider/appleLogin_provider.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/googleLogin_provider.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/login_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
@@ -301,11 +302,49 @@ class LoginScreen extends StatelessWidget {
                                   },
                                 ),
                                 SizedBox(width: 25.w),
-                                socialButton(
-                                  icon: Icons.apple,
-                                  color: Colors.black,
-                                  onTap: () => print("Apple login"),
-                                ),
+                               socialButton(
+  icon: Icons.apple,
+  color: Colors.black,
+  onTap: () async {
+    // ✅ cache references BEFORE await
+    final appleProvider = context.read<CompanyAppleLoginProvider>();
+    final profileProvider = context.read<ProfileFetchProvider>();
+    final nav = Navigator.of(context);
+
+    appleProvider.clearError();
+
+    await appleProvider.loginWithApple();
+
+    if (appleProvider.loginData?.token != null &&
+        appleProvider.loginData!.token!.isNotEmpty) {
+      final jwt = appleProvider.loginData!.token!;
+      await LocalStorage.initPushAndSaveToken(jwtToken: jwt);
+
+      profileProvider.clearProfileCache();
+      await profileProvider.getProfileOnce(refresh: true);
+
+      final ok = profileProvider.profileData?.message ==
+          "Profile fetched successfully";
+
+      if (!nav.mounted) return;
+
+      if (ok) {
+        nav.pushReplacement(
+          MaterialPageRoute(builder: (_) => CompanyHomeScreen()),
+        );
+      } else {
+        final email = appleProvider.loginData?.user?.email ?? "";
+        nav.pushReplacement(
+          MaterialPageRoute(builder: (_) => ProfileFormScreen(email: email)),
+        );
+      }
+    } else {
+      AppToast.error(
+        appleProvider.errorMessage ?? "Apple login failed",
+      );
+    }
+  },
+),
                               ],
                             ),
 

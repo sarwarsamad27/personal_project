@@ -5,7 +5,7 @@ import 'package:new_brand/resources/global.dart';
 class GetProfileRepository {
   final NetworkApiServices apiServices = NetworkApiServices();
   final String apiUrl = Global.GetProfile;
-  Future<ProfileScreenModel> getProfile() async {
+  Future<ProfileScreenModel> getProfile() async { 
     final response = await apiServices.getApi(apiUrl);
 
     return ProfileScreenModel.fromJson(response);

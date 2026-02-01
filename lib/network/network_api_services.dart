@@ -1,6 +1,8 @@
+// network/network_api_services.dart
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -11,59 +13,78 @@ import 'package:new_brand/exception/exceptions.dart';
 import 'package:new_brand/network/base_api_services.dart';
 import 'package:new_brand/resources/appNav.dart';
 import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/auth/loginScreen.dart';
 
 class NetworkApiServices extends BaseApiServices {
   static bool _isRedirecting = false;
+
+  // ✅ Global callable logout (SessionGuard uses it too)
+  static Future<void> forceLogoutGlobal() async {
+    final api = NetworkApiServices();
+    await api._forceLogoutToLogin();
+  }
 
   Future<void> _forceLogoutToLogin() async {
     if (_isRedirecting) return;
     _isRedirecting = true;
 
     try {
-      await LocalStorage.clearToken();
-    } catch (_) {}
+      // ✅ clear token first
+      try {
+        await LocalStorage.clearToken();
+      } catch (_) {}
 
-    final nav = appNavKey.currentState;
-    if (nav != null) {
-      nav.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
+      void doNav() {
+        final nav = appNavKey.currentState;
+        if (nav == null) return;
+
+        // ✅ Always use root navigator
+        nav.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      }
+
+      // ✅ Navigation reliable even during build phase
+      WidgetsBinding.instance.addPostFrameCallback((_) => doNav());
+      // also try immediate (works if already ready)
+      doNav();
+    } finally {
+      // ✅ ALWAYS reset (even if nav null)
+      _isRedirecting = false;
     }
-
-    _isRedirecting = false;
   }
 
-  // ✅ Static headers (with token)
+  // ✅ headers with auth
   Future<Map<String, String>> getHeaders({bool isMultipart = false}) async {
     final token = await LocalStorage.getToken();
+
     if (kDebugMode) {
       print("Token: $token");
     }
 
-    // ✅ Token missing -> logout
+    // ✅ no token => logout + return no-auth headers
     if (token == null || token.isEmpty) {
-      await _forceLogoutToLogin();
+      unawaited(_forceLogoutToLogin());
       return {
         "Accept": "application/json",
         if (!isMultipart) "Content-Type": "application/json",
       };
     }
 
-    // ✅ Token expired (local check) -> logout
+    // ✅ local expiry check
     try {
-      final expired = JwtDecoder.isExpired(token);
-      if (expired) {
-        await _forceLogoutToLogin();
+      if (JwtDecoder.isExpired(token)) {
+        unawaited(_forceLogoutToLogin());
         return {
           "Accept": "application/json",
           if (!isMultipart) "Content-Type": "application/json",
         };
       }
     } catch (_) {
-      // if token not a valid JWT, treat as invalid
-      await _forceLogoutToLogin();
+      // invalid token => logout
+      unawaited(_forceLogoutToLogin());
       return {
         "Accept": "application/json",
         if (!isMultipart) "Content-Type": "application/json",
@@ -122,21 +143,17 @@ class NetworkApiServices extends BaseApiServices {
     String fileFieldName = "image",
   }) async {
     try {
-      // If image is provided, use multipart PUT
       if (image != null) {
-        var request = http.MultipartRequest('PUT', Uri.parse(url));
+        final request = http.MultipartRequest('PUT', Uri.parse(url));
 
-        // Headers
         final headers = await getHeaders(isMultipart: true);
         request.headers.addAll(headers);
 
-        // Add text fields
         body.forEach((key, value) {
           request.fields[key] = value.toString();
         });
 
-        // Add image
-        final mimeType = image.path.split('.').last.toLowerCase(); // jpg/png
+        final mimeType = image.path.split('.').last.toLowerCase();
         request.files.add(
           await http.MultipartFile.fromPath(
             fileFieldName,
@@ -145,18 +162,15 @@ class NetworkApiServices extends BaseApiServices {
           ),
         );
 
-        // Send request
-        var streamed = await request.send();
-        var response = await http.Response.fromStream(streamed);
+        final streamed = await request.send();
+        final response = await http.Response.fromStream(streamed);
 
         if (kDebugMode) {
           print("PUT Multipart Response: ${response.body}");
         }
 
-        // ✅ handle 401/403 same way
         return _handleResponse(url, response, body: body);
       } else {
-        // Plain JSON PUT
         final response = await http.put(
           Uri.parse(url),
           headers: await getHeaders(),
@@ -193,17 +207,14 @@ class NetworkApiServices extends BaseApiServices {
     String fileFieldName = "images",
   }) async {
     try {
-      var request = http.MultipartRequest('PUT', Uri.parse(url));
+      final request = http.MultipartRequest('PUT', Uri.parse(url));
 
-      // Add headers
       final headers = await getHeaders(isMultipart: true);
       request.headers.addAll(headers);
 
-      // Add text fields
       request.fields.addAll(fields);
 
-      // Add files
-      for (var file in files) {
+      for (final file in files) {
         final mimeType = file.path.split(".").last.toLowerCase();
         request.files.add(
           await http.MultipartFile.fromPath(
@@ -214,9 +225,8 @@ class NetworkApiServices extends BaseApiServices {
         );
       }
 
-      // Send request
-      var streamed = await request.send();
-      var response = await http.Response.fromStream(streamed);
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
 
       return _handleResponse(url, response);
     } catch (e) {
@@ -231,19 +241,15 @@ class NetworkApiServices extends BaseApiServices {
     String fileFieldName = "image",
   }) async {
     try {
-      var request = http.MultipartRequest('POST', Uri.parse(url));
+      final request = http.MultipartRequest('POST', Uri.parse(url));
 
-      // Correct Headers
       final headers = await getHeaders(isMultipart: true);
       request.headers.addAll(headers);
 
-      // Add Text Fields
       request.fields.addAll(fields);
 
-      // Add Image Properly
       if (image != null) {
-        final mimeType = image.path.split(".").last.toLowerCase(); // jpg/png/jpeg
-
+        final mimeType = image.path.split(".").last.toLowerCase();
         request.files.add(
           await http.MultipartFile.fromPath(
             fileFieldName,
@@ -253,8 +259,8 @@ class NetworkApiServices extends BaseApiServices {
         );
       }
 
-      var streamed = await request.send();
-      var response = await http.Response.fromStream(streamed);
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
 
       if (kDebugMode) {
         print("Upload Response: ${response.body}");
@@ -273,24 +279,21 @@ class NetworkApiServices extends BaseApiServices {
     String fileFieldName = "images",
   }) async {
     try {
-      var request = http.MultipartRequest('POST', Uri.parse(url));
+      final request = http.MultipartRequest('POST', Uri.parse(url));
 
-      // Add Authorization Header (IMPORTANT)
       final headers = await getHeaders(isMultipart: true);
       request.headers.addAll(headers);
 
-      // Add fields (text)
       request.fields.addAll(fields);
 
-      // Add images
-      for (var file in images) {
+      for (final file in images) {
         request.files.add(
           await http.MultipartFile.fromPath(fileFieldName, file.path),
         );
       }
 
-      var streamedResponse = await request.send();
-      var response = await http.Response.fromStream(streamedResponse);
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
 
       return _handleResponse(url, response);
     } catch (e) {
@@ -318,17 +321,13 @@ class NetworkApiServices extends BaseApiServices {
   }) {
     if (kDebugMode) {
       print('✅ API URL: $url');
-    }
-    // ignore: avoid_print
-    if (body != null) print('✅ Request Body: ${jsonEncode(body)}');
-    if (kDebugMode) {
+      if (body != null) print('✅ Request Body: ${jsonEncode(body)}');
       print('✅ Status Code: ${response.statusCode}');
       print('✅ Response Body: ${response.body}');
     }
 
-    // ✅ Unauthorized -> logout + return
+    // ✅ Unauthorized => logout + return response so UI loader can stop
     if (response.statusCode == 401 || response.statusCode == 403) {
-      // fire-and-forget (avoid making _handleResponse async)
       unawaited(_forceLogoutToLogin());
       return {
         'code_status': false,
@@ -339,26 +338,35 @@ class NetworkApiServices extends BaseApiServices {
     if (response.statusCode == 200 || response.statusCode == 201) {
       try {
         final decoded = jsonDecode(response.body);
-        if (decoded is Map<String, dynamic>) {
-          return decoded;
-        } else {
-          return {'code_status': true, 'message': decoded.toString()};
-        }
-      } catch (e) {
+        if (decoded is Map<String, dynamic>) return decoded;
+        return {'code_status': true, 'message': decoded.toString()};
+      } catch (_) {
         return {'code_status': true, 'message': response.body};
       }
-    } else {
-      return {
-        'code_status': false,
-        'message': 'Server Error: ${response.body}',
-      };
     }
+
+    return {
+      'code_status': false,
+      'message': 'Server Error: ${response.body}',
+    };
   }
 
   Map<String, dynamic> _handleError(e) {
-    if (e is InternetException) {
+    // ✅ internet off (real)
+    if (e is SocketException) {
+      try {
+        AppToast.error("Your internet disconnected");
+      } catch (_) {}
       return {'code_status': false, 'message': 'No Internet Connection'};
     }
+
+    if (e is InternetException) {
+      try {
+        AppToast.error("Your internet disconnected");
+      } catch (_) {}
+      return {'code_status': false, 'message': 'No Internet Connection'};
+    }
+
     return {'code_status': false, 'message': 'Exception: $e'};
   }
 }

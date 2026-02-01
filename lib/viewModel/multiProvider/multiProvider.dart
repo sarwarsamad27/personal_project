@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:new_brand/viewModel/providers/AuthProvider/appleLogin_provider.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/forgotPassword_provider.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/googleLogin_provider.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/login_provider.dart';
@@ -8,6 +9,7 @@ import 'package:new_brand/viewModel/providers/AuthProvider/verifyCode_provider.d
 import 'package:new_brand/viewModel/providers/categoryProvider/createCategory_provider.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/getcategory_provider.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/updateAndDeleteCategory_provider.dart';
+import 'package:new_brand/viewModel/providers/chatProvider/chatThread_provider.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/companySaleChart_provider.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
@@ -67,6 +69,8 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ReplyReviewProvider()),
         ChangeNotifierProvider(create: (_) => GetRelatedProductProvider()),
         ChangeNotifierProvider(create: (_) => CompanyGoogleLoginProvider()),
+        ChangeNotifierProvider(create: (_) => CompanyChatThreadsProvider()),
+        ChangeNotifierProvider(create: (_) => CompanyAppleLoginProvider()),
       ],
 
       child: child,

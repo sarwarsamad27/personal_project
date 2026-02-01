@@ -3,12 +3,13 @@
 class Global {
   // static var BaseUrl = "http://10.0.2.2:5000/api/auth";
   // static var imageUrl = "http://10.0.2.2:5000";
-  static var imageUrl = "http://192.168.100.49:5000";
-  static var BaseUrl = "http://192.168.100.49:5000/api/auth";
+  static var imageUrl = "http://192.168.100.5:5000";
+  static var BaseUrl = "http://192.168.100.5:5000/api/auth";
 
   static var SignUp = "${BaseUrl}/signup";
   static var Login = "${BaseUrl}/login";
   static var GoogleLogin = "${BaseUrl}/google/login";
+  static var AppleLogin = "${BaseUrl}/apple/login";
   static var CreateProfile = "${BaseUrl}/create/profile";
   static var GetProfile = "${BaseUrl}/profile";
   static var UpdateProfile = "${BaseUrl}/update/profile";
@@ -39,4 +40,8 @@ class Global {
   static var ReplyReviews = "${BaseUrl}/reply/reviews";
   static var GetRelatedProduct = "${BaseUrl}/get/related/products";
   static var saveFcmToken = "${BaseUrl}/seller/save/fcm-token";
+  static var getExchangeRequest = "${BaseUrl}/get/exchange/requests";
+  static var exchangeDecision = "${BaseUrl}/exchange";
+  static var companyChatThreads = "$BaseUrl/company/chat/threads";
+  static var companyChatMessages = "$BaseUrl/company/chat/messages";
 }

@@ -86,7 +86,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
       listen: false,
     );
     final oldName = cat.name ?? "";
-    final oldImage = cat.image ?? "";
+    final oldImage = (cat.image ?? "");
+    final oldImageUrl = oldImage.startsWith("http")
+        ? oldImage
+        : Global.imageUrl + oldImage;
 
     final nameController = TextEditingController(text: oldName);
     File? newImageFile;
@@ -154,7 +157,24 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         clipBehavior: Clip.hardEdge,
                         child: newImageFile != null
                             ? Image.file(newImageFile!, fit: BoxFit.cover)
-                            : Image.network(oldImage, fit: BoxFit.cover),
+                            : Image.network(
+                                oldImageUrl,
+                                fit: BoxFit.cover,
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return const Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      );
+                                    },
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Center(
+                                    child: Icon(Icons.broken_image),
+                                  );
+                                },
+                              ),
                       ),
                     ),
                     SizedBox(height: 20.h),

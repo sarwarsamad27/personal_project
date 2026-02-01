@@ -33,7 +33,6 @@ class Profile {
   String? updatedAt;
   int? iV;
   List<String>? fcmTokens;
-  List<String>? followers;
   int? followersCount;
 
   Profile(
@@ -49,7 +48,6 @@ class Profile {
       this.updatedAt,
       this.iV,
       this.fcmTokens,
-      this.followers,
       this.followersCount});
 
   Profile.fromJson(Map<String, dynamic> json) {
@@ -65,7 +63,6 @@ class Profile {
     updatedAt = json['updatedAt'];
     iV = json['__v'];
     fcmTokens = json['fcmTokens'].cast<String>();
-    followers = json['followers'].cast<String>();
     followersCount = json['followersCount'];
   }
 
@@ -83,7 +80,6 @@ class Profile {
     data['updatedAt'] = this.updatedAt;
     data['__v'] = this.iV;
     data['fcmTokens'] = this.fcmTokens;
-    data['followers'] = this.followers;
     data['followersCount'] = this.followersCount;
     return data;
   }
