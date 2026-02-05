@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class PaymentTabBar extends StatefulWidget {
@@ -30,10 +31,10 @@ class PaymentTabBar extends StatefulWidget {
 }
 
 class _PaymentTabBarState extends State<PaymentTabBar> {
-  int selectedIndex = 0;
+  final ValueNotifier<int> _selectedIndex = ValueNotifier<int>(0);
 
   void changeTab(int index) {
-    setState(() => selectedIndex = index);
+    _selectedIndex.value = index;
 
     if (widget.onTabChanged != null) {
       widget.onTabChanged!(index);
@@ -49,72 +50,84 @@ class _PaymentTabBarState extends State<PaymentTabBar> {
         widget.thirdTabbarName!,
     ];
 
-    return Expanded(
-      child: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.all(6.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(30.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
+    return ValueListenableBuilder<int>(
+      valueListenable: _selectedIndex,
+      builder: (context, index, child) {
+        return Expanded(
+          child: Column(
+            children: [
+              Container(
+                padding: EdgeInsets.all(6.w),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Row(
-              children: List.generate(tabs.length, (index) {
-                bool selected = selectedIndex == index;
+                child: Row(
+                  children: List.generate(tabs.length, (i) {
+                    bool selected = index == i;
 
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => changeTab(index),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      padding: EdgeInsets.symmetric(vertical: 10.h),
-                      decoration: BoxDecoration(
-                        gradient: selected
-                            ? const LinearGradient(
-                                colors: [Color(0xFFFF6A00), Color(0xFFFFD300)],
-                              )
-                            : null,
-                        borderRadius: BorderRadius.circular(25.r),
-                      ),
-                      child: Center(
-                        child: Text(
-                          tabs[index],
-                          style: TextStyle(
-                            color: selected ? Colors.white : Colors.black87,
-                            fontWeight: selected
-                                ? FontWeight.bold
-                                : FontWeight.w500,
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () => changeTab(i),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          padding: EdgeInsets.symmetric(vertical: 10.h),
+                          decoration: BoxDecoration(
+                            gradient: selected
+                                ? const LinearGradient(
+                                    colors: [
+                                      Color(0xFFFF6A00),
+                                      Color(0xFFFFD300),
+                                    ],
+                                  )
+                                : null,
+                            borderRadius: BorderRadius.circular(25.r),
+                          ),
+                          child: Center(
+                            child: Text(
+                              tabs[i],
+                              style: TextStyle(
+                                color: selected ? Colors.white : Colors.black87,
+                                fontWeight: selected
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
+                    );
+                  }),
+                ),
+              ),
 
-          SizedBox(height: 20.h),
+              SizedBox(height: 20.h),
 
-          /// 🔻 TAB CONTENT
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: selectedIndex == 0
-                  ? widget.firstTab
-                  : selectedIndex == 1
-                  ? widget.secondTab
-                  : widget.thirdTab!,
-            ),
+              /// 🔻 TAB CONTENT
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child:
+                      (index == 0
+                              ? widget.firstTab
+                              : index == 1
+                              ? widget.secondTab
+                              : widget.thirdTab!)
+                          .animate()
+                          .fadeIn(duration: 400.ms)
+                          .slideY(begin: 0.05, end: 0, duration: 400.ms),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

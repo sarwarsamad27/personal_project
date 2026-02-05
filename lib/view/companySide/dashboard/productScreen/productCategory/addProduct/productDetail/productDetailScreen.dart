@@ -31,10 +31,6 @@ class ProductDetailScreen extends StatefulWidget {
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
-  bool showAllReviews = false;
-  Set<String> repliedReviews = {}; // Already replied reviews
-  Map<String, bool> showReplyButton = {};
-
   @override
   void initState() {
     super.initState();
@@ -74,217 +70,226 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<GetSingleProductProvider>(context);
-    final relatedProvider = Provider.of<GetRelatedProductProvider>(context);
+    return Consumer2<GetSingleProductProvider, GetRelatedProductProvider>(
+      builder: (context, provider, relatedProvider, child) {
+        /// ---------------- LOADING ----------------
+        if (provider.isLoading) {
+          return const Scaffold(
+            body: Center(
+              child: SpinKitThreeBounce(color: AppColor.primaryColor, size: 30),
+            ),
+          );
+        }
 
-    /// ---------------- LOADING ----------------
-    if (provider.isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: SpinKitThreeBounce(color: AppColor.primaryColor, size: 30),
-        ),
-      );
-    }
+        /// ---------------- NULL SAFE ----------------
+        if (provider.productData == null ||
+            provider.productData!.product == null) {
+          return const Scaffold(
+            body: Center(child: Text("No product data found")),
+          );
+        }
 
-    /// ---------------- NULL SAFE ----------------
-    if (provider.productData == null || provider.productData!.product == null) {
-      return const Scaffold(body: Center(child: Text("No product data found")));
-    }
+        final prods = provider.productData!.product!;
+        final List<Reviews> reviews = provider.productData!.reviews ?? [];
 
-    final prods = provider.productData!.product!;
-    final List<Reviews> reviews = provider.productData!.reviews ?? [];
+        final displayedReviews = provider.showAllReviews
+            ? reviews
+            : reviews.take(3).toList();
+        final List<RelatedProducts> relatedProducts =
+            relatedProvider.productData?.relatedProducts ?? [];
 
-    final displayedReviews = showAllReviews
-        ? reviews
-        : reviews.take(3).toList();
-    final List<RelatedProducts> relatedProducts =
-        relatedProvider.productData?.relatedProducts ?? [];
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6F7F9),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// IMAGE (unchanged)
-              ProductImage(
-                imageUrls: prods.images ?? [],
-                name: prods.name ?? "",
-                description: prods.description ?? "",
-                color: (prods.color != null && prods.color!.isNotEmpty)
-                    ? prods.color!.first
-                    : "N/A",
-                size: (prods.size != null && prods.size!.isNotEmpty)
-                    ? prods.size!.first
-                    : "N/A",
-                price: "PKR: ${prods.afterDiscountPrice ?? 0}",
-                productId: prods.sId!,
-                categoryId: prods.categoryId!,
-                stock: prods.stock.toString(),
-              ),
-
-              SizedBox(height: 12.h),
-
-              /// DETAILS CARD (premium)
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: PremiumCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        prods.name ?? "Unnamed Product",
-                        style: TextStyle(
-                          fontSize: 20.sp,
-                          fontWeight: FontWeight.w800,
-                          height: 1.15,
-                          color: const Color(0xFF111827),
-                        ),
-                      ),
-                      SizedBox(height: 10.h),
-
-                      _buildStockRow(prods),
-
-                      SizedBox(height: 14.h),
-
-                      Wrap(
-                        spacing: 10.w,
-                        runSpacing: 10.h,
-                        children: [
-                          if (prods.color != null && prods.color!.isNotEmpty)
-                            buildMetaChip(
-                              icon: Icons.palette_outlined,
-                              text: "Color: ${prods.color!.first}",
-                            ),
-
-                          if (prods.size != null && prods.size!.isNotEmpty)
-                            buildMetaChip(
-                              icon: Icons.straighten_outlined,
-                              text: "Size: ${prods.size!.first}",
-                            ),
-                        ],
-                      ),
-
-                      SizedBox(height: 18.h),
-
-                      _SectionTitle(title: "Description"),
-                      SizedBox(height: 8.h),
-
-                      Text(
-                        prods.description ?? "No Description Available",
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          height: 1.55,
-                          color: const Color(0xFF4B5563),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+        return Scaffold(
+          backgroundColor: const Color(0xFFF6F7F9),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  /// IMAGE (unchanged)
+                  ProductImage(
+                    imageUrls: prods.images ?? [],
+                    name: prods.name ?? "",
+                    description: prods.description ?? "",
+                    color: (prods.color != null && prods.color!.isNotEmpty)
+                        ? prods.color!.first
+                        : "N/A",
+                    size: (prods.size != null && prods.size!.isNotEmpty)
+                        ? prods.size!.first
+                        : "N/A",
+                    price: "PKR: ${prods.afterDiscountPrice ?? 0}",
+                    productId: prods.sId!,
+                    categoryId: prods.categoryId!,
+                    stock: prods.stock.toString(),
                   ),
-                ),
-              ),
 
-              SizedBox(height: 14.h),
+                  SizedBox(height: 12.h),
 
-              /// REVIEWS SECTION
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: _SectionTitle(title: "Customer Reviews"),
-              ),
-              SizedBox(height: 8.h),
-
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: Column(
-                  children: [
-                    ...displayedReviews.map(
-                      (review) => buildReviewCard(review),
-                    ),
-                    if (reviews.length > 3)
-                      Align(
-                        alignment: Alignment.center,
-                        child: TextButton(
-                          onPressed: () {
-                            setState(() => showAllReviews = !showAllReviews);
-                          },
-                          child: Text(
-                            showAllReviews ? "View Less" : "View More",
+                  /// DETAILS CARD (premium)
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: PremiumCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            prods.name ?? "Unnamed Product",
                             style: TextStyle(
-                              color: AppColor.primaryColor,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14.sp,
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w800,
+                              height: 1.15,
+                              color: const Color(0xFF111827),
                             ),
                           ),
-                        ),
+                          SizedBox(height: 10.h),
+
+                          _buildStockRow(prods),
+
+                          SizedBox(height: 14.h),
+
+                          Wrap(
+                            spacing: 10.w,
+                            runSpacing: 10.h,
+                            children: [
+                              if (prods.color != null &&
+                                  prods.color!.isNotEmpty)
+                                buildMetaChip(
+                                  icon: Icons.palette_outlined,
+                                  text: "Color: ${prods.color!.first}",
+                                ),
+
+                              if (prods.size != null && prods.size!.isNotEmpty)
+                                buildMetaChip(
+                                  icon: Icons.straighten_outlined,
+                                  text: "Size: ${prods.size!.first}",
+                                ),
+                            ],
+                          ),
+
+                          SizedBox(height: 18.h),
+
+                          _SectionTitle(title: "Description"),
+                          SizedBox(height: 8.h),
+
+                          Text(
+                            prods.description ?? "No Description Available",
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              height: 1.55,
+                              color: const Color(0xFF4B5563),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
-                  ],
-                ),
-              ),
+                    ),
+                  ),
 
-              SizedBox(height: 16.h),
+                  SizedBox(height: 14.h),
 
-              /// RELATED PRODUCTS
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: _SectionTitle(title: "Related Products"),
-              ),
-              SizedBox(height: 10.h),
+                  /// REVIEWS SECTION
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: _SectionTitle(title: "Customer Reviews"),
+                  ),
+                  SizedBox(height: 8.h),
 
-              SizedBox(
-                height: 250.h,
-                child: ListView.separated(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: relatedProducts.length,
-                  separatorBuilder: (_, __) => SizedBox(width: 8.w),
-                  itemBuilder: (context, index) {
-                    final product = relatedProducts[index];
-                    return SizedBox(
-                      width: 190.w,
-                      child: ProductCard(
-                        name: product.name ?? "Unnamed Product",
-                        price: product.afterDiscountPrice != null
-                            ? "PKR: ${product.afterDiscountPrice}"
-                            : "Price N/A",
-                        originalPrice: product.beforeDiscountPrice != null
-                            ? "PKR ${product.beforeDiscountPrice}"
-                            : null,
-                        saveText: product.beforeDiscountPrice != null
-                            ? "Save Rs.${(product.beforeDiscountPrice! - product.afterDiscountPrice!).abs()}"
-                            : null,
-                        description: product.description ?? "No Description",
-                        imageUrl:
-                            (product.images != null &&
-                                product.images!.isNotEmpty)
-                            ? Global.imageUrl + product.images!.first
-                            : "",
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ProductDetailScreen(
-                                productId: product.sId,
-                                categoryId: product.categoryId,
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: Column(
+                      children: [
+                        ...displayedReviews.map(
+                          (review) => buildReviewCard(review, provider),
+                        ),
+                        if (reviews.length > 3)
+                          Align(
+                            alignment: Alignment.center,
+                            child: TextButton(
+                              onPressed: () {
+                                provider.toggleShowAllReviews();
+                              },
+                              child: Text(
+                                provider.showAllReviews
+                                    ? "View Less"
+                                    : "View More",
+                                style: TextStyle(
+                                  color: AppColor.primaryColor,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14.sp,
+                                ),
                               ),
                             ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
+                          ),
+                      ],
+                    ),
+                  ),
 
-              SizedBox(height: 24.h),
-            ],
+                  SizedBox(height: 16.h),
+
+                  /// RELATED PRODUCTS
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: _SectionTitle(title: "Related Products"),
+                  ),
+                  SizedBox(height: 10.h),
+
+                  SizedBox(
+                    height: 250.h,
+                    child: ListView.separated(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: relatedProducts.length,
+                      separatorBuilder: (_, __) => SizedBox(width: 8.w),
+                      itemBuilder: (context, index) {
+                        final product = relatedProducts[index];
+                        return SizedBox(
+                          width: 190.w,
+                          child: ProductCard(
+                            name: product.name ?? "Unnamed Product",
+                            price: product.afterDiscountPrice != null
+                                ? "PKR: ${product.afterDiscountPrice}"
+                                : "Price N/A",
+                            originalPrice: product.beforeDiscountPrice != null
+                                ? "PKR ${product.beforeDiscountPrice}"
+                                : null,
+                            saveText: product.beforeDiscountPrice != null
+                                ? "Save Rs.${(product.beforeDiscountPrice! - product.afterDiscountPrice!).abs()}"
+                                : null,
+                            description:
+                                product.description ?? "No Description",
+                            imageUrl:
+                                (product.images != null &&
+                                    product.images!.isNotEmpty)
+                                ? Global.imageUrl + product.images!.first
+                                : "",
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ProductDetailScreen(
+                                    productId: product.sId,
+                                    categoryId: product.categoryId,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  SizedBox(height: 24.h),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   Widget _buildStockRow(Product prods) {
+    // ... (unchanged logic inside _buildStockRow)
     final String stockText = (prods.stock ?? "In Stock").trim();
     final bool isOutOfStock = stockText.toLowerCase() == "out of stock";
     final Color bgColor = isOutOfStock
@@ -331,15 +336,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget buildReviewCard(Reviews review) {
+  Widget buildReviewCard(Reviews review, GetSingleProductProvider provider) {
     final replyController = TextEditingController(
       text: review.reply?.text ?? "",
     );
 
     final userEmail = getEmailPrefix(review.userId?.email ?? "user");
     final reviewId = review.sId ?? "";
-
-    showReplyButton.putIfAbsent(reviewId, () => true);
 
     final hasReply =
         review.reply != null && (review.reply!.text?.isNotEmpty ?? false);
@@ -446,16 +449,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
 
           if (!hasReply &&
-              showReplyButton[reviewId]! &&
-              !repliedReviews.contains(reviewId))
+              (provider.showReplyButton[reviewId] ?? true) &&
+              !provider.repliedReviews.contains(reviewId))
             Align(
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 onPressed: () async {
-                  _replyDialog(review, replyController);
+                  _replyDialog(review, replyController, provider);
 
                   Future.delayed(const Duration(minutes: 1), () {
-                    setState(() => showReplyButton[reviewId] = false);
+                    provider.setShowReplyButton(reviewId, false);
                   });
                 },
                 icon: Icon(
@@ -478,7 +481,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  void _replyDialog(Reviews review, TextEditingController controller) {
+  void _replyDialog(
+    Reviews review,
+    TextEditingController controller,
+    GetSingleProductProvider provider,
+  ) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -509,20 +516,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                         if (success) {
                           // Mark as replied
-                          setState(() {
-                            repliedReviews.add(review.sId!);
-                            showReplyButton[review.sId!] = false;
-                          });
+                          provider.markAsReplied(review.sId!);
 
                           // Refresh product
-                          final productProvider =
-                              Provider.of<GetSingleProductProvider>(
-                                context,
-                                listen: false,
-                              );
-
                           final token = await LocalStorage.getToken() ?? "";
-                          await productProvider.fetchSingleProducts(
+                          await provider.fetchSingleProducts(
                             token: token,
                             categoryId: widget.categoryId,
                             productId: widget.productId,

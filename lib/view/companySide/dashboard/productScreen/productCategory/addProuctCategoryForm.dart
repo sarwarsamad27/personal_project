@@ -1,11 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/createCategory_provider.dart';
 import 'package:new_brand/widgets/customImageContainer.dart';
 import 'package:provider/provider.dart';
-import 'dart:io';
 
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
@@ -17,28 +18,28 @@ class AddCategoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<CreateCategoryProvider>(context);
+    final provider = context.watch<CreateCategoryProvider>();
 
     return Scaffold(
+      backgroundColor: AppColor.appimagecolor,
       body: CustomBgContainer(
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 30.h),
-            child: Column(
-              children: [
-                Text(
-                  "Add Category",
-                  style: TextStyle(
-                    fontSize: 28.sp,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 50.h),
+          child: Column(
+            children: [
+              Text(
+                "Add Category",
+                style: TextStyle(
+                  fontSize: 28.sp,
+                  color: AppColor.appimagecolor,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
-                SizedBox(height: 40.h),
-
-                Expanded(
-                  child: Center(
+              ),
+              SizedBox(height: 20.h),
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
                     child: CustomAppContainer(
                       width: double.infinity,
                       padding: EdgeInsets.all(24.w),
@@ -46,9 +47,11 @@ class AddCategoryScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           GestureDetector(
-                            onTap: () {
-                              provider.pickImage();
-                            },
+                            onTap: provider.loading
+                                ? null
+                                : () => context
+                                      .read<CreateCategoryProvider>()
+                                      .pickImage(),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(25.r),
                               child: CustomImageContainer(
@@ -88,7 +91,6 @@ class AddCategoryScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-
                           SizedBox(height: 30.h),
 
                           CustomTextField(
@@ -103,36 +105,39 @@ class AddCategoryScreen extends StatelessWidget {
                             text: provider.loading
                                 ? "Please wait..."
                                 : "Add Category",
-                            onTap: () async {
-                              final token =
-                                  await LocalStorage.getToken(); // ← replace later
+                            onTap: provider.loading
+                                ? null
+                                : () async {
+                                    final token = await LocalStorage.getToken();
 
-                              bool success = await provider.createCategory(
-                                token ?? "",
-                              );
+                                    final success = await context
+                                        .read<CreateCategoryProvider>()
+                                        .createCategory(token ?? "");
 
-                              if (success) {
-                                AppToast.success(
-                                  "Category added successfully!",
-                                );
+                                    if (!context.mounted) return;
 
-                                provider.resetFields();
+                                    if (success) {
+                                      // ✅ BUG FIX: Navigator.pop ko next frame pe move karo
+                                      // taake Flushbar/overlay dismiss lock se conflict na ho
+                                      context
+                                          .read<CreateCategoryProvider>()
+                                          .resetFields();
 
-                                Navigator.pop(context);
-                              } else {
-                                AppToast.warning(
-                                  "Please select image and name",
-                                );
-                              }
-                            },
+                                      Navigator.pop(context);
+                                    } else {
+                                      AppToast.warning(
+                                        "Please select image and name",
+                                      );
+                                    }
+                                  },
                           ),
                         ],
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

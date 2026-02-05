@@ -111,8 +111,8 @@ class _HomeDashboardState extends State<HomeDashboard>
           /// ---------- Chart Card ----------
           Positioned(
             top: 50.h,
-            left: 3.w,
-            right: 3.w,
+            left: 6.w,
+            right: 6.w,
             child: FadeTransition(
               opacity: _cardFade,
               child: SlideTransition(
@@ -156,6 +156,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                                 padding: EdgeInsets.symmetric(horizontal: 12.w),
                                 color: const Color(0xFFEEF2FF),
                                 borderRadius: BorderRadius.circular(20.r),
+                                borderColor: AppColor.appimagecolor,
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton<String>(
                                     value: uiValue,

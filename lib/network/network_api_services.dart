@@ -66,6 +66,7 @@ class NetworkApiServices extends BaseApiServices {
 
     // ✅ no token => logout + return no-auth headers
     if (token == null || token.isEmpty) {
+      AppToast.error("No active session found. Please login.");
       unawaited(_forceLogoutToLogin());
       return {
         "Accept": "application/json",
@@ -76,6 +77,7 @@ class NetworkApiServices extends BaseApiServices {
     // ✅ local expiry check
     try {
       if (JwtDecoder.isExpired(token)) {
+        AppToast.error("Session expired. Please login again.");
         unawaited(_forceLogoutToLogin());
         return {
           "Accept": "application/json",
@@ -84,6 +86,7 @@ class NetworkApiServices extends BaseApiServices {
       }
     } catch (_) {
       // invalid token => logout
+      AppToast.error("Invalid session. Please login again.");
       unawaited(_forceLogoutToLogin());
       return {
         "Accept": "application/json",
@@ -98,12 +101,16 @@ class NetworkApiServices extends BaseApiServices {
     };
   }
 
-  Future<Map<String, String>> getHeadersNoAuth({bool isMultipart = false}) async {
+  Future<Map<String, String>> getHeadersNoAuth({
+    bool isMultipart = false,
+  }) async {
     return {
       "Accept": "application/json",
       if (!isMultipart) "Content-Type": "application/json",
     };
   }
+
+  final int _timeoutDuration = 15;
 
   @override
   Future<Map<String, dynamic>> postApi(
@@ -111,12 +118,14 @@ class NetworkApiServices extends BaseApiServices {
     Map<String, dynamic> body,
   ) async {
     try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: await getHeaders(),
-        body: jsonEncode(body),
-      );
-      return _handleResponse(url, response, body: body);
+      final response = await http
+          .post(
+            Uri.parse(url),
+            headers: await getHeaders(),
+            body: jsonEncode(body),
+          )
+          .timeout(Duration(seconds: _timeoutDuration));
+      return _handleResponse(url, response, body: body, method: 'POST');
     } catch (e) {
       return _handleError(e);
     }
@@ -125,10 +134,9 @@ class NetworkApiServices extends BaseApiServices {
   @override
   Future<Map<String, dynamic>> getApi(String url) async {
     try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: await getHeaders(),
-      );
+      final response = await http
+          .get(Uri.parse(url), headers: await getHeaders())
+          .timeout(Duration(seconds: _timeoutDuration));
       return _handleResponse(url, response);
     } catch (e) {
       return _handleError(e);
@@ -162,22 +170,26 @@ class NetworkApiServices extends BaseApiServices {
           ),
         );
 
-        final streamed = await request.send();
+        final streamed = await request.send().timeout(
+          Duration(seconds: _timeoutDuration),
+        );
         final response = await http.Response.fromStream(streamed);
 
         if (kDebugMode) {
           print("PUT Multipart Response: ${response.body}");
         }
 
-        return _handleResponse(url, response, body: body);
+        return _handleResponse(url, response, body: body, method: 'PUT');
       } else {
-        final response = await http.put(
-          Uri.parse(url),
-          headers: await getHeaders(),
-          body: jsonEncode(body),
-        );
+        final response = await http
+            .put(
+              Uri.parse(url),
+              headers: await getHeaders(),
+              body: jsonEncode(body),
+            )
+            .timeout(Duration(seconds: _timeoutDuration));
 
-        return _handleResponse(url, response, body: body);
+        return _handleResponse(url, response, body: body, method: 'PUT');
       }
     } catch (e) {
       return _handleError(e);
@@ -189,12 +201,14 @@ class NetworkApiServices extends BaseApiServices {
     Map<String, dynamic> body,
   ) async {
     try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: await getHeadersNoAuth(),
-        body: jsonEncode(body),
-      );
-      return _handleResponse(url, response, body: body);
+      final response = await http
+          .post(
+            Uri.parse(url),
+            headers: await getHeadersNoAuth(),
+            body: jsonEncode(body),
+          )
+          .timeout(Duration(seconds: _timeoutDuration));
+      return _handleResponse(url, response, body: body, method: 'POST');
     } catch (e) {
       return _handleError(e);
     }
@@ -225,12 +239,14 @@ class NetworkApiServices extends BaseApiServices {
         );
       }
 
-      final streamed = await request.send();
+      final streamed = await request.send().timeout(
+        Duration(seconds: _timeoutDuration),
+      );
       final response = await http.Response.fromStream(streamed);
 
-      return _handleResponse(url, response);
+      return _handleResponse(url, response, method: 'PUT');
     } catch (e) {
-      return {'code_status': false, 'message': 'Exception: $e'};
+      return _handleError(e);
     }
   }
 
@@ -259,16 +275,18 @@ class NetworkApiServices extends BaseApiServices {
         );
       }
 
-      final streamed = await request.send();
+      final streamed = await request.send().timeout(
+        Duration(seconds: _timeoutDuration),
+      );
       final response = await http.Response.fromStream(streamed);
 
       if (kDebugMode) {
         print("Upload Response: ${response.body}");
       }
 
-      return _handleResponse(url, response);
+      return _handleResponse(url, response, method: 'POST');
     } catch (e) {
-      return {'code_status': false, 'message': 'Exception: $e'};
+      return _handleError(e);
     }
   }
 
@@ -292,23 +310,24 @@ class NetworkApiServices extends BaseApiServices {
         );
       }
 
-      final streamedResponse = await request.send();
+      final streamedResponse = await request.send().timeout(
+        Duration(seconds: _timeoutDuration),
+      );
       final response = await http.Response.fromStream(streamedResponse);
 
-      return _handleResponse(url, response);
+      return _handleResponse(url, response, method: 'POST');
     } catch (e) {
-      return {'code_status': false, 'message': 'Exception: $e'};
+      return _handleError(e);
     }
   }
 
   @override
   Future<Map<String, dynamic>> deleteApi(String url) async {
     try {
-      final response = await http.delete(
-        Uri.parse(url),
-        headers: await getHeaders(),
-      );
-      return _handleResponse(url, response);
+      final response = await http
+          .delete(Uri.parse(url), headers: await getHeaders())
+          .timeout(Duration(seconds: _timeoutDuration));
+      return _handleResponse(url, response, method: 'DELETE');
     } catch (e) {
       return _handleError(e);
     }
@@ -318,6 +337,7 @@ class NetworkApiServices extends BaseApiServices {
     String url,
     http.Response response, {
     Map<String, dynamic>? body,
+    String? method,
   }) {
     if (kDebugMode) {
       print('✅ API URL: $url');
@@ -328,6 +348,7 @@ class NetworkApiServices extends BaseApiServices {
 
     // ✅ Unauthorized => logout + return response so UI loader can stop
     if (response.statusCode == 401 || response.statusCode == 403) {
+      AppToast.error("Session expired. Please login again.");
       unawaited(_forceLogoutToLogin());
       return {
         'code_status': false,
@@ -338,35 +359,75 @@ class NetworkApiServices extends BaseApiServices {
     if (response.statusCode == 200 || response.statusCode == 201) {
       try {
         final decoded = jsonDecode(response.body);
-        if (decoded is Map<String, dynamic>) return decoded;
+        String message = "Operation successful";
+
+        if (decoded is Map<String, dynamic>) {
+          if (decoded.containsKey('message')) {
+            message = decoded['message'].toString();
+          }
+
+          // Show success toast for mutations
+          if (method != null &&
+              (method == 'POST' || method == 'PUT' || method == 'DELETE')) {
+            AppToast.success(message);
+          }
+
+          return decoded;
+        }
+
+        if (method != null &&
+            (method == 'POST' || method == 'PUT' || method == 'DELETE')) {
+          AppToast.success(message);
+        }
         return {'code_status': true, 'message': decoded.toString()};
       } catch (_) {
         return {'code_status': true, 'message': response.body};
       }
     }
 
-    return {
-      'code_status': false,
-      'message': 'Server Error: ${response.body}',
-    };
+    // Handle Error Responses (400, 500, etc)
+    String errorMessage = "Server Error occurred";
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic> && decoded.containsKey('message')) {
+        errorMessage = decoded['message'].toString();
+      } else {
+        errorMessage = response.body;
+      }
+    } catch (_) {
+      errorMessage = response.body;
+    }
+
+    AppToast.error(errorMessage);
+    return {'code_status': false, 'message': errorMessage};
   }
 
   Map<String, dynamic> _handleError(e) {
-    // ✅ internet off (real)
+    if (e is TimeoutException) {
+      AppToast.error("Request Timeout. Please try again.");
+      return {'code_status': false, 'message': 'Request Timeout'};
+    }
+
     if (e is SocketException) {
-      try {
-        AppToast.error("Your internet disconnected");
-      } catch (_) {}
+      AppToast.error("No Internet Connection. Please check your network.");
       return {'code_status': false, 'message': 'No Internet Connection'};
+    }
+
+    if (e is HandshakeException) {
+      AppToast.error("Security certificate error. Please try again later.");
+      return {'code_status': false, 'message': 'Handshake Exception'};
     }
 
     if (e is InternetException) {
-      try {
-        AppToast.error("Your internet disconnected");
-      } catch (_) {}
+      AppToast.error("No Internet Connection. Please check your network.");
       return {'code_status': false, 'message': 'No Internet Connection'};
     }
 
+    String msg = e.toString();
+    if (msg.contains("Exception:")) {
+      msg = msg.split("Exception:").last.trim();
+    }
+    AppToast.error(msg);
     return {'code_status': false, 'message': 'Exception: $e'};
   }
 }

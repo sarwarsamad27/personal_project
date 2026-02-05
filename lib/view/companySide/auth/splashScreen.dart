@@ -2,12 +2,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/profileForm.dart';
+import 'package:new_brand/viewModel/providers/AuthProvider/login_provider.dart';
+import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/auth/loginScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
+import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -33,6 +37,15 @@ class _SplashScreenState extends State<SplashScreen>
 
     checkLoginStatus();
   }
+String _emailFromJwt(String token) {
+  try {
+    final t = _normalizeToken(token);
+    final decoded = JwtDecoder.decode(t);
+    return (decoded['email'] ?? "").toString();
+  } catch (_) {
+    return "";
+  }
+}
 
   Future<void> requestNotifPermissionAndroid13Plus() async {
     final status = await Permission.notification.status;
@@ -62,13 +75,9 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> checkLoginStatus() async {
     await requestNotifPermissionAndroid13Plus();
-
-    // Keep splash visible
     await Future.delayed(const Duration(seconds: 2));
 
     final tokenRaw = await LocalStorage.getToken();
-
-    // Token missing?
     if (tokenRaw == null || tokenRaw.trim().isEmpty) {
       if (!mounted) return;
       _goLogin();
@@ -77,7 +86,6 @@ class _SplashScreenState extends State<SplashScreen>
 
     final token = _normalizeToken(tokenRaw);
 
-    // Token expired locally?
     if (_isTokenExpiredSafe(token)) {
       await LocalStorage.clearToken();
       if (!mounted) return;
@@ -85,25 +93,34 @@ class _SplashScreenState extends State<SplashScreen>
       return;
     }
 
-    // ✅ Token looks valid locally BUT server may reject it
+    // ✅ optional: FCM should NOT block
     try {
       await LocalStorage.initPushAndSaveToken(
         jwtToken: token,
       ).timeout(const Duration(seconds: 8));
-    } on AuthExpiredException {
-      // ✅ SERVER SAYS TOKEN INVALID -> logout
-      await LocalStorage.clearToken();
-      if (!mounted) return;
-      _goLogin();
-      return;
     } catch (e) {
-      // FCM failure should NOT stop login flow (network etc)
-      // ignore: avoid_print
-      print("FCM init failed on splash: $e");
+      debugPrint("FCM init failed on splash: $e");
     }
 
+    // ✅ MUST: Check profile before going home
+    final profileProvider = context.read<ProfileFetchProvider>();
+    profileProvider.clearProfileCache();
+    await profileProvider.getProfileOnce(refresh: true);
+
+    final ok =
+        profileProvider.profileData?.message == "Profile fetched successfully";
+
     if (!mounted) return;
-    _goHome();
+
+    if (ok) {
+      _goHome();
+    } else {
+  final email = _emailFromJwt(token); // ✅ get email from JWT
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (_) => ProfileFormScreen(email: email)),
+  );
+}
   }
 
   void _goLogin() {

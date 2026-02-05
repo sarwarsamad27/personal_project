@@ -108,7 +108,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
 
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Consumer<GetProductCategoryWiseProvider>(
                 builder: (context, provider, _) {
                   if (provider.isLoading) {
@@ -134,13 +134,12 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                     child: GridView.builder(
                       padding: EdgeInsets.only(top: 12.h),
                       itemCount: prods.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 0.72,
-                          ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 5,
+                        childAspectRatio: 0.72,
+                      ),
                       itemBuilder: (context, index) {
                         final p = prods[index];
 

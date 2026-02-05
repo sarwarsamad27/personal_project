@@ -21,16 +21,17 @@ class InternetListener {
     final initOk = await _hasInternet();
     _isOffline = !initOk;
 
-    _sub = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) async {
-      // results can contain multiple (wifi + vpn etc), but our real check is DNS
+    _sub = Connectivity().onConnectivityChanged.listen((
+      List<ConnectivityResult> results,
+    ) async {
       final ok = await _hasInternet();
 
       if (!ok && !_isOffline) {
         _isOffline = true;
-        _showOncePerFewSeconds("Your internet disconnected");
+        _showOncePerFewSeconds("Internet Disconnected", isError: true);
       } else if (ok && _isOffline) {
         _isOffline = false;
-        _showOncePerFewSeconds("Back online");
+        _showOncePerFewSeconds("Internet Connected", isError: false);
       }
     });
   }
@@ -40,14 +41,17 @@ class InternetListener {
     _sub = null;
   }
 
-  static void _showOncePerFewSeconds(String msg) {
+  static void _showOncePerFewSeconds(String msg, {required bool isError}) {
     final now = DateTime.now();
     if (now.difference(_lastToastAt).inSeconds < 2) return;
     _lastToastAt = now;
 
     try {
-      // aapka existing toast
-      AppToast.error(msg);
+      if (isError) {
+        AppToast.error(msg);
+      } else {
+        AppToast.success(msg);
+      }
     } catch (e) {
       if (kDebugMode) print("Toast error: $e");
     }

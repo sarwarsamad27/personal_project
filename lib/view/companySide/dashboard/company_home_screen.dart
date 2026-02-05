@@ -21,7 +21,7 @@ class CompanyHomeScreen extends StatefulWidget {
 }
 
 class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
-  int _currentIndex = 0;
+  final ValueNotifier<int> _currentIndex = ValueNotifier<int>(0);
   DateTime? lastPressed;
 
   final screens = const [
@@ -73,14 +73,19 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
 
               if (shouldExit == true) SystemNavigator.pop();
             },
-            child: Scaffold(
-              extendBody: _currentIndex == 3 || _currentIndex == 4,
-              backgroundColor: const Color(0xFFF9FAFB),
-              body: screens[_currentIndex],
-              bottomNavigationBar: _PremiumNavBar(
-                currentIndex: _currentIndex,
-                onTap: (i) => setState(() => _currentIndex = i),
-              ),
+            child: ValueListenableBuilder<int>(
+              valueListenable: _currentIndex,
+              builder: (context, index, child) {
+                return Scaffold(
+                  extendBody: index == 3 || index == 4,
+                  backgroundColor: const Color(0xFFF9FAFB),
+                  body: screens[index],
+                  bottomNavigationBar: _PremiumNavBar(
+                    currentIndex: index,
+                    onTap: (i) => _currentIndex.value = i,
+                  ),
+                );
+              },
             ),
           );
         },

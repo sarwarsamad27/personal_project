@@ -23,43 +23,48 @@ class CreateCategoryProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// PICK IMAGE
   Future<void> pickImage() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
 
-    if (picked != null) {
-      String ext = picked.path.split('.').last.toLowerCase();
-
-      if (!(ext == 'png' || ext == 'jpg' || ext == 'jpeg')) {
-        _image = null;
-        notifyListeners();
-        return;
-      }
-
-      _image = File(picked.path);
+    final ext = picked.path.split('.').last.toLowerCase();
+    if (!(ext == 'png' || ext == 'jpg' || ext == 'jpeg')) {
+      _image = null;
+      notifyListeners();
+      return;
     }
 
+    _image = File(picked.path);
     notifyListeners();
   }
 
-  /// CREATE CATEGORY API CALL
   Future<bool> createCategory(String token) async {
-    if (nameController.text.isEmpty || _image == null) {
+    if (nameController.text.trim().isEmpty || _image == null) {
       return false;
     }
 
     _loading = true;
     notifyListeners();
 
-    _response = await repository.createCategory(
-      name: nameController.text,
-      image: _image,
-      token: token,
-    );
+    try {
+      _response = await repository.createCategory(
+        name: nameController.text.trim(),
+        image: _image,
+        token: token,
+      );
+    } catch (_) {
+      _response = null;
+    }
 
     _loading = false;
     notifyListeners();
 
     return _response?.category != null;
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    super.dispose();
   }
 }

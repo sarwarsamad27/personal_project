@@ -30,10 +30,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
   @override
   void initState() {
     super.initState();
-
     Future.microtask(() async {
       final provider = Provider.of<GetCategoryProvider>(context, listen: false);
-      await provider.getCategories(); // first load
+      await provider.getCategories();
     });
   }
 
@@ -61,14 +60,17 @@ class _CategoryScreenState extends State<CategoryScreen> {
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context);
+              Navigator.pop(context); // close dialog first
+
               final success = await provider.deleteCategory(categoryId: id);
+              if (!mounted) return;
+
               if (success) {
                 AppToast.success("Category deleted successfully!");
                 Provider.of<GetCategoryProvider>(
                   context,
                   listen: false,
-                ).getCategories(forceRefresh: true); // ✅
+                ).getCategories(forceRefresh: true);
               } else {
                 AppToast.error("Failed to delete category");
               }
@@ -85,7 +87,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
       context,
       listen: false,
     );
-    final oldName = cat.name ?? "";
+
+    final oldName = (cat.name ?? "").trim();
     final oldImage = (cat.image ?? "");
     final oldImageUrl = oldImage.startsWith("http")
         ? oldImage
@@ -93,12 +96,22 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
     final nameController = TextEditingController(text: oldName);
     File? newImageFile;
+
     bool isChanged = false;
+    bool listenerAdded = false;
+
+    void checkChanges(void Function(void Function()) setModalState) {
+      final nameChanged = nameController.text.trim() != oldName;
+      final imageChanged = newImageFile != null;
+      setModalState(() {
+        isChanged = nameChanged || imageChanged;
+      });
+    }
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) {
+      builder: (dialogCtx) {
         return Dialog(
           insetPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
           backgroundColor: Colors.transparent,
@@ -107,16 +120,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
             width: double.infinity,
             padding: EdgeInsets.all(20.w),
             child: StatefulBuilder(
-              builder: (context, setModalState) {
-                void checkChanges() {
-                  final nameChanged = nameController.text.trim() != oldName;
-                  final imageChanged = newImageFile != null;
-                  setModalState(() {
-                    isChanged = nameChanged || imageChanged;
-                  });
+              builder: (BuildContext ctx, setModalState) {
+                // ✅ add listener only once
+                if (!listenerAdded) {
+                  listenerAdded = true;
+                  nameController.addListener(() => checkChanges(setModalState));
                 }
-
-                nameController.addListener(checkChanges);
 
                 return Column(
                   mainAxisSize: MainAxisSize.min,
@@ -130,12 +139,13 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       ),
                     ),
                     SizedBox(height: 20.h),
+
                     GestureDetector(
                       onTap: () async {
                         final img = await _pickImage();
                         if (img != null) {
                           newImageFile = img;
-                          checkChanges();
+                          checkChanges(setModalState);
                         }
                       },
                       child: Container(
@@ -177,20 +187,26 @@ class _CategoryScreenState extends State<CategoryScreen> {
                               ),
                       ),
                     ),
+
                     SizedBox(height: 20.h),
+
                     CustomTextField(
                       controller: nameController,
                       headerText: "Category Name",
                       hintText: "Enter new name",
                       prefixIcon: Icons.edit,
                     ),
+
                     SizedBox(height: 25.h),
+
                     Row(
                       children: [
                         Expanded(
                           child: CustomButton(
                             text: "Cancel",
-                            onTap: () => Navigator.pop(context),
+                            onTap: () {
+                              Navigator.pop(dialogCtx); // ✅ only close dialog
+                            },
                           ),
                         ),
                         SizedBox(width: 12.w),
@@ -210,20 +226,32 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                             image: newImageFile,
                                           );
 
-                                      if (success) {
-                                        Navigator.pop(context);
-                                        AppToast.show("Category updated!");
-                                        Provider.of<GetCategoryProvider>(
-                                          context,
-                                          listen: false,
-                                        ).getCategories(
-                                          forceRefresh: true,
-                                        ); // ✅
-                                      } else {
-                                        AppToast.show(
-                                          "Failed to update category",
-                                        );
-                                      }
+                                      // if (!mounted) return;
+
+                                      // ✅ close dialog first
+                                      Navigator.pop(dialogCtx);
+
+                                      // ✅ toast + refresh after dialog closes
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                            if (!mounted) return;
+
+                                            if (success) {
+                                              AppToast.show(
+                                                "Category updated!",
+                                              );
+                                              Provider.of<GetCategoryProvider>(
+                                                context,
+                                                listen: false,
+                                              ).getCategories(
+                                                forceRefresh: true,
+                                              );
+                                            } else {
+                                              AppToast.show(
+                                                "Failed to update category",
+                                              );
+                                            }
+                                          });
                                     }
                                   : null,
                             ),
@@ -292,6 +320,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 itemBuilder: (context, index) {
                   final item = provider.categoryData!.categories![index];
                   log(item.image.toString());
+
                   return Stack(
                     children: [
                       CategoryTile(
@@ -301,7 +330,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
+                              builder: (_) =>
                                   CategoryProductsScreen(category: item),
                             ),
                           );
@@ -391,17 +420,21 @@ class _CategoryScreenState extends State<CategoryScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           onPressed: () async {
-            await Navigator.push(
+            final added = await Navigator.push<bool>(
               context,
-              MaterialPageRoute(
-                builder: (context) => const AddCategoryScreen(),
-              ),
+              MaterialPageRoute(builder: (_) => const AddCategoryScreen()),
             );
 
-            Provider.of<GetCategoryProvider>(
-              context,
-              listen: false,
-            ).getCategories(forceRefresh: true); // ✅
+            if (!mounted) return;
+
+            if (added == true) {
+              // ✅ toast yahan show karo (safe, no navigator lock)
+              AppToast.success("Category added successfully!");
+              Provider.of<GetCategoryProvider>(
+                context,
+                listen: false,
+              ).getCategories(forceRefresh: true);
+            }
           },
           child: const Icon(LucideIcons.plus, color: Colors.white, size: 30),
         ),

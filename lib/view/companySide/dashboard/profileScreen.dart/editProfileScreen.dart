@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:new_brand/models/profile/getSingleProfile_model.dart';
@@ -27,7 +28,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController address;
   late TextEditingController description;
 
-  File? imageFile;
+  final ValueNotifier<File?> _imageFile = ValueNotifier<File?>(null);
 
   @override
   void initState() {
@@ -42,7 +43,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? img = await picker.pickImage(source: ImageSource.gallery);
-    if (img != null) setState(() => imageFile = File(img.path));
+    if (img != null) _imageFile.value = File(img.path);
   }
 
   InputDecoration field(String title) {
@@ -73,39 +74,46 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               padding: EdgeInsets.all(20),
               child: Column(
                 children: [
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
 
                   // Image
                   GestureDetector(
                     onTap: pickImage,
-                    child: CircleAvatar(
-                      radius: 60,
-                      backgroundColor: AppColor.primaryColor.withOpacity(0.2),
-                      backgroundImage: imageFile != null
-                          ? FileImage(imageFile!)
-                          : NetworkImage(
-                              Global.imageUrl + widget.profile.image!,
-                            ),
+                    child: ValueListenableBuilder<File?>(
+                      valueListenable: _imageFile,
+                      builder: (context, image, child) {
+                        return CircleAvatar(
+                          radius: 60,
+                          backgroundColor: AppColor.primaryColor.withOpacity(
+                            0.2,
+                          ),
+                          backgroundImage: image != null
+                              ? FileImage(image)
+                              : NetworkImage(
+                                  Global.imageUrl + widget.profile.image!,
+                                ),
+                        );
+                      },
                     ),
                   ),
 
-                  SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
                   // Fields
                   TextField(controller: name, decoration: field("Full Name")),
 
-                  SizedBox(height: 15),
+                  const SizedBox(height: 15),
                   TextField(controller: phone, decoration: field("Phone")),
-                  SizedBox(height: 15),
+                  const SizedBox(height: 15),
                   TextField(controller: address, decoration: field("Address")),
-                  SizedBox(height: 15),
+                  const SizedBox(height: 15),
                   TextField(
                     controller: description,
                     maxLines: 3,
                     decoration: field("Description"),
                   ),
 
-                  SizedBox(height: 35),
+                  const SizedBox(height: 35),
 
                   provider.loading
                       ? SpinKitThreeBounce(
@@ -125,7 +133,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 phone: phone.text,
                                 address: address.text,
                                 description: description.text,
-                                image: imageFile,
+                                image: _imageFile.value,
                               );
 
                               if (provider.error != null) {
@@ -142,7 +150,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                         ),
                 ],
-              ),
+              ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.1, end: 0),
             );
           },
         ),
