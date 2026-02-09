@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/models/orders/getMyOrders_model.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
-import 'package:new_brand/view/companySide/dashboard/orderScreen/pdf/pdf_invoice_serivce.dart';
+import 'package:new_brand/view/companySide/dashboard/orderScreen/pdf/backendPdfService.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
@@ -134,10 +134,26 @@ class OrderDetailScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 25.h),
+                  
+                  // ✅ BACKEND PDF BUTTON
                   CustomButton(
                     text: "Generate Invoice PDF",
-                    onTap: () =>
-                        PdfInvoiceService().generateInvoice(context, order),
+                    onTap: () async {
+                      if (order.sId == null || order.sId!.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Order ID not found"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      await BackendPdfService().downloadAndOpenInvoice(
+                        context,
+                        order.sId!,
+                      );
+                    },
                   ),
                 ],
               ),
