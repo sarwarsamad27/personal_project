@@ -117,13 +117,13 @@ class AddCategoryScreen extends StatelessWidget {
                                     if (!context.mounted) return;
 
                                     if (success) {
-                                      // ✅ BUG FIX: Navigator.pop ko next frame pe move karo
-                                      // taake Flushbar/overlay dismiss lock se conflict na ho
+                                      // ✅ CHANGE: Reset fields pehle
                                       context
                                           .read<CreateCategoryProvider>()
                                           .resetFields();
 
-                                      Navigator.pop(context);
+                                      // ✅ CHANGE: Pop with true to indicate success
+                                      Navigator.pop(context, true);
                                     } else {
                                       AppToast.warning(
                                         "Please select image and name",

@@ -89,7 +89,7 @@ class _HomeDashboardState extends State<HomeDashboard>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F8),
+      // backgroundColor: const Color(0xFFF3F4F8),
       body: Stack(
         children: [
           /// ---------- Gradient Header ----------
@@ -469,6 +469,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                   children: [
                     SizedBox(height: 20.h),
                     StatsView(),
+                    SizedBox(height: 90.h),
                   ],
                 ),
               ),

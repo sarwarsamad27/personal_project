@@ -398,6 +398,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       floatingActionButton: Container(
         height: 70.h,
         width: 70.h,
+        margin: EdgeInsets.only(bottom: 70.h),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: LinearGradient(

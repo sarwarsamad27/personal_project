@@ -77,8 +77,9 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
               valueListenable: _currentIndex,
               builder: (context, index, child) {
                 return Scaffold(
-                  extendBody: index == 3 || index == 4,
-                  backgroundColor: const Color(0xFFF9FAFB),
+                  extendBody: true,
+                  // index == 0 || index == 3 || index == 4,
+                  // backgroundColor: const Color(0xFFF9FAFB),
                   body: screens[index],
                   bottomNavigationBar: _PremiumNavBar(
                     currentIndex: index,
@@ -215,9 +216,7 @@ class _NavItem extends StatelessWidget {
           duration: const Duration(milliseconds: 220),
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
           decoration: BoxDecoration(
-            color: selected
-                ? AppColor.primaryColor.withOpacity(0.10)
-                : Colors.transparent,
+            color: selected ? Colors.transparent : Colors.transparent,
             borderRadius: BorderRadius.circular(16.r),
           ),
           child: Column(
@@ -225,7 +224,7 @@ class _NavItem extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                size: 22.sp, // ✅ fixed, no jump
+                size: 22.sp,
                 color: selected ? AppColor.primaryColor : Colors.grey,
               ),
               SizedBox(height: 4.h),

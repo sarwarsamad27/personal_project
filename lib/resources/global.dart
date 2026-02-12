@@ -3,8 +3,8 @@
 class Global {
   // static var BaseUrl = "http://10.0.2.2:5000/api/auth";
   // static var imageUrl = "http://10.0.2.2:5000";
-  static var imageUrl = "http://192.168.100.49:5000";
-  static var BaseUrl = "http://192.168.100.49:5000/api/auth";  
+  static var imageUrl = "http://192.168.100.62:5000";
+  static var BaseUrl = "http://192.168.100.62:5000/api/auth";  
 
   static var SignUp = "${BaseUrl}/signup";
   static var Login = "${BaseUrl}/login";

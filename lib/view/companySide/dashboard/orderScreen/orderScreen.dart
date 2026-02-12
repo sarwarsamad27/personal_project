@@ -61,39 +61,35 @@ class _OrderScreenState extends State<OrderScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: CustomBgContainer(
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Consumer2<GetMyOrdersProvider, GetDispatchedOrderProvider>(
-                  builder: (context, pendingProvider, dispatchedProvider, _) {
-                    return PaymentTabBar(
-                      onTabChanged: (index) {
-                        if (index == 0) {
-                          Provider.of<GetMyOrdersProvider>(
-                            context,
-                            listen: false,
-                          ).fetchOrders(isRefresh: true); // Pending
-                        } else {
-                          Provider.of<GetDispatchedOrderProvider>(
-                            context,
-                            listen: false,
-                          ).fetchDispatchedOrders(
-                            isRefresh: true,
-                          ); // Dispatched
-                        }
-                      },
-                      firstTab: pendingTab(pendingProvider),
-                      secondTab: dispatchedTab(dispatchedProvider),
-                      firstTabbarName: "Pending Orders",
-                      secondTabbarName: "Dispatched Orders",
-                    );
-                  },
-                ),
-              ],
-            ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 50.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Consumer2<GetMyOrdersProvider, GetDispatchedOrderProvider>(
+                builder: (context, pendingProvider, dispatchedProvider, _) {
+                  return PaymentTabBar(
+                    onTabChanged: (index) {
+                      if (index == 0) {
+                        Provider.of<GetMyOrdersProvider>(
+                          context,
+                          listen: false,
+                        ).fetchOrders(isRefresh: true); // Pending
+                      } else {
+                        Provider.of<GetDispatchedOrderProvider>(
+                          context,
+                          listen: false,
+                        ).fetchDispatchedOrders(isRefresh: true); // Dispatched
+                      }
+                    },
+                    firstTab: pendingTab(pendingProvider),
+                    secondTab: dispatchedTab(dispatchedProvider),
+                    firstTabbarName: "Pending Orders",
+                    secondTabbarName: "Dispatched Orders",
+                  );
+                },
+              ),
+            ],
           ),
         ),
       ),
@@ -171,6 +167,8 @@ class _OrderScreenState extends State<OrderScreen>
               ],
             )
           : ListView.separated(
+              padding: EdgeInsets.only(bottom: 50.h),
+
               controller: scrollController,
               itemCount:
                   list.length + ((pendingProvider?.loadMore ?? false) ? 1 : 0),
@@ -201,7 +199,7 @@ class _OrderScreenState extends State<OrderScreen>
                     : null;
 
                 return CustomAppContainer(
-                  padding: EdgeInsets.all(20.w),
+                  // padding: EdgeInsets.all(120.w),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

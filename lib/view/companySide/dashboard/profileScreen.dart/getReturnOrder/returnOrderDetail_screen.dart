@@ -11,7 +11,7 @@ class ReturnedOrderDetailScreen extends StatelessWidget {
   const ReturnedOrderDetailScreen({super.key, required this.order});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) {  
     return Scaffold(
       appBar: AppBar( backgroundColor: AppColor.primaryColor,title: const Text("Returned Order Detail")),
       body: CustomBgContainer(
