@@ -7,17 +7,15 @@ import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/pendingToCancel_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/pendingToDispatched_provider.dart';
+import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/paymentTabbar.dart';
 import 'package:provider/provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 
 // ✅ IMPORTANT: Alias imports to avoid Orders name clash
-import 'package:new_brand/models/orders/getMyOrders_model.dart' as my;
-import 'package:new_brand/models/orders/getDispatchedOrder_model.dart' as disp;
-
-import 'orderDetailScreen.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -178,7 +176,7 @@ class _OrderScreenState extends State<OrderScreen>
                     (pendingProvider?.loadMore ?? false)) {
                   return const Center(
                     child: Padding(
-                      padding: EdgeInsets.all(10),
+                      padding: EdgeInsets.all(0),
                       child: SpinKitThreeBounce(
                         color: AppColor.whiteColor,
                         size: 30.0,
@@ -252,15 +250,18 @@ class _OrderScreenState extends State<OrderScreen>
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  "#${(order.sId ?? "").toString().substring(0, 6)}",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.bold,
+                                Flexible(
+                                  child: Text(
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    firstProduct?.name ?? "your product",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 17.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
-
                                 if (isPendingTab)
                                   _buildPendingStatusDropdown(
                                     orderId: order.sId,
@@ -287,17 +288,6 @@ class _OrderScreenState extends State<OrderScreen>
                                     ),
                                   ),
                               ],
-                            ),
-
-                            SizedBox(height: 8.h),
-
-                            Text(
-                              firstProduct?.name ?? "Multiple Items",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 17.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
                             ),
 
                             SizedBox(height: 6.h),
@@ -334,32 +324,6 @@ class _OrderScreenState extends State<OrderScreen>
                                     fontSize: 15.sp,
                                   ),
                                 ),
-                                TextButton(
-                                  onPressed: () {
-                                    // ✅ Navigate to detail screen (product list inside)
-                                    // For pending tab we have my.Orders model
-                                    if (isPendingTab) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => OrderDetailScreen(
-                                            order: order as my.Orders,
-                                          ),
-                                        ),
-                                      );
-                                    } else {
-                                      // Dispatched model currently not wired to detail in your snippet.
-                                      // If you want, create a DispatchedOrderDetailScreen similarly.
-                                      AppToast.error(
-                                        "Detail screen for dispatched not connected",
-                                      );
-                                    }
-                                  },
-                                  child: const Text(
-                                    "View Detail",
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
                               ],
                             ),
                           ],
@@ -374,6 +338,8 @@ class _OrderScreenState extends State<OrderScreen>
   }
 
   // ✅ Changed: pass orderId only (no Orders type dependency)
+  // ✅ Replace _buildPendingStatusDropdown in order_screen.dart with this
+
   Widget _buildPendingStatusDropdown({required String orderId}) {
     Color getStatusColor(String status) {
       switch (status) {
@@ -382,14 +348,12 @@ class _OrderScreenState extends State<OrderScreen>
         case 'Dispatched':
           return AppColor.successColor;
         case 'Cancel':
-          return AppColor.primaryColor;
+          return Colors.orange;
         default:
           return Colors.grey;
       }
     }
 
-    // Since it's pending tab, status is always Pending in list.
-    // Keep UI same: dropdown with value "Pending"
     return Container(
       height: 30.h,
       padding: EdgeInsets.symmetric(horizontal: 4.w),
@@ -411,34 +375,226 @@ class _OrderScreenState extends State<OrderScreen>
         ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
         onChanged: (newStatus) async {
           if (newStatus == "Dispatched") {
+            // ── existing dispatched logic ──
             final dispatchProvider = Provider.of<PendingToDispatchedProvider>(
               context,
               listen: false,
             );
-
             bool success = await dispatchProvider.updateOrderStatus(
               orderId: orderId,
               status: "dispatched",
             );
-
             if (success) {
               Provider.of<GetMyOrdersProvider>(
                 context,
                 listen: false,
               ).updateStatusAndRefresh();
-
               Provider.of<GetDispatchedOrderProvider>(
                 context,
                 listen: false,
               ).fetchDispatchedOrders(isRefresh: true);
-
               AppToast.success("Order moved to Dispatched");
             } else {
               AppToast.error("Failed to update");
             }
+          } else if (newStatus == "Cancel") {
+            // ── Premium cancel reason dialog ──
+            _showCancelReasonDialog(orderId: orderId);
           }
         },
       ),
+    );
+  }
+
+  // ✅ Premium Cancel Reason Bottom Sheet Dialog
+  void _showCancelReasonDialog({required String orderId}) {
+    final TextEditingController reasonController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColor.appimagecolor.withOpacity(0.9),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+              border: Border.all(color: Colors.white12),
+            ),
+            padding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 32.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── drag handle ──
+                Center(
+                  child: Container(
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20.h),
+
+                // ── title ──
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(8.w),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.cancel_outlined,
+                        color: Colors.redAccent,
+                        size: 20.sp,
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Cancel Order",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          "This action cannot be undone",
+                          style: TextStyle(
+                            color: Colors.white38,
+                            fontSize: 12.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 24.h),
+
+                // ── reason label ──
+                Text(
+                  "Reason for cancellation",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  "Optional — customer will be notified",
+                  style: TextStyle(color: Colors.white70, fontSize: 11.sp),
+                ),
+                SizedBox(height: 10.h),
+
+                // ── text field ──
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: TextField(
+                    controller: reasonController,
+                    maxLines: 3,
+                    maxLength: 200,
+                    style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                    decoration: InputDecoration(
+                      hintText: "e.g. Out of stock, customer requested...",
+                      hintStyle: TextStyle(
+                        color: AppColor.textPrimaryLightColor,
+                        fontSize: 13.sp,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(14.w),
+                      counterStyle: TextStyle(
+                        color: Colors.black.withOpacity(0.5),
+                        fontSize: 11.sp,
+                      ),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 20.h),
+
+                // ── action buttons ──
+                Row(
+                  children: [
+                    // keep order
+                    Expanded(
+                      child: CustomButton(
+                        second: true,
+                        text: "Keep Order",
+                        onTap: () => Navigator.pop(ctx),
+                      ),
+                    ),
+
+                    SizedBox(width: 12.w),
+
+                    // confirm cancel
+                    Expanded(
+                      child: Consumer<CancelOrderProvider>(
+                        builder: (context, cancelProvider, _) {
+                          return CustomButton(
+                            text: "Confirm Cancel",
+                            onTap: () => cancelProvider.loading
+                                ? null
+                                : () async {
+                                    final reason = reasonController.text.trim();
+
+                                    // ✅ Save BEFORE any async call
+                                    final ordersProvider =
+                                        Provider.of<GetMyOrdersProvider>(
+                                          context,
+                                          listen: false,
+                                        );
+
+                                    // ✅ API call pehle
+                                    bool success = await cancelProvider
+                                        .cancelOrder(
+                                          orderId: orderId,
+                                          reason: reason.isNotEmpty
+                                              ? reason
+                                              : null,
+                                        );
+
+                                    // ✅ Ab pop karo
+                                    if (ctx.mounted) Navigator.pop(ctx);
+
+                                    // ✅ Saved reference use karo — no crash
+                                    if (success) {
+                                      ordersProvider.fetchOrders(
+                                        isRefresh: true,
+                                      );
+                                      AppToast.success("Order Cancelled");
+                                    } else {
+                                      AppToast.error("Failed to cancel order");
+                                    }
+                                  },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

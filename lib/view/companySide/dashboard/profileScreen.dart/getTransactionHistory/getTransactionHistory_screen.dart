@@ -111,6 +111,32 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     return "${isDebit ? '-' : '+'} Rs. ${tx.amount ?? '-'}";
   }
 
+  String _formatDate(String? raw) {
+    if (raw == null || raw.isEmpty) return '-';
+    try {
+      final dt = DateTime.parse(raw).toLocal();
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+      final minute = dt.minute.toString().padLeft(2, '0');
+      final period = dt.hour >= 12 ? 'PM' : 'AM';
+      return '${dt.day} ${months[dt.month - 1]} ${dt.year}  $hour:$minute $period';
+    } catch (_) {
+      return raw;
+    }
+  }
   // ---------- UI ----------
 
   @override
@@ -189,7 +215,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           ),
                           SizedBox(height: 4.h),
                           Text(
-                            tx.createdAt ?? '',
+                            _formatDate(tx.createdAt),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(

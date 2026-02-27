@@ -20,10 +20,37 @@ class _GetdeliveredorderScreenState extends State<GetdeliveredorderScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      context
-          .read<GetDeliveredOrderProvider>()
-          .fetchDeliveredOrders(refresh: true);
+      context.read<GetDeliveredOrderProvider>().fetchDeliveredOrders(
+        refresh: true,
+      );
     });
+  }
+
+  String _formatDate(String? raw) {
+    if (raw == null || raw.isEmpty) return '-';
+    try {
+      final dt = DateTime.parse(raw).toLocal();
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+      final minute = dt.minute.toString().padLeft(2, '0');
+      final period = dt.hour >= 12 ? 'PM' : 'AM';
+      return '${dt.day} ${months[dt.month - 1]} ${dt.year}  $hour:$minute $period';
+    } catch (_) {
+      return raw;
+    }
   }
 
   @override
@@ -50,8 +77,7 @@ class _GetdeliveredorderScreenState extends State<GetdeliveredorderScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        DeliveredOrderDetailScreen(order: order),
+                    builder: (_) => DeliveredOrderDetailScreen(order: order),
                   ),
                 );
               },
@@ -71,7 +97,7 @@ class _GetdeliveredorderScreenState extends State<GetdeliveredorderScreen> {
                           ),
                         ),
                         Text(
-                          order.createdAt ?? '',
+                          _formatDate(order.createdAt),
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
@@ -91,8 +117,7 @@ class _GetdeliveredorderScreenState extends State<GetdeliveredorderScreen> {
                         ),
                         const Text(
                           "Delivered",
-                          style:
-                              TextStyle(color: Colors.green, fontSize: 13),
+                          style: TextStyle(color: Colors.green, fontSize: 13),
                         ),
                       ],
                     ),

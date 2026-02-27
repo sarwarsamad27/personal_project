@@ -8,6 +8,7 @@ import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/colorSelect.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/sizeSelect.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/uploadImages.dart';
+import 'package:new_brand/viewModel/providers/productProvider/AnalyzeProductProvider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/addProduct_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
@@ -25,13 +26,38 @@ class AddProductScreen extends StatelessWidget {
   final TextEditingController _beforePriceController = TextEditingController();
   final TextEditingController _afterPriceController = TextEditingController();
   final TextEditingController _discountController = TextEditingController();
-final ValueNotifier<String> selectedStockNotifier = ValueNotifier("In Stock");
 
-final List<String> stockOptions = const ["In Stock", "Out of Stock"];
+  final ValueNotifier<String> selectedStockNotifier = ValueNotifier("In Stock");
+  final List<String> stockOptions = const ["In Stock", "Out of Stock"];
   final ValueNotifier<List<File>> selectedImagesNotifier = ValueNotifier([]);
   final ValueNotifier<List<String>> selectedSizesNotifier = ValueNotifier([]);
   final ValueNotifier<List<Map<String, dynamic>>> selectedColorsNotifier =
       ValueNotifier([]);
+
+  // ✅ Analyze image call
+  Future<void> _analyzeImage(BuildContext context, File image) async {
+    final token = await LocalStorage.getToken();
+    final analyzeProvider =
+        Provider.of<AnalyzeProductProvider>(context, listen: false);
+
+    // ✅ Placeholder dikhao
+    _nameController.text = "Analyzing...";
+    _descriptionController.text = "Please wait...";
+
+    analyzeProvider.analyzeImage(
+      token: token??'',
+      image: image,
+      onSuccess: (name, description) {
+        _nameController.text = name;
+        _descriptionController.text = description;
+      },
+      onError: (error) {
+        _nameController.text = "";
+        _descriptionController.text = "";
+        AppToast.show("Could not analyze image");
+      },
+    );
+  }
 
   void _calculateDiscount(BuildContext context) {
     final beforeText = _beforePriceController.text.trim();
@@ -61,18 +87,18 @@ final List<String> stockOptions = const ["In Stock", "Out of Stock"];
   }
 
   void _saveProduct(BuildContext context) async {
-    final token = await LocalStorage.getToken(); // FIXED 💯
+    final token = await LocalStorage.getToken();
     final provider = Provider.of<AddProductProvider>(context, listen: false);
 
     if (selectedImagesNotifier.value.isEmpty ||
         _nameController.text.isEmpty ||
+        _nameController.text == "Analyzing..." ||
         _beforePriceController.text.isEmpty ||
         _afterPriceController.text.isEmpty) {
       AppToast.show("Please fill all required fields");
       return;
     }
 
-    // ✅ FIX: remove missing cache files
     final original = List<File>.from(selectedImagesNotifier.value);
     final validImages = original.where((f) => f.existsSync()).toList();
 
@@ -83,9 +109,7 @@ final List<String> stockOptions = const ["In Stock", "Out of Stock"];
 
     if (validImages.length != original.length) {
       selectedImagesNotifier.value = validImages;
-      AppToast.show(
-        "Some images were removed (file not found). Please re-select if needed.",
-      );
+      AppToast.show("Some images were removed. Please re-select if needed.");
     }
 
     provider.addProduct(
@@ -101,7 +125,6 @@ final List<String> stockOptions = const ["In Stock", "Out of Stock"];
           .map((e) => e["name"].toString())
           .toList(),
       stock: selectedStockNotifier.value,
-
       onSuccess: () {
         AppToast.show("Product added successfully!");
         Navigator.pop(context);
@@ -114,24 +137,16 @@ final List<String> stockOptions = const ["In Stock", "Out of Stock"];
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Bottom bar height estimate so container never hides under it
-
     return Scaffold(
       backgroundColor: AppColor.appimagecolor,
       bottomNavigationBar: Padding(
         padding: EdgeInsets.only(bottom: 20.h, left: 24.w, right: 24.w),
-        child: CustomButton(
-          text: "Add Product",
-          onTap: () {
-            _saveProduct(context);
-
-            print("NAME: ${_nameController.text}");
-            print("DESC: ${_descriptionController.text}");
-            print("Before: ${_beforePriceController.text}");
-            print("After: ${_afterPriceController.text}");
-            print("Sizes: ${selectedSizesNotifier.value}");
-            print("Colors: ${selectedColorsNotifier.value}");
-            print("Images: ${selectedImagesNotifier.value}");
+        child: Consumer<AddProductProvider>(
+          builder: (context, provider, _) {
+            return CustomButton(
+              text: provider.isLoading ? "Adding..." : "Add Product",
+              onTap: provider.isLoading ? null : () => _saveProduct(context),
+            );
           },
         ),
       ),
@@ -147,8 +162,41 @@ final List<String> stockOptions = const ["In Stock", "Out of Stock"];
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        UploadImages(selectedImages: selectedImagesNotifier),
+                        // ✅ UploadImages with onImageSelected callback
+                        UploadImages(
+                          selectedImages: selectedImagesNotifier,
+                          onImageSelected: (File firstImage) {
+                            _analyzeImage(context, firstImage);
+                          },
+                        ),
                         SizedBox(height: 30.h),
+
+                        // ✅ Analyzing loader dikhao
+                        Consumer<AnalyzeProductProvider>(
+                          builder: (context, analyzeProvider, _) {
+                            if (!analyzeProvider.isAnalyzing) {
+                              return const SizedBox.shrink();
+                            }
+                            return Padding(
+                              padding: EdgeInsets.only(bottom: 12.h),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 16.w,
+                                    height: 16.h,
+                                    child: const CircularProgressIndicator(
+                                        strokeWidth: 2),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    "AI analyzing image...",
+                                    style: TextStyle(fontSize: 12.sp),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
 
                         CustomTextField(
                           controller: _nameController,
@@ -196,40 +244,34 @@ final List<String> stockOptions = const ["In Stock", "Out of Stock"];
                         ColorSelect(colorNotifier: selectedColorsNotifier),
                         SizedBox(height: 20.h),
 
-                       Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    Text(
-      "Stock",
-      // agar aapka CustomTextField header style use hota hai to yahan same style apply kar dein
-      // style: ...
-    ),
-    SizedBox(height: 8.h),
-    ValueListenableBuilder<String>(
-      valueListenable: selectedStockNotifier,
-      builder: (context, value, _) {
-        return DropdownButtonFormField<String>(
-          value: value,
-          items: stockOptions
-              .map((s) => DropdownMenuItem<String>(
-                    value: s,
-                    child: Text(s),
-                  ))
-              .toList(),
-          onChanged: (v) {
-            if (v == null) return;
-            selectedStockNotifier.value = v;
-          },
-          decoration: InputDecoration(
-            hintText: "Select stock status",
-            // agar aapke app me consistent borders/padding chahiye to yahan set kar sakte hain
-          ),
-        );
-      },
-    ),
-  ],
-),
-
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Stock"),
+                            SizedBox(height: 8.h),
+                            ValueListenableBuilder<String>(
+                              valueListenable: selectedStockNotifier,
+                              builder: (context, value, _) {
+                                return DropdownButtonFormField<String>(
+                                  value: value,
+                                  items: stockOptions
+                                      .map((s) => DropdownMenuItem<String>(
+                                            value: s,
+                                            child: Text(s),
+                                          ))
+                                      .toList(),
+                                  onChanged: (v) {
+                                    if (v == null) return;
+                                    selectedStockNotifier.value = v;
+                                  },
+                                  decoration: const InputDecoration(
+                                    hintText: "Select stock status",
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),

@@ -25,6 +25,33 @@ class _GetReturnedorderScreenState extends State<GetReturnedorderScreen> {
     });
   }
 
+  String _formatDate(String? raw) {
+    if (raw == null || raw.isEmpty) return '-';
+    try {
+      final dt = DateTime.parse(raw).toLocal();
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+      final minute = dt.minute.toString().padLeft(2, '0');
+      final period = dt.hour >= 12 ? 'PM' : 'AM';
+      return '${dt.day} ${months[dt.month - 1]} ${dt.year}  $hour:$minute $period';
+    } catch (_) {
+      return raw;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<GetReturnedOrderProvider>(
@@ -69,7 +96,7 @@ class _GetReturnedorderScreenState extends State<GetReturnedorderScreen> {
                           ),
                         ),
                         Text(
-                          order.createdAt ?? '',
+                          _formatDate(order.createdAt),
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,

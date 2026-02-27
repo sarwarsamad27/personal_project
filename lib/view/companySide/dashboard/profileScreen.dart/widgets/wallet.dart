@@ -50,23 +50,7 @@ class _WalletState extends State<Wallet> {
       },
     },
   ];
-  String _monthName(int month) {
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    return months[month - 1];
-  }
+ 
 
   @override
   void initState() {
@@ -86,7 +70,7 @@ class _WalletState extends State<Wallet> {
     bool isVerifying = false;
 
     showModalBottomSheet(
-      backgroundColor: AppColor.bottomSheetColor,
+      backgroundColor: AppColor.appimagecolor,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25.r)),
@@ -112,7 +96,7 @@ class _WalletState extends State<Wallet> {
                         height: 5,
                         width: 60,
                         decoration: BoxDecoration(
-                          color: Colors.white24,
+                          color: AppColor.whiteColor.withOpacity(0.5),
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
@@ -160,7 +144,7 @@ class _WalletState extends State<Wallet> {
                                 padding: EdgeInsets.symmetric(vertical: 12.h),
                                 decoration: BoxDecoration(
                                   color: selectedMethod == 'JazzCash'
-                                      ? Colors.orange
+                                      ? Colors.green
                                       : Colors.white.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(10.r),
                                 ),
@@ -185,7 +169,7 @@ class _WalletState extends State<Wallet> {
                                 padding: EdgeInsets.symmetric(vertical: 12.h),
                                 decoration: BoxDecoration(
                                   color: selectedMethod == 'Easypaisa'
-                                      ? Colors.orange
+                                      ? Colors.green
                                       : Colors.white.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(10.r),
                                 ),
@@ -237,7 +221,8 @@ class _WalletState extends State<Wallet> {
 
                                 final verified = await provider
                                     .verifyWithdrawCode(
-                                      code: codeController.text, context: context,
+                                      code: codeController.text,
+                                      context: context,
                                     );
 
                                 setSheetState(() => isVerifying = false);
@@ -288,17 +273,18 @@ class _WalletState extends State<Wallet> {
                             );
 
                             if (nameController.text.isEmpty ||
-    phoneController.text.isEmpty ||
-    amount == null ||
-    amount <= 0 ||
-    amount > provider.currentBalance || // ✅ REAL API BALANCE
-    selectedMethod == null) {
-  AppToast.show(
-    "Insufficient wallet balance or invalid input",
-  );
-  return;
-}
-
+                                phoneController.text.isEmpty ||
+                                amount == null ||
+                                amount <= 0 ||
+                                amount >
+                                    provider
+                                        .currentBalance || // ✅ REAL API BALANCE
+                                selectedMethod == null) {
+                              AppToast.show(
+                                "Insufficient wallet balance or invalid input",
+                              );
+                              return;
+                            }
 
                             final success = await provider.sendWithdrawCode(
                               name: nameController.text,

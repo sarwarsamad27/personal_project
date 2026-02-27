@@ -3,13 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:new_brand/resources/toast.dart';
-import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customImageContainer.dart';
 
 class UploadImages extends StatelessWidget {
   final ValueNotifier<List<File>> selectedImages;
+  final Function(File firstImage)? onImageSelected; // ✅ NEW callback
 
-  UploadImages({super.key, required this.selectedImages});
+  const UploadImages({
+    super.key,
+    required this.selectedImages,
+    this.onImageSelected,
+  });
 
   Future<void> _pickImages(BuildContext context) async {
     if (selectedImages.value.length >= 5) {
@@ -19,15 +23,18 @@ class UploadImages extends StatelessWidget {
 
     final picker = ImagePicker();
     final picked = await picker.pickMultiImage();
+
     if (picked.isNotEmpty) {
       final newImages = picked.map((x) => File(x.path)).toList();
       final updated = List<File>.from(selectedImages.value)
         ..addAll(newImages.take(5 - selectedImages.value.length));
 
       selectedImages.value = updated;
-      print("Selected Images: ${selectedImages.value}");
-    } else {
-      print("No images selected.");
+
+      // ✅ Pehli image se analyze trigger karo
+      if (onImageSelected != null && updated.isNotEmpty) {
+        onImageSelected!(updated.first);
+      }
     }
   }
 

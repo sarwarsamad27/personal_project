@@ -17,8 +17,10 @@ import 'package:new_brand/viewModel/providers/orderProvider/getDeliveredOrder_pr
 import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getReturnedOrder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/pendingToCancel_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/pendingToDispatched_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/transactionHIstory_provider.dart';
+import 'package:new_brand/viewModel/providers/productProvider/AnalyzeProductProvider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/addProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/deleteProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getProductCategoryWise_provider.dart';
@@ -71,6 +73,8 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CompanyGoogleLoginProvider()),
         ChangeNotifierProvider(create: (_) => CompanyChatThreadsProvider()),
         ChangeNotifierProvider(create: (_) => CompanyAppleLoginProvider()),
+        ChangeNotifierProvider(create: (_) => AnalyzeProductProvider()),
+        ChangeNotifierProvider(create: (_) => CancelOrderProvider()),
       ],
 
       child: child,

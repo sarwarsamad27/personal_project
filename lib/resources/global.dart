@@ -1,10 +1,10 @@
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps
 
 class Global {
-  // static var BaseUrl = "http://10.0.2.2:5000/api/auth";
-  // static var imageUrl = "http://10.0.2.2:5000";
-  static var imageUrl = "http://192.168.100.62:5000";
-  static var BaseUrl = "http://192.168.100.62:5000/api/auth";  
+  static var BaseUrl = "http://10.0.2.2:5000/api/auth";
+  static var imageUrl = "http://10.0.2.2:5000";
+  // static var imageUrl = "http://192.168.30.124:5000";
+  // static var BaseUrl = "http://192.168.30.124:5000/api/auth";  
 
   static var SignUp = "${BaseUrl}/signup";
   static var Login = "${BaseUrl}/login";
@@ -27,6 +27,7 @@ class Global {
   static var DeleteSingleProduct = "${BaseUrl}/delete/product";
   static var GetOrders = "${BaseUrl}/get/orders";
   static var PendingToDispatched = "${BaseUrl}/pending/to/dispatched/orders";
+  static var PendingToCancelled = "${BaseUrl}/pending/to/cancelled/orders";
   static var GetDispatchedOrder = "${BaseUrl}/get/dispatched/orders";
   static var GetReturnedOrder = "${BaseUrl}/get/returned/orders";
   static var GetDeliveredOrder = "${BaseUrl}/get/delivered/orders";
@@ -45,4 +46,5 @@ class Global {
   static var companyChatThreads = "$BaseUrl/company/chat/threads";
   static var companyChatMessages = "$BaseUrl/company/chat/messages";
    static var generateInvoicePdf = "${BaseUrl}/generate/invoice/pdf";
+   static var analyzeProductImage = "${BaseUrl}/analyze-product-image";
 }
