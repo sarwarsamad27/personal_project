@@ -1,5 +1,7 @@
 // models/chatThread/chatModel.dart
 
+import 'package:new_brand/models/productModel/productCard_model.dart';
+
 class ChatMessage {
   final String? id;
   final String? threadId;
@@ -11,6 +13,7 @@ class ChatMessage {
   final String? readAt; // ✅ NEW
   final bool isExchangeRequest;
   final ExchangeRequestData? exchangeData;
+  final ProductCard? productCard;
 
   ChatMessage({
     this.id,
@@ -23,6 +26,7 @@ class ChatMessage {
     this.readAt,
     this.isExchangeRequest = false,
     this.exchangeData,
+    this.productCard,
   });
 
   static String? _extractThreadId(Map<String, dynamic> json) {
@@ -64,6 +68,11 @@ class ChatMessage {
       exchangeData: json["exchangeData"] != null && json["exchangeData"] is Map
           ? ExchangeRequestData.fromJson(
               (json["exchangeData"] as Map).cast<String, dynamic>(),
+            )
+          : null,
+           productCard: json["productCard"] != null && json["productCard"] is Map
+          ? ProductCard.fromJson(
+              (json["productCard"] as Map).cast<String, dynamic>(),
             )
           : null,
     );
