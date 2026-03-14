@@ -10,6 +10,7 @@ import 'package:new_brand/viewModel/providers/categoryProvider/createCategory_pr
 import 'package:new_brand/viewModel/providers/categoryProvider/getcategory_provider.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/updateAndDeleteCategory_provider.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/chatThread_provider.dart';
+import 'package:new_brand/viewModel/providers/chatProvider/companyExchange.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/companySaleChart_provider.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
@@ -75,6 +76,7 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CompanyAppleLoginProvider()),
         ChangeNotifierProvider(create: (_) => AnalyzeProductProvider()),
         ChangeNotifierProvider(create: (_) => CancelOrderProvider()),
+        ChangeNotifierProvider(create: (_) => CompanyExchangeProvider()),
       ],
 
       child: child,

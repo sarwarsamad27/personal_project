@@ -511,7 +511,7 @@ class _OrderScreenState extends State<OrderScreen>
                     controller: reasonController,
                     maxLines: 3,
                     maxLength: 200,
-                    style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                    style: TextStyle(color: Colors.black, fontSize: 14.sp),
                     decoration: InputDecoration(
                       hintText: "e.g. Out of stock, customer requested...",
                       hintStyle: TextStyle(
