@@ -4,6 +4,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:new_brand/view/companySide/dashboard/orderScreen/companyExchangeListScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/editProfileScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/allConditions.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/allProfileField.dart';
@@ -351,7 +352,24 @@ class ProfileScreen extends StatelessWidget {
                     ),
 
                     SizedBox(height: 30.h),
-
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CompanyExchangeListScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        "View Exchange Requests",
+                        style: TextStyle(
+                          color: AppColor.appimagecolor,
+                          fontSize: 14.sp,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
                     // ---------------- REVIEWS ----------------
                     Align(
                       alignment: Alignment.centerLeft,

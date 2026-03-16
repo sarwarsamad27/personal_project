@@ -3,10 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/view/companySide/dashboard/ChatListScreen/emptyState.dart';
 import 'package:new_brand/view/companySide/dashboard/ChatListScreen/exchangeRequestpoll.dart';
 import 'package:new_brand/view/companySide/dashboard/ChatListScreen/messageBubble.dart';
+import 'package:new_brand/view/companySide/dashboard/ChatListScreen/productCardWidget.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../viewModel/providers/chatProvider/chat_provider.dart';
-
 
 class CompanyChatList extends StatelessWidget {
   const CompanyChatList({super.key});
@@ -30,9 +30,19 @@ class CompanyChatList extends StatelessWidget {
           itemCount: p.messages.length,
           itemBuilder: (context, index) {
             final message = p.messages[index];
+
             if (message.isExchangeRequest == true) {
               return ExchangeRequestPoll(message: message);
             }
+
+            // ✅ ADD
+            if (message.productCard != null) {
+              return ProductCardWidget(
+                productCard: message.productCard!,
+                isMe: message.fromType == "seller",
+              );
+            }
+
             return MessageBubble(message: message);
           },
         );

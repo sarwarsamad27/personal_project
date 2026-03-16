@@ -5,11 +5,10 @@ import 'package:new_brand/resources/global.dart';
 
 class ExchangeDecisionRepository {
   final NetworkApiServices apiServices = NetworkApiServices();
-final String baseUrl = Global.exchangeDecision;
+
   Future<bool> makeDecision({
     required String exchangeId,
     required String decision,
-
     String? note,
   }) async {
     try {
@@ -20,8 +19,9 @@ final String baseUrl = Global.exchangeDecision;
         "note": note ?? "",
       };
 
+      // ✅ Global.exchangeDecision is now a function
       final response = await apiServices.putApi(
-        "${Global.exchangeDecision}/$exchangeId/decision",
+        Global.exchangeDecision(exchangeId),
         body,
       );
 

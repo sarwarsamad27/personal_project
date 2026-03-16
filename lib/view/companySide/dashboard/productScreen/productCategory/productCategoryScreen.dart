@@ -269,6 +269,18 @@ class _CategoryScreenState extends State<CategoryScreen> {
     );
   }
 
+  String getImageUrl(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) return '';
+
+    // Agar already complete URL hai (Cloudinary) toh baseUrl mat lagao
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+
+    // Local path hai toh baseUrl lagao
+    return '${Global.imageUrl}$imagePath';
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<GetCategoryProvider>(context);
@@ -277,19 +289,17 @@ class _CategoryScreenState extends State<CategoryScreen> {
       appBar: AppBar(
         backgroundColor: AppColor.appimagecolor,
         elevation: 4,
-        shadowColor: Colors.black.withOpacity(0.08),
+        automaticallyImplyLeading: false,
         centerTitle: true,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(LucideIcons.grid, color: Colors.black87, size: 22),
-            SizedBox(width: 8.w),
             Text(
               "Product Categories",
               style: TextStyle(
                 fontSize: 20.sp,
                 fontWeight: FontWeight.bold,
-                color: AppColor.textPrimaryColor,
+                color: AppColor.whiteColor,
               ),
             ),
           ],
@@ -308,7 +318,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           : Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
               child: GridView.builder(
-                padding: EdgeInsets.zero,
+                padding: EdgeInsets.only(bottom: 50.h),
                 physics: const BouncingScrollPhysics(),
                 itemCount: provider.categoryData!.categories!.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -325,7 +335,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     children: [
                       CategoryTile(
                         name: item.name ?? "",
-                        image: Global.imageUrl + (item.image ?? ""),
+                        image: getImageUrl(item.image),
                         onTap: () {
                           Navigator.push(
                             context,

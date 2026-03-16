@@ -291,42 +291,48 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
     });
 
     // ------- exchange:status -------
-    socket.on("exchange:status", (data) {
-      if (data is! Map) return;
-
-      final exchangeId = data["exchangeRequestId"]?.toString();
-      final newStatus = data["status"]?.toString();
-      if (exchangeId == null || newStatus == null) return;
-
-      for (int i = 0; i < messages.length; i++) {
-        if (messages[i].isExchangeRequest == true &&
-            messages[i].exchangeData?.exchangeId == exchangeId) {
-          final old = messages[i];
-          messages[i] = ChatMessage(
-            id: old.id,
-            threadId: old.threadId,
-            fromType: old.fromType,
-            isExchangeRequest: true,
-            timestamp: old.timestamp,
-            text: old.text,
-            deliveredAt: old.deliveredAt,
-            readAt: old.readAt,
-            exchangeData: ExchangeRequestData(
-              exchangeId: old.exchangeData?.exchangeId,
-              orderId: old.exchangeData?.orderId,
-              productId: old.exchangeData?.productId,
-              productName: old.exchangeData?.productName,
-              reason: old.exchangeData?.reason,
-              status: newStatus,
-              createdAt: old.exchangeData?.createdAt,
-              images: old.exchangeData?.images ?? const [],
-            ),
-          );
-          break;
-        }
-      }
-      notifyListeners();
-    });
+   socket.on("exchange:status", (data) {
+  if (data is! Map) return;
+ 
+  final exchangeId = data["exchangeRequestId"]?.toString();
+  final newStatus = data["status"]?.toString();
+  if (exchangeId == null || newStatus == null) return;
+ 
+  for (int i = 0; i < messages.length; i++) {
+    if (messages[i].isExchangeRequest == true &&
+        messages[i].exchangeData?.exchangeId == exchangeId) {
+      final old = messages[i];
+      messages[i] = ChatMessage(
+        id: old.id,
+        threadId: old.threadId,
+        fromType: old.fromType,
+        isExchangeRequest: true,
+        timestamp: old.timestamp,
+        text: old.text,
+        deliveredAt: old.deliveredAt,
+        readAt: old.readAt,
+        exchangeData: ExchangeRequestData(
+          exchangeId: old.exchangeData?.exchangeId,
+          orderId: old.exchangeData?.orderId,
+          productId: old.exchangeData?.productId,
+          productName: old.exchangeData?.productName,
+          reason: old.exchangeData?.reason,
+          reasonCategory: old.exchangeData?.reasonCategory, // ✅ preserve
+          status: newStatus,
+          createdAt: old.exchangeData?.createdAt,
+          // ✅ Update from socket payload
+          courierPaidBy:  data["courierPaidBy"]?.toString() ?? old.exchangeData?.courierPaidBy,
+          resolutionType: data["resolutionType"]?.toString() ?? old.exchangeData?.resolutionType,
+          companyNote:    data["companyNote"]?.toString() ?? old.exchangeData?.companyNote,
+          pdfPath:        data["pdfPath"]?.toString() ?? old.exchangeData?.pdfPath,
+          images: old.exchangeData?.images ?? const [],
+        ),
+      );
+      break;
+    }
+  }
+  notifyListeners();
+});
 
     // ------- typing -------
     socket.on("chat:typing", (data) {

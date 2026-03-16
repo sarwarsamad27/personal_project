@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'package:new_brand/resources/appColor.dart';
 import '../../../../viewModel/providers/chatProvider/chat_provider.dart';
-  
+
 class CompanyMessageInput extends StatelessWidget {
   const CompanyMessageInput({super.key});
 
@@ -43,10 +43,13 @@ class CompanyMessageInput extends StatelessWidget {
                   onChanged: p.onTyping,
                   decoration: InputDecoration(
                     hintText: "Type a message",
-                    hintStyle: TextStyle(fontSize: 14.sp, color: Colors.black38),
+                    hintStyle: TextStyle(
+                      fontSize: 14.sp,
+                      color: Colors.black38,
+                    ),
                     border: InputBorder.none,
                   ),
-                  maxLines: null,
+                  maxLines: 3,
                 ),
               ),
             ),
