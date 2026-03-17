@@ -4,13 +4,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/models/chatThread/exchangeRequestModel.dart';
+import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/CompanyExchangeDetailScreen.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/companyExchange.dart';
 import 'package:provider/provider.dart';
 import 'package:new_brand/resources/appColor.dart';
 
 class CompanyExchangeListScreen extends StatefulWidget {
-  const CompanyExchangeListScreen({super.key});
+  final ExchangeRequest? request;
+  const CompanyExchangeListScreen({super.key , this.request});
 
   @override
   State<CompanyExchangeListScreen> createState() =>
@@ -64,6 +66,7 @@ class _CompanyExchangeListScreenState
             style:
                 TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold)),
         bottom: TabBar(
+          padding: EdgeInsets.zero,
           controller: _tab,
           isScrollable: true,
           indicatorColor: Colors.white,
@@ -116,6 +119,8 @@ class _CompanyExchangeListScreenState
                   context,
                   MaterialPageRoute(
                     builder: (_) => CompanyExchangeDetailScreen(
+                      profileId: requests[i].sellerProfileId ?? "",
+                      userId: requests[i].buyerId ?? "",
                       exchangeId: requests[i].id ?? "",
                     ),
                   ),

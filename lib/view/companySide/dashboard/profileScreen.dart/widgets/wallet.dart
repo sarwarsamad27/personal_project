@@ -232,9 +232,10 @@ class _WalletState extends State<Wallet> {
                                   return;
                                 }
 
-                                Navigator.pop(context);
+                                Navigator.pop(context , true);
 
                                 AppToast.show("Withdrawal request submitted");
+                                 Navigator.pop(context , true);
                               },
 
                               child: isVerifying

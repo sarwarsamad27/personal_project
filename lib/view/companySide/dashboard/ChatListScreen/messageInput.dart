@@ -49,6 +49,7 @@ class CompanyMessageInput extends StatelessWidget {
                     ),
                     border: InputBorder.none,
                   ),
+                  minLines: 1,
                   maxLines: 3,
                 ),
               ),

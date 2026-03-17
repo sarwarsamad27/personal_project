@@ -12,7 +12,9 @@ import 'package:new_brand/resources/toast.dart';
 
 class CompanyExchangeDetailScreen extends StatefulWidget {
   final String exchangeId;
-  const CompanyExchangeDetailScreen({super.key, required this.exchangeId});
+  final String? profileId;
+  final String ?userId;
+  const CompanyExchangeDetailScreen({super.key, required this.exchangeId , this.profileId , this.userId});
 
   @override
   State<CompanyExchangeDetailScreen> createState() =>
@@ -43,7 +45,8 @@ class _CompanyExchangeDetailScreenState
       final ex = provider.requests
           .where((r) => r.id == widget.exchangeId)
           .firstOrNull ?? _exchange;
-
+ final threadId =
+                                              'buyer_${widget.userId}_seller_${widget.profileId}';
       return Scaffold(
         backgroundColor: const Color(0xFFF5F6FA),
         appBar: AppBar(
