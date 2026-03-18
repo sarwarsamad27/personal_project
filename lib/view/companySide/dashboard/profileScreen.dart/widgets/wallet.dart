@@ -223,7 +223,7 @@ class _WalletState extends State<Wallet> {
                                     .verifyWithdrawCode(
                                       code: codeController.text,
                                       context: context,
-                                    );
+                                      );
 
                                 setSheetState(() => isVerifying = false);
 
