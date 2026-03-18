@@ -88,8 +88,8 @@ class _GetReturnedorderScreenState extends State<GetReturnedorderScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "Order #${order.sId!.substring(0, 6)}",
+                          Text(
+                            order.orderId ?? "Order #${order.sId!.substring(0, 6)}",
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,

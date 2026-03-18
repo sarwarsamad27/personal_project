@@ -247,6 +247,14 @@ class _OrderScreenState extends State<OrderScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Text(
+                              "Order ID: ${order.orderId ?? order.sId ?? ''}",
+                              style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(height: 2.h),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [

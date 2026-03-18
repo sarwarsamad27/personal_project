@@ -41,6 +41,7 @@ class OrderDetailScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        _buildRow("Order ID", order.orderId ?? order.sId ?? ""),
                         _buildRow("Customer", order.buyerDetails?.name ?? ""),
                         _buildRow(
                           "Address",

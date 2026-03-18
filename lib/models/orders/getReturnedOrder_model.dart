@@ -54,6 +54,7 @@
     String? createdAt;
     String? updatedAt;
     int? iV;
+    String? orderId;
 
     Orders(
         {this.sId,
@@ -66,10 +67,12 @@
         this.status,
         this.createdAt,
         this.updatedAt,
+        this.orderId,
         this.iV});
 
     Orders.fromJson(Map<String, dynamic> json) {
       sId = json['_id'];
+      orderId = json['orderId'];
       buyerId = json['buyerId'];
       profileId = json['profileId'];
       if (json['products'] != null) {
@@ -104,6 +107,7 @@
       }
       data['status'] = this.status;
       data['createdAt'] = this.createdAt;
+      data['orderId'] = this.orderId;
       data['updatedAt'] = this.updatedAt;
       data['__v'] = this.iV;
       return data;

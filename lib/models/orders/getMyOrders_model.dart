@@ -49,6 +49,7 @@ class GetMyPendingOrders {
 
 class Orders {
   String? sId;
+  String? orderId;
   String? buyerId;
   String? profileId;
   List<Products>? products;
@@ -62,6 +63,7 @@ class Orders {
 
   Orders({
     this.sId,
+    this.orderId,
     this.buyerId,
     this.profileId,
     this.products,
@@ -76,6 +78,7 @@ class Orders {
 
   Orders.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
+    orderId = json['orderId'];
     buyerId = json['buyerId'];
     profileId = json['profileId'];
     if (json['products'] != null) {
@@ -98,6 +101,7 @@ class Orders {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['_id'] = this.sId;
+    data['orderId'] = this.orderId;
     data['buyerId'] = this.buyerId;
     data['profileId'] = this.profileId;
     if (this.products != null) {
