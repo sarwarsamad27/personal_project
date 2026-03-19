@@ -35,8 +35,12 @@ class CompanyWalletProvider with ChangeNotifier {
     }
   }
 
-  double get currentBalance =>
+  double get grossBalance =>
       (walletData?.currentBalance ?? 0).toDouble();
+
+  double get netBalance => grossBalance * 0.90;
+
+  double get currentBalance => netBalance;
 
   // ================= SEND OTP =================
   Future<bool> sendWithdrawCode({

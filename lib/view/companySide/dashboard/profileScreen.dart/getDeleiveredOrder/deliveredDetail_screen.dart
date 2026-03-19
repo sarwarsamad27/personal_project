@@ -15,7 +15,7 @@ class DeliveredOrderDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColor.primaryColor,
-        title: const Text("Delivered Order Detail"),
+        title: const Text("Detail"),
       ),
       body: CustomBgContainer(
         child: Padding(
@@ -90,15 +90,22 @@ class DeliveredOrderDetailScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const Divider(color: Colors.white24),
                     Text(
-                      "Shipment: Rs. ${order.shipmentCharges}",
+                      "Total Amount: Rs. ${order.grandTotal ?? 0}",
                       style: const TextStyle(color: Colors.white),
                     ),
                     Text(
-                      "Grand Total: Rs. ${order.grandTotal}",
+                      "Shookoo Share (10%): Rs. ${((order.grandTotal ?? 0) * 0.10).toStringAsFixed(0)}",
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    const Divider(color: Colors.white24),
+                    Text(
+                      "Net to Company (90%): Rs. ${((order.grandTotal ?? 0) * 0.90).toStringAsFixed(0)}",
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Colors.green,
                         fontWeight: FontWeight.bold,
+                        fontSize: 18,
                       ),
                     ),
                   ],

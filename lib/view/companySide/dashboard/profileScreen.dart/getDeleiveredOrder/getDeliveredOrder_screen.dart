@@ -89,8 +89,9 @@ class _GetdeliveredorderScreenState extends State<GetdeliveredorderScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                          Text(
-                            order.orderId ?? "Order #${order.sId!.substring(0, 6)}",
+                        Text(
+                          order.orderId ??
+                              "Order #${order.orderId!.substring(0, 6)}",
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
@@ -109,9 +110,9 @@ class _GetdeliveredorderScreenState extends State<GetdeliveredorderScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          "Rs. ${order.grandTotal}",
+                          "Net: Rs. ${((order.grandTotal ?? 0) * 0.90).toStringAsFixed(0)}",
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: Colors.greenAccent,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
