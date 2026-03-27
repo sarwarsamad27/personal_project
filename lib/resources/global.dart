@@ -1,11 +1,12 @@
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps
 
 class Global {
-  static var BaseUrl = "http://10.0.2.2:5000/api/auth";
-  static var imageUrl = "http://10.0.2.2:5000";
+  static var BaseUrl = "https://seller-and-buyer-backend.onrender.com/api/auth";
+  static var imageUrl = "https://seller-and-buyer-backend.onrender.com";
   // static var imageUrl = "http://192.168.30.124:5000";
   // static var BaseUrl = "http://192.168.30.124:5000/api/auth";
-
+//   static var BaseUrl = "http://10.0.2.2:5000/api/auth";
+//   static var imageUrl = "http://10.0.2.2:5000";
   static var SignUp = "${BaseUrl}/signup";
   static var Login = "${BaseUrl}/login";
   static var GoogleLogin = "${BaseUrl}/google/login";
