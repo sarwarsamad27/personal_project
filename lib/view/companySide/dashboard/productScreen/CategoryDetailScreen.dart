@@ -95,7 +95,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                           children: [
                             // ── Image ──
                             Image.network(
-                              Global.imageUrl + widget.category.image!,
+                              Global.getImageUrl(widget.category.image!),
                               fit: BoxFit.cover,
                               height: imageHeight + 120.h,
                               width: double.infinity,
@@ -246,7 +246,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                               ? "Rs. ${p.beforeDiscountPrice}"
                               : null,
                           imageUrl: (p.images != null && p.images!.isNotEmpty)
-                              ? Global.imageUrl + p.images!.first
+                              ? Global.getImageUrl(p.images!.first)
                               : "",
                           saveText: p.beforeDiscountPrice != null
                               ? "Save Rs.${(p.beforeDiscountPrice! - p.afterDiscountPrice!).abs()}"

@@ -259,7 +259,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             imageUrl:
                                 (product.images != null &&
                                     product.images!.isNotEmpty)
-                                ? Global.imageUrl + product.images!.first
+                                ? Global.getImageUrl(product.images!.first)
                                 : "",
                             onTap: () {
                               Navigator.push(

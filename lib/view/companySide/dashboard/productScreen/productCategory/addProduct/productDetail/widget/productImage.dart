@@ -65,10 +65,10 @@ class ProductImage extends StatelessWidget {
         .toList();
 
     // 2) Base URL safety (optional but helpful)
-    final String baseUrl = (Global.imageUrl).trim();
+   
 
     // If baseUrl is empty, we should not attempt network load.
-    final bool canLoadNetwork = baseUrl.isNotEmpty;
+    final bool canLoadNetwork = Global.getImageUrl('') != '';
 
     final bool hasImages = validImages.isNotEmpty && canLoadNetwork;
 
@@ -89,7 +89,7 @@ class ProductImage extends StatelessWidget {
                     controller: _pageController,
                     itemCount: validImages.length,
                     itemBuilder: (context, index) {
-                      final url = baseUrl + validImages[index];
+                      final url = Global.getImageUrl(validImages[index]);
 
                       return Image.network(
                         url,

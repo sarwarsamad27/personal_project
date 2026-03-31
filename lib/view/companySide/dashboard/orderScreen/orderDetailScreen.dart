@@ -75,7 +75,7 @@ class OrderDetailScreen extends StatelessWidget {
                                       height: 100.h,
                                       width: 100.w,
                                       child: Image.network(
-                                        Global.imageUrl + product.images!.first,
+                                        Global.getImageUrl(product.images!.first)  ,
                                         fit: BoxFit.cover,
                                       ),
                                     ),
@@ -106,11 +106,15 @@ class OrderDetailScreen extends StatelessWidget {
                                 ],
                               ),
                               SizedBox(height: 6.h),
+if (product.selectedSize == null || product.selectedSize!.isEmpty)
+                                SizedBox.shrink()
+                              else
 
-                              _buildRow(
-                                "Color",
-                                (product.selectedColor ?? []).join(", "),
-                              ),
+
+                             
+                              if (product.selectedSize == null || product.selectedSize!.isEmpty)
+                                SizedBox.shrink()
+                              else
                               _buildRow(
                                 "Size",
                                 (product.selectedSize ?? []).join(", "),

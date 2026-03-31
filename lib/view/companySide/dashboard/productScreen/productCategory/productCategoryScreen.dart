@@ -92,7 +92,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final oldImage = (cat.image ?? "");
     final oldImageUrl = oldImage.startsWith("http")
         ? oldImage
-        : Global.imageUrl + oldImage;
+        : Global.getImageUrl(oldImage);
 
     final nameController = TextEditingController(text: oldName);
     File? newImageFile;
@@ -269,17 +269,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     );
   }
 
-  String getImageUrl(String? imagePath) {
-    if (imagePath == null || imagePath.isEmpty) return '';
-
-    // Agar already complete URL hai (Cloudinary) toh baseUrl mat lagao
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      return imagePath;
-    }
-
-    // Local path hai toh baseUrl lagao
-    return '${Global.imageUrl}$imagePath';
-  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -335,7 +325,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     children: [
                       CategoryTile(
                         name: item.name ?? "",
-                        image: getImageUrl(item.image),
+                        image: Global.getImageUrl(item.image),
                         onTap: () {
                           Navigator.push(
                             context,

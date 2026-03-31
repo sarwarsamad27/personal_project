@@ -90,7 +90,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           backgroundImage: image != null
                               ? FileImage(image)
                               : NetworkImage(
-                                  Global.imageUrl + widget.profile.image!,
+                                  Global.getImageUrl(widget.profile.image!),
                                 ),
                         );
                       },

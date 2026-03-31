@@ -358,7 +358,7 @@ class _ExistingImageTile extends StatelessWidget {
           height: 110.h,
           clipBehavior: Clip.hardEdge,
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(14.r)),
-          child: Image.network(Global.imageUrl + imagePath, fit: BoxFit.cover),
+          child: Image.network(Global.getImageUrl(imagePath), fit: BoxFit.cover),
         ),
         Positioned(
           top: 4,

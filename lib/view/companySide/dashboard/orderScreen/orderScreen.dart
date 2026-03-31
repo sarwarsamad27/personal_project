@@ -4,6 +4,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/toast.dart';
+import 'package:new_brand/view/companySide/dashboard/orderScreen/orderDetailScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
@@ -210,7 +211,7 @@ class _OrderScreenState extends State<OrderScreen>
                               (firstProduct != null &&
                                       firstProduct.images != null &&
                                       firstProduct.images.isNotEmpty)
-                                  ? Global.imageUrl + firstProduct.images.first
+                                  ? Global.getImageUrl(firstProduct.images.first)
                                   : "",
                               height: 75.h,
                               width: 75.w,
@@ -248,7 +249,7 @@ class _OrderScreenState extends State<OrderScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Order ID: ${order.orderId ?? order.sId ?? ''}",
+                              "Order ID: ${order.orderId ?? ''}",
                               style: TextStyle(
                                   color: Colors.white70,
                                   fontSize: 11.sp,
@@ -332,6 +333,27 @@ class _OrderScreenState extends State<OrderScreen>
                                     fontSize: 15.sp,
                                   ),
                                 ),
+
+                                if(isPendingTab)
+                                  GestureDetector(
+                                    onTap: () {
+                                     Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => OrderDetailScreen(order: order)
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      "View Details",
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.bold,
+                                          decoration: TextDecoration.underline
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
                           ],

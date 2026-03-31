@@ -7,6 +7,7 @@ import 'package:new_brand/viewModel/repository/orderRepository/paymentRepository
 import 'package:new_brand/models/orders/payment/paymentRequest_model.dart';
 import 'package:provider/provider.dart';
 import '../../repository/orderRepository/paymentRepository/verifyCode_repository.dart';
+import '../../repository/orderRepository/paymentRepository/addMoney_repository.dart';
 
 class CompanyWalletProvider with ChangeNotifier {
   final GetCompanyAmountRepository _walletRepo =
@@ -15,6 +16,8 @@ class CompanyWalletProvider with ChangeNotifier {
       PaymentRequestRepository();
   final VerifyCodeRepository _verifyCode =
       VerifyCodeRepository();
+  final AddMoneyRepository _addMoneyRepo =
+      AddMoneyRepository();
 
   bool isLoading = false;
 
@@ -104,6 +107,67 @@ class CompanyWalletProvider with ChangeNotifier {
       return false;
     } catch (e) {
       debugPrint("Verify OTP Error: $e");
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+  // ================= JAZZCASH CREDIT (INITIATE) =================
+  Future<Map<String, dynamic>?> initiateJazzcashCredit({
+    required String phone,
+    required String amount,
+  }) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      final res = await _addMoneyRepo.initiateJazzcashCredit(
+        phone: phone,
+        amount: amount,
+      );
+
+      if (res['message'] == "Payment approved" || res['message'] == "Payment prompt sent to your phone") {
+        return res;
+      }
+      return null;
+    } catch (e) {
+      debugPrint("JazzCash Initiate Error: $e");
+      return null;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ================= JAZZCASH CREDIT (CONFIRM/INQUIRE) =================
+  Future<bool> confirmJazzcashCredit({
+    required String txnRefNo,
+    required BuildContext context,
+  }) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      final res = await _addMoneyRepo.confirmJazzcashCredit(
+        txnRefNo: txnRefNo,
+      );
+
+      if (res['message'] == "Wallet credited successfully") {
+        /// 🔥 refresh wallet balance
+        await fetchCompanyWallet();
+
+        /// 🔥 refresh transaction history
+        if (context.mounted) {
+          await context.read<TransactionHistoryProvider>().fetchTransactions();
+        }
+
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint("JazzCash Confirm Error: $e");
       return false;
     } finally {
       isLoading = false;

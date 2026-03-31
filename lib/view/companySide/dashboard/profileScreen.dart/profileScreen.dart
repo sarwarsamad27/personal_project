@@ -94,7 +94,7 @@ class ProfileScreen extends StatelessWidget {
                             radius: 60.r,
                             backgroundImage: profile.image != null
                                 ? NetworkImage(
-                                    "${Global.imageUrl}${profile.image}",
+                                    "${Global.getImageUrl(profile.image!)}",
                                   )
                                 : const NetworkImage(
                                     "https://i.pravatar.cc/300",

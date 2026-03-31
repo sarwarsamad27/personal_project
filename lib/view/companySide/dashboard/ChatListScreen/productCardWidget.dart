@@ -21,7 +21,7 @@ class ProductCardWidget extends StatelessWidget {
     String getImageUrl(String? path) {
       if (path == null || path.isEmpty) return '';
       if (path.startsWith('http')) return path;
-      return '${Global.imageUrl}$path';
+      return '${Global.getImageUrl('')}$path';
     }
 
     return Container(

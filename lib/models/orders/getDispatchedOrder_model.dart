@@ -49,6 +49,7 @@ class GetDispatchedOrderModel {
 class Orders {
   String? sId;
   String? buyerId;
+   String? orderId;
   String? profileId;
   List<Products>? products;
   int? shipmentCharges;
@@ -64,6 +65,7 @@ class Orders {
       this.buyerId,
       this.profileId,
       this.products,
+       this.orderId,
       this.shipmentCharges,
       this.grandTotal,
       this.buyerDetails,
@@ -75,6 +77,7 @@ class Orders {
   Orders.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     buyerId = json['buyerId'];
+     orderId = json['orderId'];
     profileId = json['profileId'];
     if (json['products'] != null) {
       products = <Products>[];
