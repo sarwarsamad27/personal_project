@@ -14,6 +14,7 @@ import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
+import 'package:new_brand/widgets/customValidation.dart';
 import 'package:provider/provider.dart';
 
 // ignore: must_be_immutable
@@ -202,6 +203,7 @@ class AddProductScreen extends StatelessWidget {
                           controller: _nameController,
                           hintText: "Enter product name",
                           headerText: 'Product Name',
+                          validator: Validators.required
                         ),
                         SizedBox(height: 20.h),
 
@@ -209,6 +211,7 @@ class AddProductScreen extends StatelessWidget {
                           controller: _descriptionController,
                           hintText: "Enter product description",
                           headerText: 'Description',
+                          validator: Validators.required,
                         ),
                         SizedBox(height: 20.h),
 

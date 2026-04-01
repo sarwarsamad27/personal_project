@@ -10,6 +10,7 @@ import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
 import 'package:new_brand/view/companySide/auth/loginScreen.dart';
+import 'package:new_brand/widgets/customValidation.dart';
 import 'package:provider/provider.dart';
 
 class SignUpScreen extends StatelessWidget {
@@ -29,7 +30,7 @@ class SignUpScreen extends StatelessWidget {
       designSize: const Size(390, 844),
       builder: (context, child) {
         return GestureDetector(
-           onTap: () => FocusScope.of(context).unfocus(),
+          onTap: () => FocusScope.of(context).unfocus(),
           child: Scaffold(
             resizeToAvoidBottomInset: true,
             body: Stack(
@@ -57,7 +58,7 @@ class SignUpScreen extends StatelessWidget {
                                   color: AppColor.primaryColor,
                                 ),
                                 SizedBox(height: 18.h),
-          
+
                                 Text(
                                   "Create Account",
                                   style: TextStyle(
@@ -76,48 +77,55 @@ class SignUpScreen extends StatelessWidget {
                                   ),
                                 ),
                                 SizedBox(height: 30.h),
-          
+
                                 CustomTextField(
                                   headerText: "Email Address",
                                   hintText: "Enter your email",
                                   controller: emailController,
+                                  validator: Validators.email,
                                   prefixIcon: Icons.email_outlined,
                                 ),
-          
+
                                 SizedBox(height: 18.h),
-          
+
                                 CustomTextField(
                                   headerText: "Password",
                                   hintText: "Enter your password",
                                   controller: passwordController,
                                   isPassword: true,
+                                  validator: Validators.password,
                                   prefixIcon: Icons.lock_outline,
                                 ),
-          
+
                                 SizedBox(height: 18.h),
-          
+
                                 CustomTextField(
                                   headerText: "Confirm Password",
-                                  hintText: "Re-enter your password",
+                                  hintText:
+                                      "Re-enter your password", // ✅ Yeh theek hai as-is
+                                  validator: Validators.confirmPassword(
+                                    confirmPasswordController,
+                                    passwordController,
+                                  ),
                                   controller: confirmPasswordController,
                                   isPassword: true,
                                   prefixIcon: Icons.lock_reset_outlined,
                                 ),
-          
+
                                 SizedBox(height: 25.h),
-          
+
                                 CustomButton(
                                   text: "Create Account",
                                   onTap: () async {
                                     if (!formKey.currentState!.validate()) {
                                       return;
                                     }
-          
+
                                     if (!await isConnected()) {
                                       AppToast.error("No internet connection");
                                       return;
                                     }
-          
+
                                     await provider.signUpProvider(
                                       email: emailController.text.trim(),
                                       password: passwordController.text.trim(),
@@ -125,7 +133,7 @@ class SignUpScreen extends StatelessWidget {
                                           .text
                                           .trim(),
                                     );
-          
+
                                     /// API RESPONSE CHECK
                                     if (provider.signUpData?.message ==
                                         "User registered successfully") {
@@ -133,9 +141,11 @@ class SignUpScreen extends StatelessWidget {
                                       emailController.clear();
                                       passwordController.clear();
                                       confirmPasswordController.clear();
-          
-                                      AppToast.success("User registered Successful");
-          
+
+                                      AppToast.success(
+                                        "User registered Successful",
+                                      );
+
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -144,14 +154,15 @@ class SignUpScreen extends StatelessWidget {
                                       );
                                     } else {
                                       AppToast.error(
-                                        provider.errorMessage ?? "Signup Failed",
+                                        provider.errorMessage ??
+                                            "Signup Failed",
                                       );
                                     }
                                   },
                                 ),
-          
+
                                 SizedBox(height: 25.h),
-          
+
                                 Row(
                                   children: [
                                     Expanded(
@@ -180,9 +191,9 @@ class SignUpScreen extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-          
+
                                 SizedBox(height: 20.h),
-          
+
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -232,9 +243,9 @@ class SignUpScreen extends StatelessWidget {
                             color: Colors.black.withOpacity(0.3),
                             child: const Center(
                               child: SpinKitThreeBounce(
-                    color: AppColor.primaryColor,
-                    size: 30.0,
-                  ),
+                                color: AppColor.primaryColor,
+                                size: 30.0,
+                              ),
                             ),
                           )
                         : const SizedBox();

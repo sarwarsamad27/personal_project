@@ -16,6 +16,7 @@ import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
+import 'package:new_brand/widgets/customValidation.dart';
 import 'package:new_brand/widgets/social_button.dart';
 import 'package:provider/provider.dart';
 
@@ -73,6 +74,7 @@ class LoginScreen extends StatelessWidget {
                       CustomTextField(
                         headerText: "Email Address",
                         hintText: "Enter your email",
+                        validator: Validators.email,
                         controller: provider.emailController,
                         prefixIcon: Icons.email_outlined,
                       ),
@@ -81,6 +83,7 @@ class LoginScreen extends StatelessWidget {
                       CustomTextField(
                         headerText: "Password",
                         hintText: "Enter your password",
+                        validator: Validators.password,
                         controller: provider.passwordController,
                         isPassword: true,
                         prefixIcon: Icons.lock_outline,

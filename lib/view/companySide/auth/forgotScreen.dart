@@ -8,6 +8,7 @@ import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
+import 'package:new_brand/widgets/customValidation.dart';
 import 'package:provider/provider.dart';
 
 class ForgotScreen extends StatelessWidget {
@@ -62,6 +63,7 @@ class ForgotScreen extends StatelessWidget {
                         headerText: "Email Address",
                         hintText: "Enter your email",
                         controller: emailController,
+                        validator: Validators.email,
                         prefixIcon: Icons.email_outlined,
                       ),
                       SizedBox(height: 30.h),

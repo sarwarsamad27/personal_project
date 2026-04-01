@@ -6,6 +6,7 @@ import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/createCategory_provider.dart';
 import 'package:new_brand/widgets/customImageContainer.dart';
+import 'package:new_brand/widgets/customValidation.dart';
 import 'package:provider/provider.dart';
 
 import 'package:new_brand/widgets/customBgContainer.dart';
@@ -94,6 +95,7 @@ class AddCategoryScreen extends StatelessWidget {
                           SizedBox(height: 30.h),
 
                           CustomTextField(
+                            validator: Validators.required,
                             controller: provider.nameController,
                             hintText: "Enter category name",
                             headerText: 'Category Name',

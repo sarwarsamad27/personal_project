@@ -52,7 +52,6 @@ class _WalletState extends State<Wallet> {
       },
     },
   ];
- 
 
   @override
   void initState() {
@@ -225,7 +224,7 @@ class _WalletState extends State<Wallet> {
                                     .verifyWithdrawCode(
                                       code: codeController.text,
                                       context: context,
-                                      );
+                                    );
 
                                 setSheetState(() => isVerifying = false);
 
@@ -234,10 +233,10 @@ class _WalletState extends State<Wallet> {
                                   return;
                                 }
 
-                                Navigator.pop(context , true);
+                                Navigator.pop(context, true);
 
                                 AppToast.show("Withdrawal request submitted");
-                                 Navigator.pop(context , true);
+                                Navigator.pop(context, true);
                               },
 
                               child: isVerifying
@@ -393,49 +392,81 @@ class _WalletState extends State<Wallet> {
                               borderRadius: BorderRadius.circular(12.r),
                             ),
                           ),
-                          onPressed: isInitiating ? null : () async {
-                            final provider = context.read<CompanyWalletProvider>();
-                            final amount = amountController.text.trim();
-                            final phone = phoneController.text.trim();
+                          onPressed: isInitiating
+                              ? null
+                              : () async {
+                                  final provider = context
+                                      .read<CompanyWalletProvider>();
+                                  final amount = amountController.text.trim();
+                                  final phone = phoneController.text.trim();
 
-                            if (phone.length != 11 || !phone.startsWith("03")) {
-                              AppToast.show("Please enter a valid 11-digit JazzCash number");
-                              return;
-                            }
+                                  if (phone.length != 11 ||
+                                      !phone.startsWith("03")) {
+                                    AppToast.show(
+                                      "Please enter a valid 11-digit JazzCash number",
+                                    );
+                                    return;
+                                  }
 
-                            if (amount.isEmpty || double.parse(amount) < 100) {
-                              AppToast.show("Minimum amount is Rs. 100");
-                              return;
-                            }
+                                  if (amount.isEmpty ||
+                                      double.parse(amount) < 100) {
+                                    AppToast.show("Minimum amount is Rs. 100");
+                                    return;
+                                  }
 
-                            setSheetState(() => isInitiating = true);
-                            final result = await provider.initiateJazzcashCredit(
-                              phone: phone,
-                              amount: amount,
-                            );
-                            setSheetState(() => isInitiating = false);
+                                  setSheetState(() => isInitiating = true);
+                                  final result = await provider
+                                      .initiateJazzcashCredit(
+                                        phone: phone,
+                                        amount: amount,
+                                      );
+                                  setSheetState(() => isInitiating = false);
 
-                            if (result != null) {
-                              setSheetState(() => currentTxnRef = result['txnRefNo']);
-                              AppToast.show(result['message'] ?? "Please check your phone for the PIN prompt");
-                            }
-                          },
-                          child: isInitiating 
-                            ? SpinKitThreeBounce(color: Colors.white, size: 20)
-                            : const Text("Pay with JazzCash", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                  if (result != null) {
+                                    setSheetState(
+                                      () => currentTxnRef = result['txnRefNo'],
+                                    );
+                                    AppToast.show(
+                                      result['message'] ??
+                                          "Please check your phone for the PIN prompt",
+                                    );
+                                  }
+                                },
+                          child: isInitiating
+                              ? SpinKitThreeBounce(
+                                  color: Colors.white,
+                                  size: 20,
+                                )
+                              : const Text(
+                                  "Pay with JazzCash",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ] else ...[
-                        Icon(LucideIcons.smartphone, color: Colors.green, size: 50.sp),
+                        Icon(
+                          LucideIcons.smartphone,
+                          color: Colors.green,
+                          size: 50.sp,
+                        ),
                         SizedBox(height: 20.h),
                         Text(
                           "A PIN prompt has been sent to your phone number ${phoneController.text}.",
-                          style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14.sp,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         SizedBox(height: 10.h),
                         Text(
                           "Please enter your JazzCash PIN on your phone and then click the button below.",
-                          style: TextStyle(color: Colors.white70, fontSize: 12.sp),
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12.sp,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         SizedBox(height: 30.h),
@@ -447,26 +478,45 @@ class _WalletState extends State<Wallet> {
                               borderRadius: BorderRadius.circular(12.r),
                             ),
                           ),
-                          onPressed: isVerifying ? null : () async {
-                            setSheetState(() => isVerifying = true);
-                            final success = await context.read<CompanyWalletProvider>().confirmJazzcashCredit(
-                              txnRefNo: currentTxnRef!,
-                              context: context,
-                            );
-                            setSheetState(() => isVerifying = false);
+                          onPressed: isVerifying
+                              ? null
+                              : () async {
+                                  setSheetState(() => isVerifying = true);
+                                  final success = await context
+                                      .read<CompanyWalletProvider>()
+                                      .confirmJazzcashCredit(
+                                        txnRefNo: currentTxnRef!,
+                                        context: context,
+                                      );
+                                  setSheetState(() => isVerifying = false);
 
-                            if (success) {
-                              Navigator.pop(context);
-                              AppToast.show("Payment Successful! Wallet Credited.");
-                            }
-                          },
+                                  if (success) {
+                                    Navigator.pop(context);
+                                    AppToast.show(
+                                      "Payment Successful! Wallet Credited.",
+                                    );
+                                  }
+                                },
                           child: isVerifying
-                            ? SpinKitThreeBounce(color: Colors.white, size: 20)
-                            : const Text("I Have Entered My PIN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              ? SpinKitThreeBounce(
+                                  color: Colors.white,
+                                  size: 20,
+                                )
+                              : const Text(
+                                  "I Have Entered My PIN",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                         TextButton(
-                          onPressed: () => setSheetState(() => currentTxnRef = null),
-                          child: const Text("Cancel & Go Back", style: TextStyle(color: Colors.white60)),
+                          onPressed: () =>
+                              setSheetState(() => currentTxnRef = null),
+                          child: const Text(
+                            "Cancel & Go Back",
+                            style: TextStyle(color: Colors.white60),
+                          ),
                         ),
                       ],
                     ],
@@ -482,18 +532,17 @@ class _WalletState extends State<Wallet> {
 
   @override
   Widget build(BuildContext context) {
-    
     return Consumer<CompanyWalletProvider>(
-      
       builder: (context, walletProvider, _) {
-        log('Current Balance: ${walletProvider.currentBalance.toStringAsFixed(0)}');
+        log(
+          'Current Balance: ${walletProvider.currentBalance.toStringAsFixed(0)}',
+        );
         return GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
           child: CustomAppContainer(
             padding: EdgeInsets.all(20.w),
             child: Column(
               children: [
-                
                 const Text(
                   "Current Balance",
                   style: TextStyle(color: Colors.white70),
@@ -517,22 +566,6 @@ class _WalletState extends State<Wallet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          padding: EdgeInsets.symmetric(vertical: 12.h),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                        ),
-                        icon: const Icon(LucideIcons.plusCircle, color: Colors.white, size: 18),
-                        label: const Text("Deposit", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        onPressed: () => _openAddMoneyDialog(),
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
                     Expanded(
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
@@ -542,12 +575,22 @@ class _WalletState extends State<Wallet> {
                             borderRadius: BorderRadius.circular(10.r),
                           ),
                         ),
-                        icon: const Icon(LucideIcons.arrowDownCircle, color: Colors.white, size: 18),
-                        label: const Text("Withdraw", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        icon: const Icon(
+                          LucideIcons.arrowDownCircle,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        label: const Text(
+                          "Withdraw",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         onPressed: () => _openWithdrawDialog(),
+                      ),
                     ),
-                   ),
-                ],
+                  ],
                 ),
               ],
             ),
@@ -555,5 +598,5 @@ class _WalletState extends State<Wallet> {
         );
       },
     );
-    
-  }}
+  }
+}

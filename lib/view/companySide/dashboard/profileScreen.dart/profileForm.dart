@@ -12,6 +12,7 @@ import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customImageContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
+import 'package:new_brand/widgets/customValidation.dart';
 import 'package:provider/provider.dart';
 
 class ProfileFormScreen extends StatefulWidget {
@@ -140,6 +141,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                             controller: _nameController,
                             hintText: "Enter your name",
                             headerText: "Full Name",
+                            validator: Validators.name,
                           ),
                           SizedBox(height: 20.h),
 
@@ -147,6 +149,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                             controller: _emailController,
                             headerText: "Email Address",
                             readOnly: true, // ✅ locked
+                            validator: Validators.email,
                           ),
                           SizedBox(height: 20.h),
 
@@ -155,6 +158,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                             hintText: "Enter your phone number",
                             keyboardType: TextInputType.number,
                             headerText: "Phone Number",
+                            validator: Validators.phonePK,
                           ),
                           SizedBox(height: 20.h),
 
@@ -162,6 +166,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                             controller: _addressController,
                             hintText: "Enter your address",
                             headerText: "Address",
+                            validator: Validators.required,
                           ),
                           SizedBox(height: 20.h),
 
@@ -169,6 +174,8 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                             controller: _descriptionController,
                             hintText: "Write something about yourself",
                             headerText: "Description",
+                            validator: Validators.required,
+                            maxLines: 5,
                             height: 120.h,
                           ),
 

@@ -14,6 +14,7 @@ class CustomTextField extends StatefulWidget {
   final TextInputType? keyboardType;
   final double? height;
   final bool? readOnly;
+  final int? maxLines;
 
   final String? Function(String?)? validator; // ✅ ADDED
   final Function(String)? onChanged;
@@ -26,7 +27,7 @@ class CustomTextField extends StatefulWidget {
     this.isPassword = false,
     this.keyboardType,
     this.prefixIcon,
-    
+    this.maxLines = 1,
     this.suffixIcon,
     this.readOnly,
     this.height,
@@ -80,6 +81,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
                     builder: (context, isObscure, child) {
                       return TextField(
                         controller: widget.controller,
+                        maxLines: widget.maxLines,
                         obscureText: widget.isPassword ? isObscure : false,
                         keyboardType: widget.keyboardType ?? TextInputType.text,
                         readOnly: widget.readOnly ?? false,
