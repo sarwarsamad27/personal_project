@@ -11,8 +11,9 @@ class CompanyExchangeRepository {
   Future<ExchangeRequestListModel> listRequests({String? status}) async {
     try {
       final query = status != null ? "?status=$status" : "";
-      final response =
-          await _api.getApi("${Global.getCompanyExchangeRequests}$query");
+      final response = await _api.getApi(
+        "${Global.getCompanyExchangeRequests}$query",
+      );
       return ExchangeRequestListModel.fromJson(response);
     } catch (e) {
       return ExchangeRequestListModel(message: "Error: $e");
@@ -27,14 +28,11 @@ class CompanyExchangeRepository {
     String note = "",
   }) async {
     try {
-      final response = await _api.putApi(
-        "${Global.exchangeDecision}/$exchangeId/decision",
-        {
-          "decision": decision,
-          "resolutionType": resolutionType,
-          "note": note,
-        },
-      );
+      final response = await _api.putApi(Global.exchangeDecision(exchangeId), {
+        "decision": decision,
+        "resolutionType": resolutionType,
+        "note": note,
+      });
       return response["success"] == true;
     } catch (e) {
       return false;
