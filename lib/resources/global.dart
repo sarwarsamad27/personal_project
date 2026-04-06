@@ -1,8 +1,8 @@
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps
 
 class Global {
-//   static var BaseUrl = "https://seller-and-buyer-backend.onrender.com/api/auth";
-//   static var imageUrl = "https://seller-and-buyer-backend.onrender.com";
+  //   static var BaseUrl = "https://seller-and-buyer-backend.onrender.com/api/auth";
+  //   static var imageUrl = "https://seller-and-buyer-backend.onrender.com";
   // static var imageUrl = "http://192.168.30.124:5000";
   // static var BaseUrl = "http://192.168.30.124:5000/api/auth";
   static var BaseUrl = "http://10.0.2.2:5000/api/auth";
@@ -105,24 +105,29 @@ class Global {
   static String markCompleted(String exchangeId) =>
       "${BaseUrl}/exchange/$exchangeId/complete";
 
-static String getImageUrl(String? imagePath) {
-  if (imagePath == null || imagePath.isEmpty) {
-    return ''; // ya koi default image
+  // ── Refund (Company) ───────────────────────────────────────────
+  static String refundDecision(String refundId) =>
+      "${BaseUrl}/refund/$refundId/decision";
+
+  static String updateRefundStatus(String refundId) =>
+      "${BaseUrl}/refund/$refundId/status";
+
+  static String getImageUrl(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) {
+      return ''; // ya koi default image
+    }
+
+    // Agar already full URL hai (cloudinary)
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+
+    // Agar local upload hai (/uploads/...)
+    if (imagePath.startsWith('/uploads/')) {
+      return imageUrl + imagePath; // imageUrl = "https://yourapi.com"
+    }
+
+    // Normal case
+    return imageUrl + imagePath;
   }
-
-  // Agar already full URL hai (cloudinary)
-  if (imagePath.startsWith('http')) {
-    return imagePath;
-  }
-
-  // Agar local upload hai (/uploads/...)
-  if (imagePath.startsWith('/uploads/')) {
-    return imageUrl + imagePath;        // imageUrl = "https://yourapi.com"
-  }
-
-  // Normal case
-  return imageUrl + imagePath;
-}
-
-
 }

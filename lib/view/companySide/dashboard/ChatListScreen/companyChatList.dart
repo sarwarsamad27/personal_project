@@ -4,6 +4,7 @@ import 'package:new_brand/view/companySide/dashboard/ChatListScreen/emptyState.d
 import 'package:new_brand/view/companySide/dashboard/ChatListScreen/exchangeRequestpoll.dart';
 import 'package:new_brand/view/companySide/dashboard/ChatListScreen/messageBubble.dart';
 import 'package:new_brand/view/companySide/dashboard/ChatListScreen/productCardWidget.dart';
+import 'package:new_brand/view/companySide/dashboard/ChatListScreen/refundRequestpoll.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../viewModel/providers/chatProvider/chat_provider.dart';
@@ -35,7 +36,10 @@ class CompanyChatList extends StatelessWidget {
               return ExchangeRequestPoll(message: message);
             }
 
-            // ✅ ADD
+            if (message.isRefundRequest == true) {
+              return RefundRequestPoll(message: message);
+            }
+
             if (message.productCard != null) {
               return ProductCardWidget(
                 productCard: message.productCard!,

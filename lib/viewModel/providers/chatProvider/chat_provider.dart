@@ -9,6 +9,7 @@ import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/socketServices.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/viewModel/repository/chatThread/exchangeDisicion_repository.dart';
+import 'package:new_brand/viewModel/repository/chatThread/refundDecision_repository.dart';
 
 class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
   final String threadId;
@@ -134,7 +135,11 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   // fingerprint key
-  String _key({required String? fromType, required String? text, required String? ts}) {
+  String _key({
+    required String? fromType,
+    required String? text,
+    required String? ts,
+  }) {
     final t = (text ?? "").trim();
     String s = (ts ?? "").toString();
     if (s.length >= 19) s = s.substring(0, 19);
@@ -185,7 +190,12 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
         final msg = ChatMessage.fromJson(Map<String, dynamic>.from(msgData));
         messages.add(msg);
         if (msg.id != null) _processedMessageIds.add(msg.id!);
-        _recentKeys[_key(fromType: msg.fromType, text: msg.text, ts: msg.timestamp)] = DateTime.now();
+        _recentKeys[_key(
+              fromType: msg.fromType,
+              text: msg.text,
+              ts: msg.timestamp,
+            )] =
+            DateTime.now();
       }
 
       notifyListeners();
@@ -205,6 +215,8 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
     socket.off("chat:message");
     socket.off("exchange:new");
     socket.off("exchange:status");
+    socket.off("refund:new");
+    socket.off("refund:status");
     socket.off("chat:typing");
     socket.off("chat:status");
     socket.off("chat:status_bulk");
@@ -224,7 +236,6 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
       final fp = _key(fromType: fromType, text: incomingText, ts: incomingTs);
       if (_isRecentDup(fp)) return;
 
-      // seller msg timestamp mismatch case
       if (fromType == "seller") {
         final lk = _loose(fromType: fromType, text: incomingText);
         if (_isRecentDup(lk)) return;
@@ -239,7 +250,6 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
       if (newMessage.id != null) _processedMessageIds.add(newMessage.id!);
       if (clientId != null) _processedClientIds.add(clientId);
 
-      // statuses for buyer msgs
       if (newMessage.fromType != "seller" && newMessage.id != null) {
         _markSingleMessageDelivered(newMessage.id!);
         _markSingleMessageRead(newMessage.id!);
@@ -257,82 +267,51 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
       final messageId = (data["_id"] ?? data["id"])?.toString();
       if (messageId != null && _processedMessageIds.contains(messageId)) return;
 
-      try {
-        final exchangeMessage = ChatMessage(
-          id: messageId,
-          threadId: threadId,
-          fromType: "buyer",
-          isExchangeRequest: true,
-          timestamp: data["timestamp"]?.toString() ??
-              data["createdAt"]?.toString() ??
-              DateTime.now().toIso8601String(),
-          text: data["text"]?.toString(),
-          exchangeData: ExchangeRequestData(
-            exchangeId: data["exchangeData"]?["exchangeId"]?.toString() ??
-                data["exchangeRequestId"]?.toString(),
-            orderId: data["exchangeData"]?["orderId"]?.toString(),
-            productId: data["exchangeData"]?["productId"]?.toString(),
-            productName: data["exchangeData"]?["productName"]?.toString(),
-            reason: data["exchangeData"]?["reason"]?.toString(),
-            status: (data["exchangeData"]?["status"]?.toString() ?? "Pending").toString(),
-            createdAt: data["exchangeData"]?["createdAt"]?.toString(),
-            images: ((data["exchangeData"]?["images"] as List?) ?? const [])
-                .map((e) => e.toString())
-                .toList(),
-          ),
-        );
+      final exchangeMessage = ChatMessage.fromJson(
+        Map<String, dynamic>.from(data),
+      );
+      messages.insert(0, exchangeMessage);
+      if (messageId != null) _processedMessageIds.add(messageId);
 
-        messages.insert(0, exchangeMessage);
-        if (messageId != null) _processedMessageIds.add(messageId);
+      notifyListeners();
+      scrollToBottom();
+    });
 
-        notifyListeners();
-        scrollToBottom();
-      } catch (_) {}
+    // ------- refund:new -------
+    socket.on("refund:new", (data) {
+      if (data is! Map) return;
+      if (data["threadId"]?.toString() != threadId) return;
+
+      final messageId = (data["_id"] ?? data["id"])?.toString();
+      if (messageId != null && _processedMessageIds.contains(messageId)) return;
+
+      final refundMessage = ChatMessage.fromJson(
+        Map<String, dynamic>.from(data),
+      );
+      messages.insert(0, refundMessage);
+      if (messageId != null) _processedMessageIds.add(messageId);
+
+      notifyListeners();
+      scrollToBottom();
     });
 
     // ------- exchange:status -------
-   socket.on("exchange:status", (data) {
-  if (data is! Map) return;
- 
-  final exchangeId = data["exchangeRequestId"]?.toString();
-  final newStatus = data["status"]?.toString();
-  if (exchangeId == null || newStatus == null) return;
- 
-  for (int i = 0; i < messages.length; i++) {
-    if (messages[i].isExchangeRequest == true &&
-        messages[i].exchangeData?.exchangeId == exchangeId) {
-      final old = messages[i];
-      messages[i] = ChatMessage(
-        id: old.id,
-        threadId: old.threadId,
-        fromType: old.fromType,
-        isExchangeRequest: true,
-        timestamp: old.timestamp,
-        text: old.text,
-        deliveredAt: old.deliveredAt,
-        readAt: old.readAt,
-        exchangeData: ExchangeRequestData(
-          exchangeId: old.exchangeData?.exchangeId,
-          orderId: old.exchangeData?.orderId,
-          productId: old.exchangeData?.productId,
-          productName: old.exchangeData?.productName,
-          reason: old.exchangeData?.reason,
-          reasonCategory: old.exchangeData?.reasonCategory, // ✅ preserve
-          status: newStatus,
-          createdAt: old.exchangeData?.createdAt,
-          // ✅ Update from socket payload
-          courierPaidBy:  data["courierPaidBy"]?.toString() ?? old.exchangeData?.courierPaidBy,
-          resolutionType: data["resolutionType"]?.toString() ?? old.exchangeData?.resolutionType,
-          companyNote:    data["companyNote"]?.toString() ?? old.exchangeData?.companyNote,
-          pdfPath:        data["pdfPath"]?.toString() ?? old.exchangeData?.pdfPath,
-          images: old.exchangeData?.images ?? const [],
-        ),
-      );
-      break;
-    }
-  }
-  notifyListeners();
-});
+    socket.on("exchange:status", (data) {
+      if (data is! Map) return;
+      final exchangeId = data["exchangeRequestId"]?.toString();
+      final newStatus = data["status"]?.toString();
+      if (exchangeId == null || newStatus == null) return;
+      _updateExchangeStatusLocally(exchangeId, newStatus, data);
+    });
+
+    // ------- refund:status -------
+    socket.on("refund:status", (data) {
+      if (data is! Map) return;
+      final refundId = data["refundRequestId"]?.toString();
+      final newStatus = data["status"]?.toString();
+      if (refundId == null || newStatus == null) return;
+      _updateRefundStatusLocally(refundId, newStatus);
+    });
 
     // ------- typing -------
     socket.on("chat:typing", (data) {
@@ -345,26 +324,28 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
     // ------- status single -------
     socket.on("chat:status", (data) {
       if (data is! Map) return;
-
       final messageId = data["messageId"]?.toString();
       if (messageId == null) return;
-
       final deliveredAt = data["deliveredAt"]?.toString();
       final readAt = data["readAt"]?.toString();
 
       for (int i = 0; i < messages.length; i++) {
         if (messages[i].id == messageId) {
+          final m = messages[i];
           messages[i] = ChatMessage(
-            id: messages[i].id,
-            threadId: messages[i].threadId,
-            fromType: messages[i].fromType,
-            fromId: messages[i].fromId,
-            text: messages[i].text,
-            timestamp: messages[i].timestamp,
+            id: m.id,
+            threadId: m.threadId,
+            fromType: m.fromType,
+            fromId: m.fromId,
+            text: m.text,
+            timestamp: m.timestamp,
             deliveredAt: deliveredAt,
             readAt: readAt,
-            isExchangeRequest: messages[i].isExchangeRequest,
-            exchangeData: messages[i].exchangeData,
+            isExchangeRequest: m.isExchangeRequest,
+            isRefundRequest: m.isRefundRequest,
+            exchangeData: m.exchangeData,
+            refundData: m.refundData,
+            productCard: m.productCard,
           );
           break;
         }
@@ -372,32 +353,112 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
       notifyListeners();
     });
 
-    // ------- status bulk -------
     socket.on("chat:status_bulk", (data) {
       if (data is! Map) return;
-
       final List<dynamic> messageIds = data["messageIds"] ?? [];
       final readAt = data["readAt"]?.toString();
       if (messageIds.isEmpty || readAt == null) return;
 
       for (int i = 0; i < messages.length; i++) {
         if (messageIds.contains(messages[i].id)) {
+          final m = messages[i];
           messages[i] = ChatMessage(
-            id: messages[i].id,
-            threadId: messages[i].threadId,
-            fromType: messages[i].fromType,
-            fromId: messages[i].fromId,
-            text: messages[i].text,
-            timestamp: messages[i].timestamp,
-            deliveredAt: messages[i].deliveredAt ?? readAt,
+            id: m.id,
+            threadId: m.threadId,
+            fromType: m.fromType,
+            fromId: m.fromId,
+            text: m.text,
+            timestamp: m.timestamp,
+            deliveredAt: m.deliveredAt ?? readAt,
             readAt: readAt,
-            isExchangeRequest: messages[i].isExchangeRequest,
-            exchangeData: messages[i].exchangeData,
+            isExchangeRequest: m.isExchangeRequest,
+            isRefundRequest: m.isRefundRequest,
+            exchangeData: m.exchangeData,
+            refundData: m.refundData,
+            productCard: m.productCard,
           );
         }
       }
       notifyListeners();
     });
+  }
+
+  void _updateExchangeStatusLocally(
+    String exchangeId,
+    String newStatus,
+    Map data,
+  ) {
+    for (int i = 0; i < messages.length; i++) {
+      if (messages[i].isExchangeRequest &&
+          messages[i].exchangeData?.exchangeId == exchangeId) {
+        final old = messages[i];
+        messages[i] = ChatMessage(
+          id: old.id,
+          threadId: old.threadId,
+          fromType: old.fromType,
+          isExchangeRequest: true,
+          timestamp: old.timestamp,
+          text: old.text,
+          deliveredAt: old.deliveredAt,
+          readAt: old.readAt,
+          exchangeData: ExchangeRequestData(
+            exchangeId: old.exchangeData?.exchangeId,
+            orderId: old.exchangeData?.orderId,
+            productId: old.exchangeData?.productId,
+            productName: old.exchangeData?.productName,
+            reason: old.exchangeData?.reason,
+            reasonCategory: old.exchangeData?.reasonCategory,
+            status: newStatus,
+            createdAt: old.exchangeData?.createdAt,
+            courierPaidBy:
+                data["courierPaidBy"]?.toString() ??
+                old.exchangeData?.courierPaidBy,
+            resolutionType:
+                data["resolutionType"]?.toString() ??
+                old.exchangeData?.resolutionType,
+            companyNote:
+                data["companyNote"]?.toString() ??
+                old.exchangeData?.companyNote,
+            pdfPath: data["pdfPath"]?.toString() ?? old.exchangeData?.pdfPath,
+            images: old.exchangeData?.images ?? const [],
+          ),
+        );
+        break;
+      }
+    }
+    notifyListeners();
+  }
+
+  void _updateRefundStatusLocally(String refundId, String status) {
+    for (int i = 0; i < messages.length; i++) {
+      if (messages[i].isRefundRequest &&
+          messages[i].refundData?.refundId == refundId) {
+        final old = messages[i];
+        messages[i] = ChatMessage(
+          id: old.id,
+          threadId: old.threadId,
+          fromType: old.fromType,
+          isRefundRequest: true,
+          timestamp: old.timestamp,
+          text: old.text,
+          deliveredAt: old.deliveredAt,
+          readAt: old.readAt,
+          refundData: RefundRequestData(
+            refundId: old.refundData?.refundId,
+            orderId: old.refundData?.orderId,
+            productId: old.refundData?.productId,
+            productName: old.refundData?.productName,
+            reason: old.refundData?.reason,
+            reasonCategory: old.refundData?.reasonCategory,
+            status: normalizeStatus(status),
+            createdAt: old.refundData?.createdAt,
+            images: old.refundData?.images ?? [],
+          ),
+        );
+        break;
+      }
+    }
+    notifyListeners();
   }
 
   // =========================
@@ -406,15 +467,14 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
   void _markMessagesAsDelivered() {
     final socket = SocketService().socket;
     if (socket == null || !socket.connected) return;
-
     final ids = messages
-        .where((m) => m.fromType != "seller" && m.deliveredAt == null && m.id != null)
+        .where(
+          (m) =>
+              m.fromType != "seller" && m.deliveredAt == null && m.id != null,
+        )
         .map((m) => m.id!)
         .toList();
-
-    for (final id in ids) {
-      socket.emit("chat:delivered", {"messageId": id});
-    }
+    for (final id in ids) socket.emit("chat:delivered", {"messageId": id});
   }
 
   void _markSingleMessageDelivered(String messageId) {
@@ -426,43 +486,40 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
   void _markMessagesAsRead() {
     final socket = SocketService().socket;
     if (socket == null || !socket.connected) return;
-
     final ids = messages
-        .where((m) => m.fromType != "seller" && m.readAt == null && m.id != null)
+        .where(
+          (m) => m.fromType != "seller" && m.readAt == null && m.id != null,
+        )
         .map((m) => m.id!)
         .toList();
-
-    if (ids.isNotEmpty) {
+    if (ids.isNotEmpty)
       socket.emit("chat:read", {"threadId": threadId, "messageIds": ids});
-    }
   }
 
   void _markSingleMessageRead(String messageId) {
     final socket = SocketService().socket;
     if (socket == null || !socket.connected) return;
-    socket.emit("chat:read", {"threadId": threadId, "messageIds": [messageId]});
+    socket.emit("chat:read", {
+      "threadId": threadId,
+      "messageIds": [messageId],
+    });
   }
 
   // =========================
-  // Send (NO FRONTEND INSERT ✅)
+  // Send
   // =========================
   void sendMessage() {
     final text = msgController.text.trim();
     if (text.isEmpty) return;
-
     final socket = SocketService().socket;
     if (socket == null || !socket.connected) {
       AppToast.error("Socket not connected");
       return;
     }
-
     final clientId = DateTime.now().millisecondsSinceEpoch.toString();
-
-    // ✅ DO NOT insert temp message (front end se show nahi)
     msgController.clear();
     scrollToBottom();
     onTyping("");
-
     socket.emitWithAck(
       "chat:send",
       {
@@ -473,11 +530,8 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
         "clientId": clientId,
       },
       ack: (resp) {
-        // ✅ ack se insert/replace nahi karna, sirf log/error
-        if (resp is Map && resp["ok"] != true) {
+        if (resp is Map && resp["ok"] != true)
           AppToast.error(resp["message"]?.toString() ?? "Failed to send");
-        }
-        // success case: socket "chat:message" will come and show msg once
       },
     );
   }
@@ -488,15 +542,12 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
   void onTyping(String value) {
     final socket = SocketService().socket;
     if (socket == null || !socket.connected) return;
-
     _typingTimer?.cancel();
-
     if (value.isNotEmpty) {
       if (_lastTypingValue != value) {
         socket.emit("chat:typing", {"threadId": threadId, "isTyping": true});
         _lastTypingValue = value;
       }
-
       _typingTimer = Timer(const Duration(seconds: 2), () {
         socket.emit("chat:typing", {"threadId": threadId, "isTyping": false});
         _lastTypingValue = null;
@@ -508,7 +559,7 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   // =========================
-  // Exchange decision (dialog stays UI)
+  // Exchange decision
   // =========================
   Future<void> handleExchangeDecision(
     BuildContext context,
@@ -516,7 +567,6 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
     String decision,
   ) async {
     if (isProcessing) return;
-
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -540,64 +590,101 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: decision == "Accepted" ? Colors.green : Colors.red,
+              backgroundColor: decision == "Accepted"
+                  ? Colors.green
+                  : Colors.red,
             ),
             child: Text(decision),
           ),
         ],
       ),
     );
-
     if (confirmed != true) return;
-
     isProcessing = true;
     notifyListeners();
-
     try {
       final repo = ExchangeDecisionRepository();
-
-      final normalizedDecision = (decision == "Denied") ? "Rejected" : decision;
-
       final success = await repo.makeDecision(
         exchangeId: exchangeId,
         decision: decision,
-        note: normalizedDecision == "Accepted"
+        note: decision == "Accepted"
             ? "Your exchange request has been approved."
             : "Cannot process this exchange request.",
       );
-
-      if (!success) {
+      if (success)
+        _updateExchangeStatusLocally(
+          exchangeId,
+          decision == "Denied" ? "Rejected" : "Accepted",
+          {},
+        );
+      else
         AppToast.error("Failed to process");
-        return;
-      }
-
-      for (int i = 0; i < messages.length; i++) {
-        final m = messages[i];
-        if (m.isExchangeRequest == true && m.exchangeData?.exchangeId == exchangeId) {
-          messages[i] = ChatMessage(
-            id: m.id,
-            threadId: m.threadId,
-            fromType: m.fromType,
-            isExchangeRequest: true,
-            timestamp: m.timestamp,
-            text: m.text,
-            deliveredAt: m.deliveredAt,
-            readAt: m.readAt,
-            exchangeData: ExchangeRequestData(
-              exchangeId: m.exchangeData?.exchangeId,
-              orderId: m.exchangeData?.orderId,
-              productId: m.exchangeData?.productId,
-              productName: m.exchangeData?.productName,
-              reason: m.exchangeData?.reason,
-              status: decision == "Denied" ? "Rejected" : "Accepted",
-              createdAt: m.exchangeData?.createdAt,
-              images: m.exchangeData?.images ?? const [],
-            ),
-          );
-          break;
-        }
-      }
+    } catch (e) {
+      AppToast.error("Error: $e");
+    } finally {
+      isProcessing = false;
       notifyListeners();
+    }
+  }
+
+  // =========================
+  // Refund decision
+  // =========================
+  Future<void> handleRefundDecision(
+    BuildContext context,
+    String refundId,
+    String decision,
+  ) async {
+    if (isProcessing) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          decision == "Accepted" ? "Approve Refund?" : "Reject Refund?",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: decision == "Accepted" ? Colors.green : Colors.red,
+          ),
+        ),
+        content: Text(
+          "Are you sure you want to $decision this refund request?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: decision == "Accepted"
+                  ? Colors.green
+                  : Colors.red,
+            ),
+            child: Text(decision),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    isProcessing = true;
+    notifyListeners();
+    try {
+      final repo = RefundDecisionRepository();
+      final success = await repo.makeDecision(
+        refundId: refundId,
+        decision: decision,
+        note: decision == "Accepted"
+            ? "Your refund has been approved."
+            : "Sorry, we cannot process this refund.",
+      );
+      if (success)
+        _updateRefundStatusLocally(
+          refundId,
+          decision == "Denied" ? "Rejected" : "Accepted",
+        );
+      else
+        AppToast.error("Failed to process refund decision");
     } catch (e) {
       AppToast.error("Error: $e");
     } finally {
