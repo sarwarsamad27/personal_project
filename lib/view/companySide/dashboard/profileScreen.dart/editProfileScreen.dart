@@ -135,7 +135,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 description: description.text,
                                 image: _imageFile.value,
                               );
-
+                              Navigator.pop(context);
                               if (provider.error != null) {
                                 AppToast.error(provider.error.toString());
                               } else {

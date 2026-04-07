@@ -99,12 +99,6 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
               ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: provider.loading
           ? const Center(child: CircularProgressIndicator())

@@ -161,6 +161,30 @@ class RefundRequestPoll extends StatelessWidget {
                   value: data.productName ?? "N/A",
                 ),
                 SizedBox(height: 10.h),
+
+                // ✅ Quantity & Attributes — NEW
+                if ((data.quantity ?? 0) > 0 ||
+                    data.selectedColor.isNotEmpty ||
+                    data.selectedSize.isNotEmpty) ...[
+                  _buildAttributesSection(
+                    quantity: data.quantity,
+                    colors: data.selectedColor,
+                    sizes: data.selectedSize,
+                  ),
+                  SizedBox(height: 12.h),
+                ],
+
+                // ✅ Refund Amount — NEW
+                if (data.refundAmount != null && data.refundAmount! > 0) ...[
+                  _buildInfoTile(
+                    icon: Icons.payments_rounded,
+                    label: "Refund Amount",
+                    value: "Rs. ${data.refundAmount!.toStringAsFixed(2)}",
+                    valueColor: Colors.green.shade700,
+                    bold: true,
+                  ),
+                  SizedBox(height: 10.h),
+                ],
                 if (data.reasonCategory != null) ...[
                   _buildInfoTile(
                     icon: Icons.category_rounded,
@@ -376,6 +400,95 @@ class RefundRequestPoll extends StatelessWidget {
     } catch (_) {
       return "";
     }
+  }
+
+  // ── Attributes Section ─────────────────────────────────────────
+  Widget _buildAttributesSection({
+    int? quantity,
+    List<String> colors = const [],
+    List<String> sizes = const [],
+  }) {
+    return Container(
+      padding: EdgeInsets.all(10.w),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Colors.black.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.shopping_bag_outlined,
+                size: 14.sp,
+                color: Colors.black54,
+              ),
+              SizedBox(width: 6.w),
+              Text(
+                "Item Details",
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              if (quantity != null && quantity > 0) ...[
+                const Spacer(),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade700,
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Text(
+                    "Qty: $quantity",
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (colors.isNotEmpty || sizes.isNotEmpty) ...[
+            SizedBox(height: 8.h),
+            Wrap(
+              spacing: 8.w,
+              runSpacing: 6.h,
+              children: [
+                if (colors.isNotEmpty)
+                  _buildTag("Color: ${colors.join(', ')}", Colors.blueGrey),
+                if (sizes.isNotEmpty)
+                  _buildTag("Size: ${sizes.join(', ')}", Colors.deepPurple),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTag(String text, Color color) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6.r),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11.sp,
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 }
 

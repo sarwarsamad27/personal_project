@@ -43,6 +43,7 @@ class CompanyChatList extends StatelessWidget {
             if (message.productCard != null) {
               return ProductCardWidget(
                 productCard: message.productCard!,
+                
                 isMe: message.fromType == "seller",
               );
             }
