@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appColor.dart';
-import 'package:new_brand/resources/toast.dart';
 
 class CustomTextField extends StatefulWidget {
   final String? headerText;
@@ -15,8 +14,7 @@ class CustomTextField extends StatefulWidget {
   final double? height;
   final bool? readOnly;
   final int? maxLines;
-
-  final String? Function(String?)? validator; // ✅ ADDED
+  final String? Function(String?)? validator;
   final Function(String)? onChanged;
 
   const CustomTextField({
@@ -31,7 +29,7 @@ class CustomTextField extends StatefulWidget {
     this.suffixIcon,
     this.readOnly,
     this.height,
-    this.validator, // ✅
+    this.validator,
     this.onChanged,
   });
 
@@ -41,107 +39,92 @@ class CustomTextField extends StatefulWidget {
 
 class _CustomTextFieldState extends State<CustomTextField> {
   final ValueNotifier<bool> _obscure = ValueNotifier<bool>(true);
-  final ValueNotifier<String?> _errorText = ValueNotifier<String?>(null);
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        /// Header Text
-        Text(
-          widget.headerText ?? '',
-          style: TextStyle(
-            color: AppColor.textPrimaryColor,
-            fontWeight: FontWeight.w600,
-            fontSize: 15.sp,
+        // Header
+        if (widget.headerText != null && widget.headerText!.isNotEmpty)
+          Text(
+            widget.headerText!,
+            style: TextStyle(
+              color: AppColor.textPrimaryColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 15.sp,
+            ),
           ),
-        ),
-        SizedBox(height: 6.h),
+        if (widget.headerText != null && widget.headerText!.isNotEmpty)
+          SizedBox(height: 6.h),
 
-        /// TextField Box
-        ValueListenableBuilder<String?>(
-          valueListenable: _errorText,
-          builder: (context, error, child) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14.r),
-                    border: Border.all(
-                      color: error == null
-                          ? AppColor.primaryColor
-                          : AppColor.errorColor,
-                    ),
-                  ),
-                  child: ValueListenableBuilder<bool>(
-                    valueListenable: _obscure,
-                    builder: (context, isObscure, child) {
-                      return TextField(
-                        controller: widget.controller,
-                        maxLines: widget.maxLines,
-                        obscureText: widget.isPassword ? isObscure : false,
-                        keyboardType: widget.keyboardType ?? TextInputType.text,
-                        readOnly: widget.readOnly ?? false,
-                        onChanged: (value) {
-                          if (widget.validator != null) {
-                            final message = widget.validator!(value);
-                            _errorText.value = message;
-                            if (message != null) {
-                              AppToast.error(message);
-                            }
-                          }
-                          if (widget.onChanged != null) {
-                            widget.onChanged!(value);
-                          }
-                        },
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: widget.hintText,
-                          hintStyle: TextStyle(
-                            color: AppColor.textSecondaryColor.withOpacity(0.7),
-                            fontSize: 14.sp,
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 14.w,
-                            vertical: 14.h,
-                          ),
-                          prefixIcon: widget.prefixIcon != null
-                              ? Icon(
-                                  widget.prefixIcon,
-                                  color: AppColor.primaryColor,
-                                )
-                              : null,
-                          suffixIcon: widget.isPassword
-                              ? IconButton(
-                                  icon: Icon(
-                                    isObscure
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: AppColor.primaryColor,
-                                  ),
-                                  onPressed: () =>
-                                      _obscure.value = !_obscure.value,
-                                )
-                              : null,
+        // ✅ TextFormField — Form se connected, validator sirf submit pe chalega
+        ValueListenableBuilder<bool>(
+          valueListenable: _obscure,
+          builder: (context, isObscure, child) {
+            return TextFormField(
+              controller: widget.controller,
+              maxLines: widget.maxLines,
+              obscureText: widget.isPassword ? isObscure : false,
+              keyboardType: widget.keyboardType ?? TextInputType.text,
+              readOnly: widget.readOnly ?? false,
+              validator:
+                  widget.validator, // ✅ Form handle karega — onChanged nahi
+              onChanged:
+                  widget.onChanged, // ✅ Sirf callback, koi validation nahi
+              autovalidateMode: AutovalidateMode.disabled, // ✅ Real-time off
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                hintText: widget.hintText,
+                hintStyle: TextStyle(
+                  color: AppColor.textSecondaryColor.withOpacity(0.7),
+                  fontSize: 14.sp,
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 14.w,
+                  vertical: 14.h,
+                ),
+                prefixIcon: widget.prefixIcon != null
+                    ? Icon(widget.prefixIcon, color: AppColor.primaryColor)
+                    : null,
+                suffixIcon: widget.isPassword
+                    ? IconButton(
+                        icon: Icon(
+                          isObscure ? Icons.visibility_off : Icons.visibility,
+                          color: AppColor.primaryColor,
                         ),
-                      );
-                    },
+                        onPressed: () => _obscure.value = !_obscure.value,
+                      )
+                    : null,
+                // Border styling
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14.r),
+                  borderSide: BorderSide(color: AppColor.primaryColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14.r),
+                  borderSide: BorderSide(
+                    color: AppColor.primaryColor,
+                    width: 1.5,
                   ),
                 ),
-
-                /// Error Text Under Field
-                if (error != null)
-                  Padding(
-                    padding: EdgeInsets.only(top: 4.h, left: 4.w),
-                    child: Text(
-                      error,
-                      style: TextStyle(color: Colors.red, fontSize: 12.sp),
-                    ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14.r),
+                  borderSide: BorderSide(color: AppColor.errorColor),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14.r),
+                  borderSide: BorderSide(
+                    color: AppColor.errorColor,
+                    width: 1.5,
                   ),
-              ],
+                ),
+                errorStyle: TextStyle(
+                  color: AppColor.errorColor,
+                  fontSize: 12.sp,
+                ),
+              ),
             );
           },
         ),

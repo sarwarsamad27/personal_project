@@ -352,8 +352,8 @@ class ProfileScreen extends StatelessWidget {
                     ),
 
                     SizedBox(height: 30.h),
-                    TextButton(
-                      onPressed: () {
+                    GestureDetector(
+                      onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -361,12 +361,47 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         );
                       },
-                      child: Text(
-                        "View Exchange Requests",
-                        style: TextStyle(
+                      child: CustomAppContainer(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20.w,
+                          vertical: 18.h,
+                        ),
+                        border: Border.all(
                           color: AppColor.appimagecolor,
-                          fontSize: 14.sp,
-                          decoration: TextDecoration.underline,
+                          width: 1,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              LucideIcons.arrowLeftRight,
+                              color: AppColor.appimagecolor,
+                              size: 24,
+                            ),
+                            SizedBox(width: 15.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Exchange Requests",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    "View all exchange requests",
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 13.sp,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(LucideIcons.chevronRight, color: Colors.white),
+                          ],
                         ),
                       ),
                     ),
