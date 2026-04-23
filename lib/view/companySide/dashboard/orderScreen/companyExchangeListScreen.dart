@@ -12,15 +12,15 @@ import 'package:new_brand/resources/appColor.dart';
 
 class CompanyExchangeListScreen extends StatefulWidget {
   final ExchangeRequest? request;
-  const CompanyExchangeListScreen({super.key , this.request});
+  const CompanyExchangeListScreen({super.key, this.request});
 
   @override
   State<CompanyExchangeListScreen> createState() =>
       _CompanyExchangeListScreenState();
 }
 
-class _CompanyExchangeListScreenState
-    extends State<CompanyExchangeListScreen> with SingleTickerProviderStateMixin {
+class _CompanyExchangeListScreenState extends State<CompanyExchangeListScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tab;
 
   static const _tabs = [
@@ -62,9 +62,14 @@ class _CompanyExchangeListScreenState
         foregroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
-        title: Text("Exchange Requests",
-            style:
-                TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold)),
+        title: Text(
+          "Exchange Requests",
+          style: TextStyle(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
         bottom: TabBar(
           padding: EdgeInsets.zero,
           controller: _tab,
@@ -72,8 +77,7 @@ class _CompanyExchangeListScreenState
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
-          labelStyle:
-              TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
+          labelStyle: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
           tabs: _tabs.map((t) => Tab(text: t.label)).toList(),
         ),
       ),
@@ -81,8 +85,8 @@ class _CompanyExchangeListScreenState
         builder: (context, provider, _) {
           if (provider.loading) {
             return const Center(
-                child: CircularProgressIndicator(
-                    color: AppColor.primaryColor));
+              child: CircularProgressIndicator(color: AppColor.primaryColor),
+            );
           }
 
           var requests = provider.requests;
@@ -140,8 +144,10 @@ class _CompanyExchangeListScreenState
         children: [
           Icon(Icons.swap_horiz_rounded, size: 72.w, color: Colors.grey[300]),
           SizedBox(height: 16.h),
-          Text("No exchange requests",
-              style: TextStyle(fontSize: 17.sp, color: Colors.grey[600])),
+          Text(
+            "No exchange requests",
+            style: TextStyle(fontSize: 17.sp, color: Colors.grey[600]),
+          ),
         ],
       ),
     );
@@ -152,8 +158,7 @@ class _CompanyExchangeCard extends StatelessWidget {
   final ExchangeRequest request;
   final VoidCallback onTap;
 
-  const _CompanyExchangeCard(
-      {required this.request, required this.onTap});
+  const _CompanyExchangeCard({required this.request, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -168,9 +173,10 @@ class _CompanyExchangeCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4)),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         child: Column(
@@ -184,8 +190,11 @@ class _CompanyExchangeCard extends StatelessWidget {
                     color: AppColor.primaryColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
-                  child: Icon(Icons.swap_horiz_rounded,
-                      color: AppColor.primaryColor, size: 20.sp),
+                  child: Icon(
+                    Icons.swap_horiz_rounded,
+                    color: AppColor.primaryColor,
+                    size: 20.sp,
+                  ),
                 ),
                 SizedBox(width: 12.w),
                 Expanded(
@@ -194,37 +203,43 @@ class _CompanyExchangeCard extends StatelessWidget {
                     children: [
                       Text(
                         request.buyerId != null
-                            ? "Buyer ID: ${request.buyerId!.substring(0, 8)}..."
+                            ? "${request.orderId!}"
                             : "Exchange Request",
                         style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87),
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
                       ),
                       SizedBox(height: 2.h),
                       Text(
                         _formatDate(request.createdAt),
-                        style:
-                            TextStyle(fontSize: 12.sp, color: Colors.grey),
+                        style: TextStyle(fontSize: 12.sp, color: Colors.grey),
                       ),
                     ],
                   ),
                 ),
                 Container(
                   padding: EdgeInsets.symmetric(
-                      horizontal: 10.w, vertical: 5.h),
+                    horizontal: 10.w,
+                    vertical: 5.h,
+                  ),
                   decoration: BoxDecoration(
                     color: statusStyle.color.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(20.r),
                     border: Border.all(
-                        color: statusStyle.color.withOpacity(0.4),
-                        width: 1),
+                      color: statusStyle.color.withOpacity(0.4),
+                      width: 1,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(statusStyle.icon,
-                          size: 12.sp, color: statusStyle.color),
+                      Icon(
+                        statusStyle.icon,
+                        size: 12.sp,
+                        color: statusStyle.color,
+                      ),
                       SizedBox(width: 4.w),
                       Text(
                         request.statusLabel,
@@ -252,15 +267,14 @@ class _CompanyExchangeCard extends StatelessWidget {
               color: request.courierPaidBy == "buyer"
                   ? Colors.orange
                   : request.courierPaidBy == "seller"
-                      ? Colors.green
-                      : Colors.grey,
+                  ? Colors.green
+                  : Colors.grey,
             ),
 
             if (request.status == "ReturnShipped") ...[
               SizedBox(height: 8.h),
               Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
                 decoration: BoxDecoration(
                   color: Colors.indigo[50],
                   borderRadius: BorderRadius.circular(8.r),
@@ -268,15 +282,19 @@ class _CompanyExchangeCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.notifications_active,
-                        size: 15.sp, color: Colors.indigo),
+                    Icon(
+                      Icons.notifications_active,
+                      size: 15.sp,
+                      color: Colors.indigo,
+                    ),
                     SizedBox(width: 6.w),
                     Text(
                       "Action: Mark parcel received",
                       style: TextStyle(
-                          fontSize: 12.sp,
-                          color: Colors.indigo[700],
-                          fontWeight: FontWeight.w600),
+                        fontSize: 12.sp,
+                        color: Colors.indigo[700],
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -286,8 +304,7 @@ class _CompanyExchangeCard extends StatelessWidget {
             if (request.status == "ApprovedInspection") ...[
               SizedBox(height: 8.h),
               Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
                 decoration: BoxDecoration(
                   color: Colors.green[50],
                   borderRadius: BorderRadius.circular(8.r),
@@ -295,17 +312,21 @@ class _CompanyExchangeCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.notifications_active,
-                        size: 15.sp, color: Colors.green[700]),
+                    Icon(
+                      Icons.notifications_active,
+                      size: 15.sp,
+                      color: Colors.green[700],
+                    ),
                     SizedBox(width: 6.w),
                     Text(
                       request.resolutionType == "refund"
                           ? "Action: Process refund"
                           : "Action: Ship replacement",
                       style: TextStyle(
-                          fontSize: 12.sp,
-                          color: Colors.green[700],
-                          fontWeight: FontWeight.w600),
+                        fontSize: 12.sp,
+                        color: Colors.green[700],
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -325,9 +346,7 @@ class _CompanyExchangeCard extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style: TextStyle(
-                fontSize: 13.sp,
-                color: color ?? Colors.black87),
+            style: TextStyle(fontSize: 13.sp, color: color ?? Colors.black87),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -356,18 +375,30 @@ class _TabDef {
 
 _StatusStyle _companyStatusStyle(String? status) {
   switch (status) {
-    case "Pending": return _StatusStyle(Colors.orange, Icons.pending);
-    case "Accepted": return _StatusStyle(Colors.blue, Icons.check_circle_outline);
-    case "Denied": return _StatusStyle(Colors.red, Icons.cancel);
-    case "ReturnShipped": return _StatusStyle(Colors.indigo, Icons.local_shipping);
-    case "ReturnReceived": return _StatusStyle(Colors.teal, Icons.inventory);
-    case "Inspecting": return _StatusStyle(Colors.purple, Icons.search);
-    case "ApprovedInspection": return _StatusStyle(Colors.green, Icons.verified);
-    case "Disputed": return _StatusStyle(Colors.red.shade400, Icons.warning_amber);
-    case "ReplacementShipped": return _StatusStyle(Colors.indigo, Icons.local_shipping);
-    case "Refunded": return _StatusStyle(Colors.green, Icons.account_balance_wallet);
-    case "Completed": return _StatusStyle(Colors.green, Icons.check_circle);
-    default: return _StatusStyle(Colors.grey, Icons.help_outline);
+    case "Pending":
+      return _StatusStyle(Colors.orange, Icons.pending);
+    case "Accepted":
+      return _StatusStyle(Colors.blue, Icons.check_circle_outline);
+    case "Denied":
+      return _StatusStyle(Colors.red, Icons.cancel);
+    case "ReturnShipped":
+      return _StatusStyle(Colors.indigo, Icons.local_shipping);
+    case "ReturnReceived":
+      return _StatusStyle(Colors.teal, Icons.inventory);
+    case "Inspecting":
+      return _StatusStyle(Colors.purple, Icons.search);
+    case "ApprovedInspection":
+      return _StatusStyle(Colors.green, Icons.verified);
+    case "Disputed":
+      return _StatusStyle(Colors.red.shade400, Icons.warning_amber);
+    case "ReplacementShipped":
+      return _StatusStyle(Colors.indigo, Icons.local_shipping);
+    case "Refunded":
+      return _StatusStyle(Colors.green, Icons.account_balance_wallet);
+    case "Completed":
+      return _StatusStyle(Colors.green, Icons.check_circle);
+    default:
+      return _StatusStyle(Colors.grey, Icons.help_outline);
   }
 }
 

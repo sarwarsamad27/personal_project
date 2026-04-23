@@ -107,7 +107,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 children: [
                   /// IMAGE (unchanged)
                   ProductImage(
-                    imageUrls: prods.images ?? [],
+                    imageUrls: Global.imageUrl != ""
+                        ? (prods.images ?? [])
+                              .where((e) => e.trim().isNotEmpty)
+                              .map((e) => Global.getImageUrl(e))
+                              .toList()
+                        : [],
                     name: prods.name ?? "",
                     description: prods.description ?? "",
                     color: (prods.color != null && prods.color!.isNotEmpty)

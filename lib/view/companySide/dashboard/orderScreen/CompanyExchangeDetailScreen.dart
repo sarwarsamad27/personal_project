@@ -64,7 +64,11 @@ class _CompanyExchangeDetailScreenState
             centerTitle: true,
             title: Text(
               "Exchange Detail",
-              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
           body: ex == null
@@ -139,6 +143,7 @@ class _CompanyExchangeDetailScreenState
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start, // 🔥 important
         children: [
           Container(
             padding: EdgeInsets.all(14.w),
@@ -149,51 +154,98 @@ class _CompanyExchangeDetailScreenState
             child: Icon(
               Icons.swap_horiz_rounded,
               color: AppColor.primaryColor,
-              size: 28.sp,
+              size: 26.sp,
             ),
           ),
-          SizedBox(width: 14.w),
+
+          SizedBox(width: 12.w),
+
+          /// 🔥 TEXT SECTION
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   "Exchange Request",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
                     color: Colors.black87,
                   ),
                 ),
+
+                SizedBox(height: 6.h),
+
+                /// 🔥 ORDER ID FIX
+                Row(
+                  children: [
+                    Text(
+                      "Order ID: ",
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        ex.orderId ?? "N/A",
+                        maxLines: 1,
+
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
                 SizedBox(height: 4.h),
+
                 Text(
                   _formatDate(ex.createdAt),
-                  style: TextStyle(fontSize: 12.sp, color: Colors.grey),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 11.sp, color: Colors.grey),
                 ),
               ],
             ),
           ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: statusStyle.color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(20.r),
-              border: Border.all(color: statusStyle.color.withOpacity(0.4)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(statusStyle.icon, size: 14.sp, color: statusStyle.color),
-                SizedBox(width: 4.w),
-                Text(
-                  ex.statusLabel,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: statusStyle.color,
+
+          SizedBox(width: 8.w),
+
+          /// 🔥 STATUS CHIP
+          Flexible(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: statusStyle.color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(20.r),
+                border: Border.all(color: statusStyle.color.withOpacity(0.4)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(statusStyle.icon, size: 12.sp, color: statusStyle.color),
+                  SizedBox(width: 4.w),
+                  Flexible(
+                    child: Text(
+                      ex.statusLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                        color: statusStyle.color,
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

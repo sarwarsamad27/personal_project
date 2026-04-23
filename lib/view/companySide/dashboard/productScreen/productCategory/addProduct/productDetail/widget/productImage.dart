@@ -92,7 +92,7 @@ class ProductImage extends StatelessWidget {
                       final url = Global.getImageUrl(validImages[index]);
 
                       return Image.network(
-                        url,
+                        validImages[index],
                         fit: BoxFit.cover,
                         width: double.infinity,
                         errorBuilder: (_, __, ___) =>

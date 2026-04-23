@@ -1,5 +1,7 @@
 // viewModel/repository/chatThread/company_exchange_repository.dart
 
+import 'dart:developer';
+
 import 'package:new_brand/models/chatThread/exchangeRequestModel.dart';
 import 'package:new_brand/network/network_api_services.dart';
 import 'package:new_brand/resources/global.dart';
@@ -14,6 +16,8 @@ class CompanyExchangeRepository {
       final response = await _api.getApi(
         "${Global.getCompanyExchangeRequests}$query",
       );
+      log("${Global.getCompanyExchangeRequests}$query");
+      log("Response: $response");
       return ExchangeRequestListModel.fromJson(response);
     } catch (e) {
       return ExchangeRequestListModel(message: "Error: $e");
