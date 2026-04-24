@@ -1,28 +1,28 @@
 class GetCompanyAmountModel {
   String? message;
-  int? totalDelivered;
-  int? totalWithdrawn;
-  int? currentBalance;
+  double? totalDelivered;
+  double? totalWithdrawn;
+  double? totalDeposited;
+  double? pendingBalance;
+  double? currentBalance;
 
-  GetCompanyAmountModel(
-      {this.message,
-      this.totalDelivered,
-      this.totalWithdrawn,
-      this.currentBalance});
+  GetCompanyAmountModel({
+    this.message,
+    this.totalDelivered,
+    this.totalWithdrawn,
+    this.totalDeposited,
+    this.pendingBalance,
+    this.currentBalance,
+  });
 
-  GetCompanyAmountModel.fromJson(Map<String, dynamic> json) {
-    message = json['message'];
-    totalDelivered = json['totalDelivered'];
-    totalWithdrawn = json['totalWithdrawn'];
-    currentBalance = json['currentBalance'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['message'] = this.message;
-    data['totalDelivered'] = this.totalDelivered;
-    data['totalWithdrawn'] = this.totalWithdrawn;
-    data['currentBalance'] = this.currentBalance;
-    return data;
+  factory GetCompanyAmountModel.fromJson(Map<String, dynamic> json) {
+    return GetCompanyAmountModel(
+      message:        json['message'],
+      totalDelivered: (json['totalDelivered'] as num?)?.toDouble() ?? 0.0,
+      totalWithdrawn: (json['totalWithdrawn'] as num?)?.toDouble() ?? 0.0,
+      totalDeposited: (json['totalDeposited'] as num?)?.toDouble() ?? 0.0,
+      pendingBalance: (json['pendingBalance'] as num?)?.toDouble() ?? 0.0,
+      currentBalance: (json['currentBalance'] as num?)?.toDouble() ?? 0.0,
+    );
   }
 }

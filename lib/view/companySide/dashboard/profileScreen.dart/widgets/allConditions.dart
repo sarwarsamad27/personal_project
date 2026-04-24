@@ -5,6 +5,10 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/auth/loginScreen.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/ContactUs.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/FAQScreen.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/TermAndCondition.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/aboutScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/infoScreen.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
@@ -167,9 +171,8 @@ class AllCondition extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const InfoScreen(
-                        title: "Terms & Conditions",
-                        content: "Here are your Terms & Conditions...",
+                      builder: (_) => const TermAndConditionScreen(
+                     
                       ),
                     ),
                   );
@@ -178,11 +181,7 @@ class AllCondition extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const InfoScreen(
-                        title: "Contact Us",
-                        content:
-                            "Contact us at: contact@company.com\nPhone: +92 300 1234567",
-                      ),
+                      builder: (_) => const ContactUsScreen(),
                     ),
                   );
                   break;
@@ -190,10 +189,8 @@ class AllCondition extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const InfoScreen(
-                        title: "About",
-                        content: "This app is developed by XYZ company...",
-                      ),
+                      builder: (_) => const AboutScreen(
+                       ),
                     ),
                   );
                   break;
@@ -201,11 +198,8 @@ class AllCondition extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const InfoScreen(
-                        title: "FAQ",
-                        content:
-                            "Q1: How to use this app?\nA1: ...\n\nQ2: Payment methods?\nA2: ...",
-                      ),
+                      builder: (_) => const FAQScreen(
+                     ),
                     ),
                   );
                   break;

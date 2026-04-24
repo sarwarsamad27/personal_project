@@ -21,7 +21,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<TransactionHistoryProvider>().fetchTransactions();
+      final provider = context.read<TransactionHistoryProvider>();
+      if (provider.transactions.isEmpty) {
+        provider.fetchTransactions();
+      }
     });
   }
 
@@ -168,101 +171,108 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           );
         }
 
-        return ListView.separated(
-          padding: EdgeInsets.symmetric(vertical: 10.h),
-          itemCount: provider.transactions.length,
-          separatorBuilder: (_, __) =>
-              Divider(color: Colors.white24, height: 18.h),
-          itemBuilder: (context, index) {
-            final tx = provider.transactions[index];
+        return RefreshIndicator(
+          onRefresh: () => provider.fetchTransactions(),
+          color: AppColor.primaryColor,
+          child: ListView.separated(
+            padding: EdgeInsets.symmetric(vertical: 10.h),
+            itemCount: provider.transactions.length,
+            separatorBuilder: (_, __) =>
+                Divider(color: Colors.white24, height: 18.h),
+            itemBuilder: (context, index) {
+              final tx = provider.transactions[index];
 
-            final icon = _statusIcon(tx);
-            final color = _statusColor(tx);
+              final icon = _statusIcon(tx);
+              final color = _statusColor(tx);
 
-            return InkWell(
-              borderRadius: BorderRadius.circular(12.r),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => TransactionDetailScreen(tx: tx),
+              return InkWell(
+                borderRadius: BorderRadius.circular(12.r),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TransactionDetailScreen(tx: tx),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 10.h,
                   ),
-                );
-              },
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                child: Row(
-                  children: [
-                    CustomAppContainer(
-                      padding: EdgeInsets.all(10.w),
-                      child: Icon(icon, color: color, size: 22.sp),
-                    ),
-                    SizedBox(width: 12.w),
-
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _title(tx),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            _formatDate(tx.createdAt),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12.sp,
-                            ),
-                          ),
-                        ],
+                  child: Row(
+                    children: [
+                      CustomAppContainer(
+                        padding: EdgeInsets.all(10.w),
+                        child: Icon(icon, color: color, size: 22.sp),
                       ),
-                    ),
+                      SizedBox(width: 12.w),
 
-                    SizedBox(width: 10.w),
-
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          _amountText(tx),
-                          style: TextStyle(
-                            color: color,
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 4.h),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(LucideIcons.dot, size: 14.sp, color: color),
-                            SizedBox(width: 4.w),
                             Text(
-                              _prettyStatus(tx),
+                              _title(tx),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: color,
+                                color: Colors.white,
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              _formatDate(tx.createdAt),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white70,
                                 fontSize: 12.sp,
-                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+
+                      SizedBox(width: 10.w),
+
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            _amountText(tx),
+                            style: TextStyle(
+                              color: color,
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(LucideIcons.dot, size: 14.sp, color: color),
+                              SizedBox(width: 4.w),
+                              Text(
+                                _prettyStatus(tx),
+                                style: TextStyle(
+                                  color: color,
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
       },
     );

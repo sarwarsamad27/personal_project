@@ -37,7 +37,6 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
     },
   ];
 
-
   Widget buildTransactionTab() {
     return ListView.separated(
       itemCount: transactions.length,
@@ -98,14 +97,21 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        
         backgroundColor: AppColor.primaryColor,
         centerTitle: true,
-        title: const Text("Wallet"),
+        title: Text(
+          "Wallet",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: CustomBgContainer(
         child: Padding(
@@ -113,9 +119,9 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
           child: Column(
             children: [
               Wallet(),
-              SizedBox(height: 25.h), 
+              SizedBox(height: 25.h),
               PaymentTabBar(
-                firstTab: TransactionHistoryScreen  (),
+                firstTab: TransactionHistoryScreen(),
                 secondTab: GetdeliveredorderScreen(),
                 thirdTab: GetReturnedorderScreen(),
                 secondTabbarName: 'Delivered',

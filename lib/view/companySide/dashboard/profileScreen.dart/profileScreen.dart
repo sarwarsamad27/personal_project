@@ -11,6 +11,7 @@ import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/myWallet.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/profileUserReview.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customContainer.dart';
@@ -28,6 +29,7 @@ class ProfileScreen extends StatelessWidget {
         context,
         listen: false,
       ).getProfileOnce();
+      context.read<CompanyWalletProvider>().fetchCompanyWallet();
     });
 
     final provider = context.watch<DashboardProvider>();
@@ -333,7 +335,7 @@ class ProfileScreen extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    "Balance: Rs. ${data?.wallet?.currentBalance ?? 0}",
+                                    "Balance: Rs. ${context.watch<CompanyWalletProvider>().currentBalance.toStringAsFixed(0)}",
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 13.sp,

@@ -19,9 +19,10 @@ class _GetReturnedorderScreenState extends State<GetReturnedorderScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      context.read<GetReturnedOrderProvider>().fetchReturnedOrders(
-        refresh: true,
-      );
+      final provider = context.read<GetReturnedOrderProvider>();
+      if (provider.orders.isEmpty) {
+        provider.fetchReturnedOrders(refresh: false);
+      }
     });
   }
 
@@ -64,67 +65,72 @@ class _GetReturnedorderScreenState extends State<GetReturnedorderScreen> {
           return const Center(child: Text("No Returned Orders"));
         }
 
-        return ListView.separated(
-          itemCount: provider.orders.length,
-          separatorBuilder: (_, __) =>
-              Divider(color: Colors.white24, height: 15.h),
-          itemBuilder: (context, index) {
-            final order = provider.orders[index];
+        return RefreshIndicator(
+          onRefresh: () => provider.fetchReturnedOrders(refresh: true),
+          color: AppColor.primaryColor,
+          child: ListView.separated(
+            itemCount: provider.orders.length,
+            separatorBuilder: (_, __) =>
+                Divider(color: Colors.white24, height: 15.h),
+            itemBuilder: (context, index) {
+              final order = provider.orders[index];
 
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ReturnedOrderDetailScreen(order: order),
-                  ),
-                );
-              },
-              child: CustomAppContainer(
-                padding: EdgeInsets.all(12.w),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ReturnedOrderDetailScreen(order: order),
+                    ),
+                  );
+                },
+                child: CustomAppContainer(
+                  padding: EdgeInsets.all(12.w),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            order.orderId ?? "Order #${order.sId!.substring(0, 6)}",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
+                            order.orderId ??
+                                "Order #${order.sId!.substring(0, 6)}",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        Text(
-                          _formatDate(order.createdAt),
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
+                          Text(
+                            _formatDate(order.createdAt),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          "Rs. ${order.grandTotal}",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            "Rs. ${order.grandTotal}",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        const Text(
-                          "Returned",
-                          style: TextStyle(color: Colors.red, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ],
+                          const Text(
+                            "Returned",
+                            style: TextStyle(color: Colors.red, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
       },
     );

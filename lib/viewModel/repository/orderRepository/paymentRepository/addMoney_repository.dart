@@ -7,6 +7,7 @@ class AddMoneyRepository {
   Future<Map<String, dynamic>> initiateJazzcashCredit({
     required String phone,
     required String amount,
+    
   }) async {
     final response = await apiServices.postApi(
       Global.AddMoneyInitiate,
@@ -20,11 +21,14 @@ class AddMoneyRepository {
 
   Future<Map<String, dynamic>> confirmJazzcashCredit({
     required String txnRefNo,
+     required String otp,
+   
   }) async {
     final response = await apiServices.postApi(
       Global.AddMoneyConfirm,
       {
         'txnRefNo': txnRefNo,
+        'otp': otp,
       },
     );
     return response;

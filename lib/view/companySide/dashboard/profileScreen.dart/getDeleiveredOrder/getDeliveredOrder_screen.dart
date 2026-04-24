@@ -20,9 +20,10 @@ class _GetdeliveredorderScreenState extends State<GetdeliveredorderScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      context.read<GetDeliveredOrderProvider>().fetchDeliveredOrders(
-        refresh: true,
-      );
+      final provider = context.read<GetDeliveredOrderProvider>();
+      if (provider.orders.isEmpty) {
+        provider.fetchDeliveredOrders(refresh: false);
+      }
     });
   }
 
@@ -65,68 +66,72 @@ class _GetdeliveredorderScreenState extends State<GetdeliveredorderScreen> {
           return const Center(child: Text("No Delivered Orders"));
         }
 
-        return ListView.separated(
-          itemCount: provider.orders.length,
-          separatorBuilder: (_, __) =>
-              Divider(color: Colors.white24, height: 15.h),
-          itemBuilder: (context, index) {
-            final order = provider.orders[index];
+        return RefreshIndicator(
+          onRefresh: () => provider.fetchDeliveredOrders(refresh: true),
+          color: AppColor.primaryColor,
+          child: ListView.separated(
+            itemCount: provider.orders.length,
+            separatorBuilder: (_, __) =>
+                Divider(color: Colors.white24, height: 15.h),
+            itemBuilder: (context, index) {
+              final order = provider.orders[index];
 
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => DeliveredOrderDetailScreen(order: order),
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DeliveredOrderDetailScreen(order: order),
+                    ),
+                  );
+                },
+                child: CustomAppContainer(
+                  padding: EdgeInsets.all(12.w),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            order.orderId ??
+                                "Order #${order.orderId!.substring(0, 6)}",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            _formatDate(order.createdAt),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            "Net: Rs. ${((order.grandTotal ?? 0) * 0.90).toStringAsFixed(0)}",
+                            style: const TextStyle(
+                              color: Colors.greenAccent,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Text(
+                            "Delivered",
+                            style: TextStyle(color: Colors.green, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                );
-              },
-              child: CustomAppContainer(
-                padding: EdgeInsets.all(12.w),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          order.orderId ??
-                              "Order #${order.orderId!.substring(0, 6)}",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          _formatDate(order.createdAt),
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          "Net: Rs. ${((order.grandTotal ?? 0) * 0.90).toStringAsFixed(0)}",
-                          style: const TextStyle(
-                            color: Colors.greenAccent,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Text(
-                          "Delivered",
-                          style: TextStyle(color: Colors.green, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ],
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
       },
     );

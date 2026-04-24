@@ -325,6 +325,7 @@ class _WalletState extends State<Wallet> {
   void _openAddMoneyDialog() {
     final phoneController = TextEditingController();
     final amountController = TextEditingController();
+    final otpController = TextEditingController(); // ✅ add kiya
     bool isInitiating = false;
     bool isVerifying = false;
     String? currentTxnRef;
@@ -372,6 +373,7 @@ class _WalletState extends State<Wallet> {
                       SizedBox(height: 25.h),
 
                       if (currentTxnRef == null) ...[
+                        // ── Step 1: Phone + Amount ──────────────────────────
                         CustomTextField(
                           hintText: "Enter JazzCash number (03XXXXXXXXX)",
                           controller: phoneController,
@@ -407,8 +409,8 @@ class _WalletState extends State<Wallet> {
                                     );
                                     return;
                                   }
-
                                   if (amount.isEmpty ||
+                                      double.tryParse(amount) == null ||
                                       double.parse(amount) < 100) {
                                     AppToast.show("Minimum amount is Rs. 100");
                                     return;
@@ -426,9 +428,10 @@ class _WalletState extends State<Wallet> {
                                     setSheetState(
                                       () => currentTxnRef = result['txnRefNo'],
                                     );
+                                    AppToast.show("OTP sent to $phone");
+                                  } else {
                                     AppToast.show(
-                                      result['message'] ??
-                                          "Please check your phone for the PIN prompt",
+                                      "Failed to send OTP. Try again.",
                                     );
                                   }
                                 },
@@ -438,7 +441,7 @@ class _WalletState extends State<Wallet> {
                                   size: 20,
                                 )
                               : const Text(
-                                  "Pay with JazzCash",
+                                  "Send OTP",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -446,30 +449,40 @@ class _WalletState extends State<Wallet> {
                                 ),
                         ),
                       ] else ...[
+                        // ── Step 2: OTP Screen ──────────────────────────────
                         Icon(
                           LucideIcons.smartphone,
                           color: Colors.green,
                           size: 50.sp,
                         ),
-                        SizedBox(height: 20.h),
+                        SizedBox(height: 16.h),
                         Text(
-                          "A PIN prompt has been sent to your phone number ${phoneController.text}.",
+                          "OTP sent to ${phoneController.text}",
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 14.sp,
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        SizedBox(height: 10.h),
+                        SizedBox(height: 6.h),
                         Text(
-                          "Please enter your JazzCash PIN on your phone and then click the button below.",
+                          "Enter the 6-digit OTP you received on WhatsApp.",
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: 12.sp,
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        SizedBox(height: 30.h),
+                        SizedBox(height: 20.h),
+
+                        // ✅ OTP field
+                        CustomTextField(
+                          hintText: "Enter 6-digit OTP",
+                          controller: otpController,
+                          keyboardType: TextInputType.number,
+                        ),
+                        SizedBox(height: 20.h),
+
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.orange,
@@ -481,20 +494,32 @@ class _WalletState extends State<Wallet> {
                           onPressed: isVerifying
                               ? null
                               : () async {
+                                  if (otpController.text.trim().length < 6) {
+                                    AppToast.show("Enter 6-digit OTP");
+                                    return;
+                                  }
                                   setSheetState(() => isVerifying = true);
                                   final success = await context
                                       .read<CompanyWalletProvider>()
                                       .confirmJazzcashCredit(
                                         txnRefNo: currentTxnRef!,
+                                        otp: otpController.text.trim(), // ✅
                                         context: context,
                                       );
                                   setSheetState(() => isVerifying = false);
 
                                   if (success) {
-                                    Navigator.pop(context);
+                                    if (context.mounted)
+                                      Navigator.of(context).pop();
                                     AppToast.show(
                                       "Payment Successful! Wallet Credited.",
                                     );
+                                    Navigator.pop(context, true);
+                                  } else {
+                                    AppToast.show(
+                                      "Invalid OTP. Please try again.",
+                                    );
+                                    otpController.clear(); // ✅ clear on fail
                                   }
                                 },
                           child: isVerifying
@@ -503,16 +528,20 @@ class _WalletState extends State<Wallet> {
                                   size: 20,
                                 )
                               : const Text(
-                                  "I Have Entered My PIN",
+                                  "Verify & Add Money",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                         ),
+
+                        SizedBox(height: 10.h),
                         TextButton(
-                          onPressed: () =>
-                              setSheetState(() => currentTxnRef = null),
+                          onPressed: () => setSheetState(() {
+                            currentTxnRef = null;
+                            otpController.clear();
+                          }),
                           child: const Text(
                             "Cancel & Go Back",
                             style: TextStyle(color: Colors.white60),
@@ -588,6 +617,31 @@ class _WalletState extends State<Wallet> {
                           ),
                         ),
                         onPressed: () => _openWithdrawDialog(),
+                      ),
+                    ),
+                    SizedBox(width: 15.w),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          padding: EdgeInsets.symmetric(vertical: 12.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                        ),
+                        icon: const Icon(
+                          LucideIcons.plusCircle,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        label: const Text(
+                          "Add Money",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        onPressed: () => _openAddMoneyDialog(),
                       ),
                     ),
                   ],

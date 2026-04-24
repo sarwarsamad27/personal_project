@@ -10,14 +10,10 @@ import '../../repository/orderRepository/paymentRepository/verifyCode_repository
 import '../../repository/orderRepository/paymentRepository/addMoney_repository.dart';
 
 class CompanyWalletProvider with ChangeNotifier {
-  final GetCompanyAmountRepository _walletRepo =
-      GetCompanyAmountRepository();
-  final PaymentRequestRepository _paymentRepo =
-      PaymentRequestRepository();
-  final VerifyCodeRepository _verifyCode =
-      VerifyCodeRepository();
-  final AddMoneyRepository _addMoneyRepo =
-      AddMoneyRepository();
+  final GetCompanyAmountRepository _walletRepo = GetCompanyAmountRepository();
+  final PaymentRequestRepository _paymentRepo = PaymentRequestRepository();
+  final VerifyCodeRepository _verifyCode = VerifyCodeRepository();
+  final AddMoneyRepository _addMoneyRepo = AddMoneyRepository();
 
   bool isLoading = false;
 
@@ -38,12 +34,11 @@ class CompanyWalletProvider with ChangeNotifier {
     }
   }
 
-  double get grossBalance =>
-      (walletData?.currentBalance ?? 0).toDouble();
-
-  double get netBalance => grossBalance * 0.90;
-
-  double get currentBalance => netBalance;
+double get currentBalance  => walletData?.currentBalance  ?? 0.0;
+double get totalDelivered  => walletData?.totalDelivered  ?? 0.0;
+double get totalWithdrawn  => walletData?.totalWithdrawn  ?? 0.0;
+double get totalDeposited  => walletData?.totalDeposited  ?? 0.0;
+double get pendingBalance  => walletData?.pendingBalance  ?? 0.0;
 
   // ================= SEND OTP =================
   Future<bool> sendWithdrawCode({
@@ -57,8 +52,7 @@ class CompanyWalletProvider with ChangeNotifier {
       isLoading = true;
       notifyListeners();
 
-      final PaymentRequestModel res =
-          await _paymentRepo.paymentRequest(
+      final PaymentRequestModel res = await _paymentRepo.paymentRequest(
         name: name,
         phone: phone,
         amount: amount,
@@ -86,20 +80,14 @@ class CompanyWalletProvider with ChangeNotifier {
       isLoading = true;
       notifyListeners();
 
-      final res =
-          await _verifyCode.verifyCode(
-        otp: code,
-        token: token ?? '',
-      );
+      final res = await _verifyCode.verifyCode(otp: code, token: token ?? '');
 
       if (res.message == "Withdrawal request submitted") {
         /// 🔥 refresh wallet balance
         await fetchCompanyWallet();
 
         /// 🔥 refresh transaction history
-        await context
-            .read<TransactionHistoryProvider>()
-            .fetchTransactions();
+        await context.read<TransactionHistoryProvider>().fetchTransactions();
 
         return true;
       }
@@ -113,6 +101,7 @@ class CompanyWalletProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
   // ================= JAZZCASH CREDIT (INITIATE) =================
   Future<Map<String, dynamic>?> initiateJazzcashCredit({
     required String phone,
@@ -127,7 +116,8 @@ class CompanyWalletProvider with ChangeNotifier {
         amount: amount,
       );
 
-      if (res['message'] == "Payment approved" || res['message'] == "Payment prompt sent to your phone") {
+      // ✅ txnRefNo aaya matlab success
+      if (res['txnRefNo'] != null) {
         return res;
       }
       return null;
@@ -144,6 +134,7 @@ class CompanyWalletProvider with ChangeNotifier {
   Future<bool> confirmJazzcashCredit({
     required String txnRefNo,
     required BuildContext context,
+    required String otp,
   }) async {
     try {
       isLoading = true;
@@ -151,6 +142,7 @@ class CompanyWalletProvider with ChangeNotifier {
 
       final res = await _addMoneyRepo.confirmJazzcashCredit(
         txnRefNo: txnRefNo,
+        otp: otp,
       );
 
       if (res['message'] == "Wallet credited successfully") {
