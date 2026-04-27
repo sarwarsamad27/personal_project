@@ -4,6 +4,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:new_brand/view/companySide/dashboard/ChatListScreen/company_refund_list_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/companyExchangeListScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/editProfileScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/allConditions.dart';
@@ -402,11 +403,72 @@ class ProfileScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            Icon(LucideIcons.chevronRight, color: Colors.white),
+                            const Icon(
+                              LucideIcons.chevronRight,
+                              color: Colors.white,
+                            ),
                           ],
                         ),
                       ),
                     ),
+
+                    SizedBox(height: 15.h),
+
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CompanyRefundListScreen(),
+                          ),
+                        );
+                      },
+                      child: CustomAppContainer(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20.w,
+                          vertical: 18.h,
+                        ),
+                        border: Border.all(color: Colors.redAccent, width: 1),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              LucideIcons.undo2,
+                              color: Colors.redAccent,
+                              size: 24,
+                            ),
+                            SizedBox(width: 15.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Refund Requests",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Manage your refund requests",
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 13.sp,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              LucideIcons.chevronRight,
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: 30.h),
                     // ---------------- REVIEWS ----------------
                     Align(
                       alignment: Alignment.centerLeft,

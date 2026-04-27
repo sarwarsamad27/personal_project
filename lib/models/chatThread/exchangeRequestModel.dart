@@ -20,8 +20,8 @@ class ExchangeRequest {
   final String? orderId;
   final String? productId;
   final String? buyerId;
-  final String? buyerName;       // ✅ NEW
-  final String? buyerEmail;      // ✅ NEW
+  final String? buyerName; // ✅ NEW
+  final String? buyerEmail; // ✅ NEW
   final String? sellerProfileId;
   final String? reason;
   final String? reasonCategory;
@@ -48,7 +48,9 @@ class ExchangeRequest {
   final String? replacementCourierName;
   final String? replacementShippedAt;
   final String? replacementSlipLink; // ✅ NEW — Leopards slip
+  final String? returnSlipLink; // ✅ NEW — Leopards return link
   final double? refundAmount;
+  final double? netRefundAmount; // ✅ NEW — Net refund after courier
   final String? refundedAt;
 
   // PDF
@@ -89,7 +91,10 @@ class ExchangeRequest {
     this.replacementCourierName,
     this.replacementShippedAt,
     this.replacementSlipLink,
+    this.returnSlipLink,
     this.refundAmount,
+    this.netRefundAmount,
+
     this.refundedAt,
     this.pdfPath,
     this.companyNote,
@@ -128,7 +133,10 @@ class ExchangeRequest {
       replacementCourierName: json["replacementCourierName"]?.toString(),
       replacementShippedAt: json["replacementShippedAt"]?.toString(),
       replacementSlipLink: json["replacementSlipLink"]?.toString(), // ✅
+      returnSlipLink: json["returnSlipLink"]?.toString(), // ✅
       refundAmount: (json["refundAmount"] as num?)?.toDouble(),
+      netRefundAmount: (json["netRefundAmount"] as num?)?.toDouble(), // ✅
+
       refundedAt: json["refundedAt"]?.toString(),
       pdfPath: json["pdfPath"]?.toString(),
       companyNote: json["companyNote"]?.toString(),
@@ -161,27 +169,43 @@ class ExchangeRequest {
 
   String get courierCostLabel {
     switch (courierPaidBy) {
-      case "seller": return "Courier cost: Seller's responsibility";
-      case "buyer": return "Return courier cost: Your responsibility";
-      case "platform": return "Courier cost: Platform will handle";
-      default: return "";
+      case "seller":
+        return "Courier cost: Seller's responsibility";
+      case "buyer":
+        return "Return courier cost: Your responsibility";
+      case "platform":
+        return "Courier cost: Platform will handle";
+      default:
+        return "";
     }
   }
 
   String get statusLabel {
     switch (status) {
-      case "Pending": return "Pending Review";
-      case "Accepted": return "Accepted";
-      case "Denied": return "Rejected";
-      case "ReturnShipped": return "Return In Transit";
-      case "ReturnReceived": return "Parcel Received";
-      case "Inspecting": return "Under Inspection";
-      case "ApprovedInspection": return "Inspection Passed";
-      case "Disputed": return "Disputed";
-      case "ReplacementShipped": return "Replacement Shipped";
-      case "Refunded": return "Refund Processed";
-      case "Completed": return "Completed";
-      default: return status ?? "Unknown";
+      case "Pending":
+        return "Pending Review";
+      case "Accepted":
+        return "Accepted";
+      case "Denied":
+        return "Rejected";
+      case "ReturnShipped":
+        return "Return In Transit";
+      case "ReturnReceived":
+        return "Parcel Received";
+      case "Inspecting":
+        return "Under Inspection";
+      case "ApprovedInspection":
+        return "Inspection Passed";
+      case "Disputed":
+        return "Disputed";
+      case "ReplacementShipped":
+        return "Replacement Shipped";
+      case "Refunded":
+        return "Refund Processed";
+      case "Completed":
+        return "Completed";
+      default:
+        return status ?? "Unknown";
     }
   }
 }
