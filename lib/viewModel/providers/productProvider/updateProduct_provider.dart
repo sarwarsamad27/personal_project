@@ -20,7 +20,8 @@ class UpdateProductProvider with ChangeNotifier {
     required List<String> color,
     required List<String> keepImages,
     required List<String> deleteImages,
-    required String stock,
+    required int quantity,        // ✅ stock ki jagah
+    required int weightInGrams,   // ✅
     required List<File> images,
   }) async {
     isLoading = true;
@@ -38,7 +39,8 @@ class UpdateProductProvider with ChangeNotifier {
         color: color,
         keepImages: keepImages,
         deleteImages: deleteImages,
-        stock: stock,
+        quantity: quantity,        // ✅
+        weightInGrams: weightInGrams, // ✅
         images: images,
       );
     } catch (e) {

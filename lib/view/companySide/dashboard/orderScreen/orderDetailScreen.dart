@@ -1,19 +1,37 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:new_brand/models/orders/getMyOrders_model.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
-import 'package:new_brand/view/companySide/dashboard/orderScreen/pdf/backendPdfService.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customImageContainer.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/acceptOrder_provider.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../models/orders/getMyOrders_model.dart';
 
 class OrderDetailScreen extends StatelessWidget {
   final Orders order;
-
   const OrderDetailScreen({super.key, required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => AcceptOrderProvider(),
+      child: _OrderDetailBody(order: order),
+    );
+  }
+}
+
+class _OrderDetailBody extends StatelessWidget {
+  final Orders order;
+  const _OrderDetailBody({required this.order});
 
   @override
   Widget build(BuildContext context) {
@@ -49,9 +67,14 @@ class OrderDetailScreen extends StatelessWidget {
                         ),
                         _buildRow("Date", formatDate(order.createdAt ?? "")),
                         _buildRow("Payment", "Cash on Delivery"),
+
+                        // ✅ Track number show karo agar available hai
+                        if (order.trackNumber != null)
+                          _buildRow("Track #", order.trackNumber!),
+
                         Divider(color: Colors.white.withOpacity(0.3)),
 
-                        // ----------------- All Products -----------------
+                        // Products
                         ...order.products!.map((product) {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,7 +98,9 @@ class OrderDetailScreen extends StatelessWidget {
                                       height: 100.h,
                                       width: 100.w,
                                       child: Image.network(
-                                        Global.getImageUrl(product.images!.first)  ,
+                                        Global.getImageUrl(
+                                          product.images!.first,
+                                        ),
                                         fit: BoxFit.cover,
                                       ),
                                     ),
@@ -83,42 +108,13 @@ class OrderDetailScreen extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: 12.h),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "Name",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16.sp,
-                                    ),
-                                  ),
-                                  Text(
-                                    product.name ?? "",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16.sp,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 6.h),
-if (product.selectedSize == null || product.selectedSize!.isEmpty)
-                                SizedBox.shrink()
-                              else
-
-
-                             
-                              if (product.selectedSize == null || product.selectedSize!.isEmpty)
-                                SizedBox.shrink()
-                              else
-                              _buildRow(
-                                "Size",
-                                (product.selectedSize ?? []).join(", "),
-                              ),
+                              _buildRow("Name", product.name ?? ""),
+                              if (product.selectedSize != null &&
+                                  product.selectedSize!.isNotEmpty)
+                                _buildRow(
+                                  "Size",
+                                  product.selectedSize!.join(", "),
+                                ),
                               _buildRow(
                                 "Quantity",
                                 product.quantity.toString(),
@@ -132,34 +128,187 @@ if (product.selectedSize == null || product.selectedSize!.isEmpty)
                           );
                         }).toList(),
 
-                        // ----------------- Grand Total -----------------
                         SizedBox(height: 12.h),
                         _buildRow("Grand Total", "Rs ${order.grandTotal ?? 0}"),
                       ],
                     ),
                   ),
+
                   SizedBox(height: 25.h),
-                  
-                  // ✅ BACKEND PDF BUTTON
-                  CustomButton(
-                    text: "Generate Invoice PDF",
-                    onTap: () async {
-                      if (order.sId == null || order.sId!.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Order ID not found"),
-                            backgroundColor: Colors.red,
-                          ),
+
+                  // ✅ Accept + Slip Buttons
+                  Consumer<AcceptOrderProvider>(
+                    builder: (context, provider, _) {
+                      final String? slip = provider.slipLink ?? order.slipLink;
+                      final String? track =
+                          provider.trackNumber ?? order.trackNumber;
+
+                      // ✅ Status provider se lo agar updated hai
+                      final String currentStatus =
+                          provider.updatedStatus ?? order.status ?? "Pending";
+                      final bool accepted =
+                          provider.isAccepted || currentStatus == "Dispatched";
+
+                      print("🎫 Slip: $slip");
+                      print("📍 Track: $track");
+                      print("✅ Accepted: ${provider.isAccepted}");
+                      print("📦 Current Status: $currentStatus");
+
+                      // ✅ Slip available
+                      if (slip != null && slip.isNotEmpty) {
+                        return Column(
+                          children: [
+                            // ✅ Status badge
+                            Container(
+                              margin: EdgeInsets.only(bottom: 12.h),
+                              padding: EdgeInsets.all(12.w),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(color: Colors.blue),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.inventory_2_outlined,
+                                    color: Colors.blue,
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    "Status: $currentStatus",
+                                    style: TextStyle(
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13.sp,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // ✅ Track number badge
+                            if (track != null)
+                              Container(
+                                margin: EdgeInsets.only(bottom: 12.h),
+                                padding: EdgeInsets.all(12.w),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  border: Border.all(color: Colors.green),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.local_shipping,
+                                      color: Colors.green,
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Expanded(
+                                      child: Text(
+                                        "Track: $track",
+                                        style: TextStyle(
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13.sp,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                            // ✅ Download Slip button
+                            CustomButton(
+                              text: "📦 Download Shipping Slip",
+                              onTap: () async {
+                                try {
+                                  final uri = Uri.parse(slip.trim());
+                                  final launched = await launchUrl(
+                                    uri,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                  if (!launched) {
+                                    await launchUrl(
+                                      uri,
+                                      mode: LaunchMode.platformDefault,
+                                    );
+                                  }
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text("Error: $e"),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
                         );
-                        return;
                       }
 
-                      await BackendPdfService().downloadAndOpenInvoice(
-                        context,
-                        order.sId!,
+                      // ✅ Accepted lekin slip nahi
+                      if (accepted) {
+                        return Container(
+                          padding: EdgeInsets.all(14.w),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: Colors.green),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: Text(
+                                  "✅ Order Accepted! Slip generating...",
+                                  style: TextStyle(
+                                    color: Colors.green,
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      // ✅ Pending — Accept button
+                      return CustomButton(
+                        text: provider.isLoading
+                            ? "Processing..."
+                            : "✅ Accept Order & Book Shipment",
+                        onTap: provider.isLoading
+                            ? null
+                            : () async {
+                                final token =
+                                    await LocalStorage.getToken() ?? "";
+                                final success = await provider.acceptOrder(
+                                  token: token,
+                                  orderId: order.sId!,
+                                );
+                                if (!success) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        provider.errorMessage ??
+                                            "Something went wrong",
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
                       );
                     },
                   ),
+                  SizedBox(height: 20.h),
                 ],
               ),
             ),
@@ -169,6 +318,7 @@ if (product.selectedSize == null || product.selectedSize!.isEmpty)
     );
   }
 
+  // ... formatDate, _monthName, _formatTime, _buildRow same rahenge
   String formatDate(String isoDate) {
     try {
       final date = DateTime.parse(isoDate).toLocal();

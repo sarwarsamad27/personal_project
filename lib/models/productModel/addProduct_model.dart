@@ -7,20 +7,21 @@ class AddProductModel {
   AddProductModel.fromJson(Map<String, dynamic> json) {
     message = json['message'];
     product =
-        json['product'] != null ? new Product.fromJson(json['product']) : null;
+        json['product'] != null ? Product.fromJson(json['product']) : null;
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['message'] = this.message;
-    if (this.product != null) {
-      data['product'] = this.product!.toJson();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['message'] = message;
+    if (product != null) {
+      data['product'] = product!.toJson();
     }
     return data;
   }
 }
 
 class Product {
+  String? sId;
   String? profileId;
   String? categoryId;
   String? name;
@@ -31,64 +32,74 @@ class Product {
   int? discountPercentage;
   List<String>? size;
   List<String>? color;
-  String? stock;
-  String? sId;
+  int? quantity;       // ✅ stock ki jagah
+  int? weightInGrams;  // ✅ new
   String? createdAt;
   String? updatedAt;
   int? iV;
 
-  Product(
-      {this.profileId,
-      this.categoryId,
-      this.name,
-      this.description,
-      this.images,
-      this.beforeDiscountPrice,
-      this.afterDiscountPrice,
-      this.discountPercentage,
-      this.size,
-      this.color,
-      this.stock,
-      this.sId,
-      this.createdAt,
-      this.updatedAt,
-      this.iV});
+  Product({
+    this.sId,
+    this.profileId,
+    this.categoryId,
+    this.name,
+    this.description,
+    this.images,
+    this.beforeDiscountPrice,
+    this.afterDiscountPrice,
+    this.discountPercentage,
+    this.size,
+    this.color,
+    this.quantity,      // ✅
+    this.weightInGrams, // ✅
+    this.createdAt,
+    this.updatedAt,
+    this.iV,
+  });
 
   Product.fromJson(Map<String, dynamic> json) {
+    sId = json['_id'];
     profileId = json['profileId'];
     categoryId = json['categoryId'];
     name = json['name'];
     description = json['description'];
-    images = json['images'].cast<String>();
+    images = json['images'] != null
+        ? List<String>.from(json['images'])
+        : [];
     beforeDiscountPrice = json['beforeDiscountPrice'];
     afterDiscountPrice = json['afterDiscountPrice'];
     discountPercentage = json['discountPercentage'];
-    size = json['size'].cast<String>();
-    color = json['color'].cast<String>();
-    stock = json['stock'];
-    sId = json['_id'];
+    size = json['size'] != null
+        ? List<String>.from(json['size'])
+        : [];
+    color = json['color'] != null
+        ? List<String>.from(json['color'])
+        : [];
+    quantity = json['quantity'];           // ✅
+    weightInGrams = json['weightInGrams']; // ✅
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     iV = json['__v'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['profileId'] = this.profileId;
-    data['categoryId'] = this.categoryId;
-    data['name'] = this.name;
-    data['description'] = this.description;
-    data['images'] = this.images;
-    data['beforeDiscountPrice'] = this.beforeDiscountPrice;
-    data['afterDiscountPrice'] = this.afterDiscountPrice;
-    data['discountPercentage'] = this.discountPercentage;
-    data['size'] = this.size;
-    data['color'] = this.color;
-    data['stock'] = this.stock;
-    data['_id'] = this.sId;
-    data['createdAt'] = this.createdAt;
-    data['updatedAt'] = this.updatedAt;
-    data['__v'] = this.iV;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['_id'] = sId;
+    data['profileId'] = profileId;
+    data['categoryId'] = categoryId;
+    data['name'] = name;
+    data['description'] = description;
+    data['images'] = images;
+    data['beforeDiscountPrice'] = beforeDiscountPrice;
+    data['afterDiscountPrice'] = afterDiscountPrice;
+    data['discountPercentage'] = discountPercentage;
+    data['size'] = size;
+    data['color'] = color;
+    data['quantity'] = quantity;           // ✅
+    data['weightInGrams'] = weightInGrams; // ✅
+    data['createdAt'] = createdAt;
+    data['updatedAt'] = updatedAt;
+    data['__v'] = iV;
     return data;
   }
 }

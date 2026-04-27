@@ -7,7 +7,7 @@ class AddProductRepository {
   final NetworkApiServices apiServices = NetworkApiServices();
 
   /// Add product with optional multiple images
-  Future<AddProductModel> addProduct({
+ Future<AddProductModel> addProduct({
     required String token,
     required String categoryId,
     required String name,
@@ -17,19 +17,20 @@ class AddProductRepository {
     int? afterPrice,
     List<String>? size,
     List<String>? color,
-    String? stock,
+    int? quantity,        // ✅ stock ki jagah quantity
+    int? weightInGrams,
   }) async {
     try {
-      
       final fields = <String, String>{
         'categoryId': categoryId,
         'name': name,
         if (description != null) 'description': description,
         if (beforePrice != null) 'beforeDiscountPrice': beforePrice.toString(),
         if (afterPrice != null) 'afterDiscountPrice': afterPrice.toString(),
-        if (stock != null) 'stock': stock.toString(),
         if (size != null && size.isNotEmpty) 'size': size.join(','),
         if (color != null && color.isNotEmpty) 'color': color.join(','),
+        if (quantity != null) 'quantity': quantity.toString(),          // ✅
+        if (weightInGrams != null) 'weightInGrams': weightInGrams.toString(),
       };
 
       final response = await apiServices.postMultipartApi(
@@ -38,7 +39,6 @@ class AddProductRepository {
         images ?? [],
         fileFieldName: "images",
       );
-      print(response);
       return AddProductModel.fromJson(response);
     } catch (e) {
       return AddProductModel(message: "Error: $e");

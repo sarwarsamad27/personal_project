@@ -23,7 +23,8 @@ class EditProductDialog extends StatelessWidget {
   final String color;
   final String size;
   final String price;
-  final String stock;
+  final int quantity;
+final int weightInGrams;
 
   const EditProductDialog({
     super.key,
@@ -35,7 +36,8 @@ class EditProductDialog extends StatelessWidget {
     required this.color,
     required this.size,
     required this.price,
-    required this.stock,
+     required this.quantity,       // ✅
+    required this.weightInGrams,
   });
 
   @override
@@ -43,7 +45,7 @@ class EditProductDialog extends StatelessWidget {
     final List<String> stockOptions = const ["In Stock", "Out of Stock"];
 
     final oldPrice = price.replaceAll("PKR", "").replaceAll(":", "").trim();
-    final oldStock = stock.trim().isEmpty ? "In Stock" : stock.trim();
+ 
 
     final bool hasColors =
         color.trim().isNotEmpty && color.trim().toLowerCase() != "n/a";
@@ -57,7 +59,9 @@ class EditProductDialog extends StatelessWidget {
         oldDescription: description,
         oldColor: color,
         oldSize: size,
-        oldStock: oldStock,
+        oldQuantity: quantity,        // ✅
+        oldWeight: weightInGrams,    // ✅
+       
         oldImages: imageUrls,
       ),
       child: Dialog(
@@ -71,15 +75,7 @@ class EditProductDialog extends StatelessWidget {
             builder: (context, s, _) {
               final bool canUpdate = s.isChanged && s.isValid;
 
-              // current dropdown value from controller (single source)
-              final String currentStock = (s.stockController.text.trim().isEmpty)
-                  ? "In Stock"
-                  : s.stockController.text.trim();
-
-              final String normalizedDropdownValue =
-                  (currentStock.toLowerCase() == "out of stock")
-                      ? "Out of Stock"
-                      : "In Stock";
+             
 
               return SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -197,32 +193,22 @@ class EditProductDialog extends StatelessWidget {
                     ],
 
                     // ----------- STOCK FIELD (DROPDOWN) -----------
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Stock"),
-                        SizedBox(height: 8.h),
-                        DropdownButtonFormField<String>(
-                          value: normalizedDropdownValue,
-                          items: stockOptions
-                              .map(
-                                (v) => DropdownMenuItem<String>(
-                                  value: v,
-                                  child: Text(v),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (v) {
-                            if (v == null) return;
-                            // ✅ stock change triggers isChanged/isValid re-eval
-                            s.setStock(v);
-                          },
-                          decoration: const InputDecoration(
-                            hintText: "Select stock status",
-                          ),
-                        ),
-                      ],
-                    ),
+                   CustomTextField(
+  controller: s.weightController,
+  headerText: "Weight (grams) *",
+  hintText: "Enter weight in grams (e.g. 500)",
+  keyboardType: TextInputType.number,
+  prefixIcon: Icons.scale_outlined,
+),
+SizedBox(height: 15.h),
+
+CustomTextField(
+  controller: s.quantityController,
+  headerText: "Quantity *",
+  hintText: "Enter available quantity (e.g. 50)",
+  keyboardType: TextInputType.number,
+  prefixIcon: Icons.inventory_2_outlined,
+),
 
                     SizedBox(height: 25.h),
 
@@ -263,41 +249,25 @@ class EditProductDialog extends StatelessWidget {
                                         listen: false,
                                       );
 
-                                      await provider.updateProduct(
-                                        productId: productId,
-                                        token: token,
-                                        name: s.nameController.text.trim(),
-                                        description: s.descriptionController.text
-                                            .trim(),
-                                        afterDiscountPrice: int.tryParse(
-                                              s.priceController.text.trim(),
-                                            ) ??
-                                            0,
-                                        beforeDiscountPrice: int.tryParse(
-                                              s.priceController.text.trim(),
-                                            ) ??
-                                            0,
-
-                                        // ✅ only send if section exists, otherwise send empty list same as earlier logic
-                                        size: hasSizes
-                                            ? s.sizeController.text
-                                                .trim()
-                                                .split(',')
-                                            : <String>[],
-                                        color: hasColors
-                                            ? s.colorController.text
-                                                .trim()
-                                                .split(',')
-                                            : <String>[],
-
-                                        // ✅ stock from controller (synced with dropdown)
-                                        stock: s.stockController.text.trim(),
-
-                                        images: validNewImages,
-
-                                        keepImages: s.existingImages,
-                                        deleteImages: s.deletedExistingImages,
-                                      );
+                                     await provider.updateProduct(
+  productId: productId,
+  token: token,
+  name: s.nameController.text.trim(),
+  description: s.descriptionController.text.trim(),
+  afterDiscountPrice: int.tryParse(s.priceController.text.trim()) ?? 0,
+  beforeDiscountPrice: int.tryParse(s.priceController.text.trim()) ?? 0,
+  size: hasSizes
+      ? s.sizeController.text.trim().split(',')
+      : <String>[],
+  color: hasColors
+      ? s.colorController.text.trim().split(',')
+      : <String>[],
+  quantity: int.tryParse(s.quantityController.text.trim()) ?? 0,       // ✅
+  weightInGrams: int.tryParse(s.weightController.text.trim()) ?? 500,  // ✅
+  images: validNewImages,
+  keepImages: s.existingImages,
+  deleteImages: s.deletedExistingImages,
+);
 
                                       if (provider.updateProductModel?.product !=
                                           null) {

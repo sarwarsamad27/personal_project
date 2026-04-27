@@ -15,7 +15,8 @@ class ProductImage extends StatelessWidget {
   final String price;
   final String categoryId;
   final String productId;
-  final String? stock;
+  final int quantity;       // ✅ stock ki jagah
+  final int weightInGrams;  // ✅ new
 
   ProductImage({
     super.key,
@@ -27,7 +28,8 @@ class ProductImage extends StatelessWidget {
     required this.size,
     required this.price,
     required this.categoryId,
-    this.stock,
+    required this.quantity,       // ✅
+    required this.weightInGrams,  // ✅
   });
 
   final PageController _pageController = PageController();
@@ -52,10 +54,12 @@ class ProductImage extends StatelessWidget {
         color: color,
         size: size,
         price: price,
-        stock: stock ?? "In Stock",
+        quantity: quantity,           // ✅
+        weightInGrams: weightInGrams, // ✅
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {

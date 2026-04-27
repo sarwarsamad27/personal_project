@@ -19,16 +19,13 @@ class AddProductProvider with ChangeNotifier {
     int? afterPrice,
     List<String>? size,
     List<String>? color,
-
-    // CHANGE: int? -> String?
-    String? stock,
-
+    int? quantity,        // ✅ stock ki jagah quantity
+    int? weightInGrams,
     required VoidCallback onSuccess,
     required Function(String) onError,
   }) async {
     isLoading = true;
     notifyListeners();
-
     try {
       final response = await repository.addProduct(
         token: token,
@@ -40,15 +37,12 @@ class AddProductProvider with ChangeNotifier {
         afterPrice: afterPrice,
         size: size,
         color: color,
-
-        // CHANGE: send String stock
-        stock: stock,
+        quantity: quantity,           // ✅
+        weightInGrams: weightInGrams,
       );
-
       isLoading = false;
       productResponse = response;
       notifyListeners();
-
       if (response.product != null) {
         onSuccess();
       } else {

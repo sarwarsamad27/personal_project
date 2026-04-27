@@ -106,27 +106,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   /// IMAGE (unchanged)
+                  // Jahan bhi ProductImage use ho raha hai wahan:
+                  // ProductImage call fix karein - prods use karein, product nahi
                   ProductImage(
-                    imageUrls: Global.imageUrl != ""
-                        ? (prods.images ?? [])
-                              .where((e) => e.trim().isNotEmpty)
-                              .map((e) => Global.getImageUrl(e))
-                              .toList()
-                        : [],
-                    name: prods.name ?? "",
-                    description: prods.description ?? "",
-                    color: (prods.color != null && prods.color!.isNotEmpty)
-                        ? prods.color!.first
-                        : "N/A",
-                    size: (prods.size != null && prods.size!.isNotEmpty)
-                        ? prods.size!.first
-                        : "N/A",
-                    price: "PKR: ${prods.afterDiscountPrice ?? 0}",
-                    productId: prods.sId!,
-                    categoryId: prods.categoryId!,
-                    stock: prods.stock.toString(),
+                    productId: prods.sId ?? '',
+                    categoryId: widget.categoryId,
+                    imageUrls: prods.images ?? [],
+                    name: prods.name ?? '',
+                    description: prods.description ?? '',
+                    color: prods.color?.join(',') ?? '',
+                    size: prods.size?.join(',') ?? '',
+                    price: prods.afterDiscountPrice?.toString() ?? '0',
+                    quantity: prods.quantity ?? 0, // ✅
+                    weightInGrams: prods.weightInGrams ?? 500, // ✅
                   ),
-
                   SizedBox(height: 12.h),
 
                   /// DETAILS CARD (premium)
@@ -147,7 +140,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ),
                           SizedBox(height: 10.h),
 
-                          _buildStockRow(prods),
+                          _buildQuantityRow(prods),
 
                           SizedBox(height: 14.h),
 
@@ -293,26 +286,50 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildStockRow(Product prods) {
-    // ... (unchanged logic inside _buildStockRow)
-    final String stockText = (prods.stock ?? "In Stock").trim();
-    final bool isOutOfStock = stockText.toLowerCase() == "out of stock";
+  Widget _buildQuantityRow(Product prods) {
+    final int qty = prods.quantity ?? 0;
+    final bool isOutOfStock = qty == 0;
+    final bool isLowStock = qty > 0 && qty < 5;
+    final bool isInStock = qty >= 5;
+
+    // Colors based on stock level
     final Color bgColor = isOutOfStock
         ? const Color(0xFFFEE2E2)
-        : const Color(0xFFFFEDD5);
+        : isLowStock
+        ? const Color(0xFFFFFBEB)
+        : const Color(0xFFDCFCE7);
+
     final Color borderColor = isOutOfStock
         ? const Color(0xFFFCA5A5)
-        : const Color(0xFFFDBA74);
+        : isLowStock
+        ? const Color(0xFFFCD34D)
+        : const Color(0xFF86EFAC);
+
     final Color textColor = isOutOfStock
         ? const Color(0xFFB91C1C)
-        : const Color(0xFFC2410C);
+        : isLowStock
+        ? const Color(0xFF92400E)
+        : const Color(0xFF15803D);
+
+    final Color dotColor = isOutOfStock
+        ? const Color(0xFFEF4444)
+        : isLowStock
+        ? const Color(0xFFF59E0B)
+        : const Color(0xFF22C55E);
+
+    final String label = isOutOfStock
+        ? "Out of Stock"
+        : isLowStock
+        ? "Low Stock • $qty left"
+        : "In Stock • $qty";
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        // ✅ Price
         Text(
           prods.afterDiscountPrice != null
-              ? "PKR: ${prods.afterDiscountPrice}"
+              ? "PKR ${prods.afterDiscountPrice}"
               : "Price Not Available",
           style: TextStyle(
             fontSize: 18.sp,
@@ -320,21 +337,40 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             color: const Color(0xFF0F172A),
           ),
         ),
+
         const Spacer(),
+
+        // ✅ Premium Stock Badge
         Container(
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: borderColor),
+            border: Border.all(color: borderColor, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: dotColor.withOpacity(0.15),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          child: Text(
-            stockText.isEmpty ? "In Stock" : stockText,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w700,
-              color: textColor,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ✅ Blinking dot
+              _BlinkingDot(color: dotColor),
+              SizedBox(width: 6.w),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w700,
+                  color: textColor,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -541,6 +577,62 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BlinkingDot extends StatefulWidget {
+  final Color color;
+  const _BlinkingDot({required this.color});
+
+  @override
+  State<_BlinkingDot> createState() => _BlinkingDotState();
+}
+
+class _BlinkingDotState extends State<_BlinkingDot>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+
+    _animation = Tween<double>(
+      begin: 0.3,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _animation,
+      child: Container(
+        width: 8.w,
+        height: 8.w,
+        decoration: BoxDecoration(
+          color: widget.color,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: widget.color.withOpacity(0.5),
+              blurRadius: 4,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
       ),
     );
   }

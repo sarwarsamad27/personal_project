@@ -8,7 +8,8 @@ class EditProductNotifier extends ChangeNotifier {
   final String oldDescription;
   final String oldColor;
   final String oldSize;
-  final String oldStock;
+  final int oldQuantity;     // ✅ oldStock ki jagah
+  final int oldWeight;       // ✅ new
   final List<String> oldImages;
 
   final TextEditingController nameController = TextEditingController();
@@ -16,9 +17,8 @@ class EditProductNotifier extends ChangeNotifier {
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController colorController = TextEditingController();
   final TextEditingController sizeController = TextEditingController();
-
-  // ✅ stock controller (dropdown sync)
-  final TextEditingController stockController = TextEditingController();
+  final TextEditingController quantityController = TextEditingController(); // ✅
+  final TextEditingController weightController = TextEditingController();   // ✅
 
   final List<String> existingImages = [];
   final List<String> deletedExistingImages = [];
@@ -30,7 +30,8 @@ class EditProductNotifier extends ChangeNotifier {
     required this.oldDescription,
     required this.oldColor,
     required this.oldSize,
-    required this.oldStock,
+    required this.oldQuantity,  // ✅
+    required this.oldWeight,    // ✅
     required this.oldImages,
   }) {
     nameController.text = oldName;
@@ -38,10 +39,8 @@ class EditProductNotifier extends ChangeNotifier {
     descriptionController.text = oldDescription;
     colorController.text = oldColor;
     sizeController.text = oldSize;
-
-    stockController.text = (oldStock.trim().toLowerCase() == "out of stock")
-        ? "Out of Stock"
-        : "In Stock";
+    quantityController.text = oldQuantity.toString(); // ✅
+    weightController.text = oldWeight.toString();     // ✅
 
     existingImages.addAll(oldImages);
 
@@ -51,31 +50,29 @@ class EditProductNotifier extends ChangeNotifier {
     descriptionController.addListener(_onAnyChange);
     colorController.addListener(_onAnyChange);
     sizeController.addListener(_onAnyChange);
-    stockController.addListener(_onAnyChange);
+    quantityController.addListener(_onAnyChange); // ✅
+    weightController.addListener(_onAnyChange);   // ✅
   }
 
-  void _onAnyChange() {
-    notifyListeners();
-  }
+  void _onAnyChange() => notifyListeners();
 
   bool get canAddMore => (existingImages.length + newImages.length) < 5;
 
-  // ✅ Stock setter so dropdown change immediately enables Update
-  void setStock(String v) {
-    stockController.text = v;
-    notifyListeners();
-  }
-
-  // ✅ Block empty updates for fields that exist
+  // ✅ isValid - stock check hata, quantity/weight check add
   bool get isValid {
     final n = nameController.text.trim();
     final p = priceController.text.trim();
     final d = descriptionController.text.trim();
-    final st = stockController.text.trim();
+    final q = quantityController.text.trim(); // ✅
+    final w = weightController.text.trim();   // ✅
 
-    if (n.isEmpty || p.isEmpty || d.isEmpty || st.isEmpty) return false;
+    if (n.isEmpty || p.isEmpty || d.isEmpty || q.isEmpty || w.isEmpty) {
+      return false;
+    }
+
     if (int.tryParse(p) == null) return false;
-    if (st != "In Stock" && st != "Out of Stock") return false;
+    if (int.tryParse(q) == null || int.parse(q) < 0) return false; // ✅
+    if (int.tryParse(w) == null || int.parse(w) <= 0) return false; // ✅
 
     final bool hadColor =
         oldColor.trim().isNotEmpty && oldColor.trim().toLowerCase() != "n/a";
@@ -85,20 +82,20 @@ class EditProductNotifier extends ChangeNotifier {
     if (hadColor && colorController.text.trim().isEmpty) return false;
     if (hadSize && sizeController.text.trim().isEmpty) return false;
 
-    // Must have at least 1 image (existing or new)
     if (existingImages.isEmpty && newImages.isEmpty) return false;
 
     return true;
   }
 
-  // ✅ used by UI to enable/disable Update
+  // ✅ isChanged - stock check hata, quantity/weight check add
   bool get isChanged {
     final newName = nameController.text.trim();
     final newPrice = priceController.text.trim();
     final newDesc = descriptionController.text.trim();
     final newColor = colorController.text.trim();
     final newSize = sizeController.text.trim();
-    final newStock = stockController.text.trim();
+    final newQty = int.tryParse(quantityController.text.trim()); // ✅
+    final newWgt = int.tryParse(weightController.text.trim());   // ✅
 
     final bool imagesChanged =
         deletedExistingImages.isNotEmpty || newImages.isNotEmpty;
@@ -107,7 +104,6 @@ class EditProductNotifier extends ChangeNotifier {
     if (newPrice != oldPrice.trim()) return true;
     if (newDesc != oldDescription.trim()) return true;
 
-    // Only consider color/size change if they existed originally
     final bool hadColor =
         oldColor.trim().isNotEmpty && oldColor.trim().toLowerCase() != "n/a";
     final bool hadSize =
@@ -116,14 +112,14 @@ class EditProductNotifier extends ChangeNotifier {
     if (hadColor && newColor != oldColor.trim()) return true;
     if (hadSize && newSize != oldSize.trim()) return true;
 
-    if (newStock.toLowerCase() != oldStock.trim().toLowerCase()) return true;
+    if (newQty != null && newQty != oldQuantity) return true; // ✅
+    if (newWgt != null && newWgt != oldWeight) return true;   // ✅
 
     if (imagesChanged) return true;
 
     return false;
   }
 
-  // Existing image remove
   void removeExisting(int index) {
     if (index < 0 || index >= existingImages.length) return;
     final img = existingImages.removeAt(index);
@@ -131,7 +127,6 @@ class EditProductNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  // New image remove
   void removeNew(int index) {
     if (index < 0 || index >= newImages.length) return;
     newImages.removeAt(index);
@@ -143,19 +138,15 @@ class EditProductNotifier extends ChangeNotifier {
 
     final picker = ImagePicker();
     final remaining = 5 - (existingImages.length + newImages.length);
-
     final picked = await picker.pickMultiImage();
     if (picked.isEmpty) return;
 
-    // take only remaining slots
     for (final x in picked.take(remaining)) {
       newImages.add(File(x.path));
     }
-
     notifyListeners();
   }
 
-  // remove missing cache files (as you were doing)
   Future<void> removeMissingFiles() async {
     newImages.removeWhere((f) => !f.existsSync());
     notifyListeners();
@@ -168,7 +159,8 @@ class EditProductNotifier extends ChangeNotifier {
     descriptionController.dispose();
     colorController.dispose();
     sizeController.dispose();
-    stockController.dispose();
+    quantityController.dispose(); // ✅
+    weightController.dispose();   // ✅
     super.dispose();
   }
 }

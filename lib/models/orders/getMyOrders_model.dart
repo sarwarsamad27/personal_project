@@ -60,6 +60,9 @@ class Orders {
   String? createdAt;
   String? updatedAt;
   int? iV;
+   bool? leopardsBooked;   // ✅
+  String? trackNumber;    // ✅
+  String? slipLink; 
 
   Orders({
     this.sId,
@@ -74,6 +77,9 @@ class Orders {
     this.createdAt,
     this.updatedAt,
     this.iV,
+     this.leopardsBooked,  // ✅
+    this.trackNumber,     // ✅
+    this.slipLink,  
   });
 
   Orders.fromJson(Map<String, dynamic> json) {
@@ -96,6 +102,9 @@ class Orders {
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     iV = json['__v'];
+     leopardsBooked = json['leopardsBooked'] ?? false; // ✅
+    trackNumber = json['trackNumber'];                 // ✅
+    slipLink = json['slipLink'];  
   }
 
   Map<String, dynamic> toJson() {
@@ -116,6 +125,9 @@ class Orders {
     data['createdAt'] = this.createdAt;
     data['updatedAt'] = this.updatedAt;
     data['__v'] = this.iV;
+     data['leopardsBooked'] = leopardsBooked; // ✅
+    data['trackNumber'] = trackNumber;        // ✅
+    data['slipLink'] = slipLink;    
     return data;
   }
 }

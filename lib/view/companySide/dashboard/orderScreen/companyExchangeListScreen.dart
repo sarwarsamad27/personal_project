@@ -4,9 +4,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/models/chatThread/exchangeRequestModel.dart';
-import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/CompanyExchangeDetailScreen.dart';
-import 'package:new_brand/viewModel/providers/chatProvider/companyExchange.dart';
+import 'package:new_brand/viewModel/providers/chatProvider/companyExchange_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:new_brand/resources/appColor.dart';
 

@@ -1,20 +1,4 @@
-// models/chatModel/exchangeRequestModel.dart
-
-class ExchangeRequestModel {
-  final String? message;
-  final ExchangeRequest? exchangeRequest;
-
-  ExchangeRequestModel({this.message, this.exchangeRequest});
-
-  factory ExchangeRequestModel.fromJson(Map<String, dynamic> json) {
-    return ExchangeRequestModel(
-      message: json["message"],
-      exchangeRequest: json["exchangeRequest"] != null
-          ? ExchangeRequest.fromJson(json["exchangeRequest"])
-          : null,
-    );
-  }
-}
+// models/chatThread/exchangeRequestModel.dart
 
 class ExchangeRequestListModel {
   final String? message;
@@ -36,15 +20,17 @@ class ExchangeRequest {
   final String? orderId;
   final String? productId;
   final String? buyerId;
+  final String? buyerName;       // ✅ NEW
+  final String? buyerEmail;      // ✅ NEW
   final String? sellerProfileId;
   final String? reason;
-  final String? reasonCategory;  // seller_fault | defective | buyer_preference | size_color
-  final String? resolutionType;  // replacement | refund
+  final String? reasonCategory;
+  final String? resolutionType;
   final String? status;
-  final String? courierPaidBy;   // seller | buyer | platform
+  final String? courierPaidBy;
   final List<String> images;
 
-  // Return shipping (user → company)
+  // Return shipping
   final String? returnTrackingNumber;
   final String? returnCourierName;
   final String? returnShippedAt;
@@ -61,6 +47,7 @@ class ExchangeRequest {
   final String? replacementTrackingNumber;
   final String? replacementCourierName;
   final String? replacementShippedAt;
+  final String? replacementSlipLink; // ✅ NEW — Leopards slip
   final double? refundAmount;
   final String? refundedAt;
 
@@ -80,6 +67,8 @@ class ExchangeRequest {
     this.orderId,
     this.productId,
     this.buyerId,
+    this.buyerName,
+    this.buyerEmail,
     this.sellerProfileId,
     this.reason,
     this.reasonCategory,
@@ -99,6 +88,7 @@ class ExchangeRequest {
     this.replacementTrackingNumber,
     this.replacementCourierName,
     this.replacementShippedAt,
+    this.replacementSlipLink,
     this.refundAmount,
     this.refundedAt,
     this.pdfPath,
@@ -116,6 +106,8 @@ class ExchangeRequest {
       orderId: json["orderId"]?.toString(),
       productId: json["productId"]?.toString(),
       buyerId: json["buyerId"]?.toString(),
+      buyerName: json["buyerName"]?.toString(),
+      buyerEmail: json["buyerEmail"]?.toString(),
       sellerProfileId: json["sellerProfileId"]?.toString(),
       reason: json["reason"]?.toString(),
       reasonCategory: json["reasonCategory"]?.toString(),
@@ -135,6 +127,7 @@ class ExchangeRequest {
       replacementTrackingNumber: json["replacementTrackingNumber"]?.toString(),
       replacementCourierName: json["replacementCourierName"]?.toString(),
       replacementShippedAt: json["replacementShippedAt"]?.toString(),
+      replacementSlipLink: json["replacementSlipLink"]?.toString(), // ✅
       refundAmount: (json["refundAmount"] as num?)?.toDouble(),
       refundedAt: json["refundedAt"]?.toString(),
       pdfPath: json["pdfPath"]?.toString(),
@@ -164,38 +157,47 @@ class ExchangeRequest {
   bool get isReplacementShipped => status == "ReplacementShipped";
   bool get isRefunded => status == "Refunded";
   bool get isCompleted => status == "Completed";
-
   bool get isActive => !isDenied && !isCompleted;
 
-  // ── Courier cost label ────────────────────────────────────────
   String get courierCostLabel {
     switch (courierPaidBy) {
-      case "seller":
-        return "Courier cost: Seller's responsibility";
-      case "buyer":
-        return "Return courier cost: Your responsibility";
-      case "platform":
-        return "Courier cost: Platform will handle";
-      default:
-        return "";
+      case "seller": return "Courier cost: Seller's responsibility";
+      case "buyer": return "Return courier cost: Your responsibility";
+      case "platform": return "Courier cost: Platform will handle";
+      default: return "";
     }
   }
 
-  // ── Status display label ──────────────────────────────────────
   String get statusLabel {
     switch (status) {
-      case "Pending":        return "Pending Review";
-      case "Accepted":       return "Accepted — Ship Product";
-      case "Denied":         return "Rejected";
-      case "ReturnShipped":  return "Return Shipped";
-      case "ReturnReceived": return "Package Received";
-      case "Inspecting":     return "Under Inspection";
+      case "Pending": return "Pending Review";
+      case "Accepted": return "Accepted";
+      case "Denied": return "Rejected";
+      case "ReturnShipped": return "Return In Transit";
+      case "ReturnReceived": return "Parcel Received";
+      case "Inspecting": return "Under Inspection";
       case "ApprovedInspection": return "Inspection Passed";
-      case "Disputed":       return "Disputed";
+      case "Disputed": return "Disputed";
       case "ReplacementShipped": return "Replacement Shipped";
-      case "Refunded":       return "Refund Processed";
-      case "Completed":      return "Completed";
-      default:               return status ?? "Unknown";
+      case "Refunded": return "Refund Processed";
+      case "Completed": return "Completed";
+      default: return status ?? "Unknown";
     }
+  }
+}
+
+// ✅ Refund list model add karo same file mein
+class RefundRequestListModel {
+  final String? message;
+  final List<ExchangeRequest> requests;
+
+  RefundRequestListModel({this.message, this.requests = const []});
+
+  factory RefundRequestListModel.fromJson(Map<String, dynamic> json) {
+    final list = (json["requests"] as List?) ?? [];
+    return RefundRequestListModel(
+      message: json["message"],
+      requests: list.map((e) => ExchangeRequest.fromJson(e)).toList(),
+    );
   }
 }

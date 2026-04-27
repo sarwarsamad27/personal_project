@@ -10,9 +10,11 @@ import 'package:new_brand/viewModel/providers/categoryProvider/createCategory_pr
 import 'package:new_brand/viewModel/providers/categoryProvider/getcategory_provider.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/updateAndDeleteCategory_provider.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/chatThread_provider.dart';
-import 'package:new_brand/viewModel/providers/chatProvider/companyExchange.dart';
+import 'package:new_brand/viewModel/providers/chatProvider/companyExchange_provider.dart';
+import 'package:new_brand/viewModel/providers/chatProvider/company_refund_provider.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/companySaleChart_provider.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/acceptOrder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDeliveredOrder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
@@ -77,6 +79,8 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AnalyzeProductProvider()),
         ChangeNotifierProvider(create: (_) => CancelOrderProvider()),
         ChangeNotifierProvider(create: (_) => CompanyExchangeProvider()),
+        ChangeNotifierProvider(create: (_) => AcceptOrderProvider()),
+        ChangeNotifierProvider(create: (_) => CompanyRefundProvider()),
       ],
 
       child: child,

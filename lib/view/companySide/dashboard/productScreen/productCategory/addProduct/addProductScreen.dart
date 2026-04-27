@@ -27,7 +27,9 @@ class AddProductScreen extends StatelessWidget {
   final TextEditingController _beforePriceController = TextEditingController();
   final TextEditingController _afterPriceController = TextEditingController();
   final TextEditingController _discountController = TextEditingController();
-
+  final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _quantityController =
+      TextEditingController(); // ✅
   final ValueNotifier<String> selectedStockNotifier = ValueNotifier("In Stock");
   final List<String> stockOptions = const ["In Stock", "Out of Stock"];
   final ValueNotifier<List<File>> selectedImagesNotifier = ValueNotifier([]);
@@ -38,15 +40,17 @@ class AddProductScreen extends StatelessWidget {
   // ✅ Analyze image call
   Future<void> _analyzeImage(BuildContext context, File image) async {
     final token = await LocalStorage.getToken();
-    final analyzeProvider =
-        Provider.of<AnalyzeProductProvider>(context, listen: false);
+    final analyzeProvider = Provider.of<AnalyzeProductProvider>(
+      context,
+      listen: false,
+    );
 
     // ✅ Placeholder dikhao
     _nameController.text = "Analyzing...";
     _descriptionController.text = "Please wait...";
 
     analyzeProvider.analyzeImage(
-      token: token??'',
+      token: token ?? '',
       image: image,
       onSuccess: (name, description) {
         _nameController.text = name;
@@ -91,12 +95,27 @@ class AddProductScreen extends StatelessWidget {
     final token = await LocalStorage.getToken();
     final provider = Provider.of<AddProductProvider>(context, listen: false);
 
+    // ✅ Validation
     if (selectedImagesNotifier.value.isEmpty ||
         _nameController.text.isEmpty ||
         _nameController.text == "Analyzing..." ||
         _beforePriceController.text.isEmpty ||
-        _afterPriceController.text.isEmpty) {
+        _afterPriceController.text.isEmpty ||
+        _weightController.text.isEmpty ||
+        _quantityController.text.isEmpty) {
       AppToast.show("Please fill all required fields");
+      return;
+    }
+
+    final weight = int.tryParse(_weightController.text.trim());
+    if (weight == null || weight <= 0) {
+      AppToast.show("Please enter valid weight in grams");
+      return;
+    }
+
+    final quantity = int.tryParse(_quantityController.text.trim());
+    if (quantity == null || quantity < 0) {
+      AppToast.show("Please enter valid quantity");
       return;
     }
 
@@ -106,11 +125,6 @@ class AddProductScreen extends StatelessWidget {
     if (validImages.isEmpty) {
       AppToast.show("Selected images not found. Please re-select images.");
       return;
-    }
-
-    if (validImages.length != original.length) {
-      selectedImagesNotifier.value = validImages;
-      AppToast.show("Some images were removed. Please re-select if needed.");
     }
 
     provider.addProduct(
@@ -125,7 +139,8 @@ class AddProductScreen extends StatelessWidget {
       color: selectedColorsNotifier.value
           .map((e) => e["name"].toString())
           .toList(),
-      stock: selectedStockNotifier.value,
+      quantity: quantity, // ✅
+      weightInGrams: weight,
       onSuccess: () {
         AppToast.show("Product added successfully!");
         Navigator.pop(context);
@@ -186,7 +201,8 @@ class AddProductScreen extends StatelessWidget {
                                     width: 16.w,
                                     height: 16.h,
                                     child: const CircularProgressIndicator(
-                                        strokeWidth: 2),
+                                      strokeWidth: 2,
+                                    ),
                                   ),
                                   SizedBox(width: 8.w),
                                   Text(
@@ -203,7 +219,7 @@ class AddProductScreen extends StatelessWidget {
                           controller: _nameController,
                           hintText: "Enter product name",
                           headerText: 'Product Name',
-                          validator: Validators.required
+                          validator: Validators.required,
                         ),
                         SizedBox(height: 20.h),
 
@@ -240,41 +256,60 @@ class AddProductScreen extends StatelessWidget {
                           readOnly: true,
                         ),
                         SizedBox(height: 20.h),
+                        CustomTextField(
+                          controller: _weightController,
+                          hintText: "Enter weight in grams (e.g. 500)",
+                          headerText: 'Weight (grams) *',
+                          keyboardType: TextInputType.number,
+                        ),
 
+                        SizedBox(height: 20.h),
+
+                        // ✅ Quantity field (stock dropdown hatao, ye lagao)
+                        CustomTextField(
+                          controller: _quantityController,
+                          hintText: "Enter available quantity (e.g. 50)",
+                          headerText: 'Quantity *',
+                          keyboardType: TextInputType.number,
+                        ),
+
+                        SizedBox(height: 20.h),
                         SizeSelect(selectedSizes: selectedSizesNotifier),
                         SizedBox(height: 20.h),
 
                         ColorSelect(colorNotifier: selectedColorsNotifier),
                         SizedBox(height: 20.h),
 
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Stock"),
-                            SizedBox(height: 8.h),
-                            ValueListenableBuilder<String>(
-                              valueListenable: selectedStockNotifier,
-                              builder: (context, value, _) {
-                                return DropdownButtonFormField<String>(
-                                  value: value,
-                                  items: stockOptions
-                                      .map((s) => DropdownMenuItem<String>(
-                                            value: s,
-                                            child: Text(s),
-                                          ))
-                                      .toList(),
-                                  onChanged: (v) {
-                                    if (v == null) return;
-                                    selectedStockNotifier.value = v;
-                                  },
-                                  decoration: const InputDecoration(
-                                    hintText: "Select stock status",
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
+                        // Column(
+                        //   crossAxisAlignment: CrossAxisAlignment.start,
+                        //   children: [
+                        //     Text("Stock"),
+                        //     SizedBox(height: 8.h),
+                        //     ValueListenableBuilder<String>(
+                        //       valueListenable: selectedStockNotifier,
+                        //       builder: (context, value, _) {
+                        //         return DropdownButtonFormField<String>(
+                        //           value: value,
+                        //           items: stockOptions
+                        //               .map(
+                        //                 (s) => DropdownMenuItem<String>(
+                        //                   value: s,
+                        //                   child: Text(s),
+                        //                 ),
+                        //               )
+                        //               .toList(),
+                        //           onChanged: (v) {
+                        //             if (v == null) return;
+                        //             selectedStockNotifier.value = v;
+                        //           },
+                        //           decoration: const InputDecoration(
+                        //             hintText: "Select stock status",
+                        //           ),
+                        //         );
+                        //       },
+                        //     ),
+                        //   ],
+                        // ),
                       ],
                     ),
                   ),

@@ -96,23 +96,24 @@ class CompanyExchangeProvider extends ChangeNotifier {
   }
 
   // ── Ship replacement ───────────────────────────────────────────
-  Future<bool> shipReplacement({
-    required String exchangeId,
-    required String trackingNumber,
-    required String courierName,
-  }) async {
-    processing = true;
-    notifyListeners();
-    final ok = await _repo.shipReplacement(
-      exchangeId: exchangeId,
-      trackingNumber: trackingNumber,
-      courierName: courierName,
-    );
-    if (ok) await refresh();
-    processing = false;
-    notifyListeners();
-    return ok;
-  }
+  // ── Ship replacement — trackingNumber optional (Leopards auto-book)
+Future<bool> shipReplacement({
+  required String exchangeId,
+  String trackingNumber = "AUTO",
+  String courierName = "Leopards",
+}) async {
+  processing = true;
+  notifyListeners();
+  final ok = await _repo.shipReplacement(
+    exchangeId: exchangeId,
+    trackingNumber: trackingNumber,
+    courierName: courierName,
+  );
+  if (ok) await refresh();
+  processing = false;
+  notifyListeners();
+  return ok;
+}
 
   // ── Process refund ─────────────────────────────────────────────
   Future<bool> processRefund({

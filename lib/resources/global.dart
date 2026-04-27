@@ -50,11 +50,16 @@ class Global {
   static var companyChatMessages = "$BaseUrl/company/chat/messages";
   static var generateInvoicePdf = "${BaseUrl}/generate/invoice/pdf";
   static var analyzeProductImage = "${BaseUrl}/analyze-product-image";
+  static var AcceptOrder = "${BaseUrl}/accept/order";
   // static var createExchangeRequest =
   //     "${BaseUrl}/api/buyer/create/exchange/request";
   // static var getExchangeRequests = "${BaseUrl}/api/buyer/get/exchange/requests";
   // static var getExchangePdf = "${BaseUrl}/api/buyer/get/exchange";
-
+static var getCompanyRefundRequests = "${BaseUrl}/get/refund/requests";
+static String refundMarkReceived(String id) => "${BaseUrl}/refund/$id/mark-received";
+static String refundStartInspection(String id) => "${BaseUrl}/refund/$id/start-inspection";
+static String refundInspectionResult(String id) => "${BaseUrl}/refund/$id/inspection-result";
+static String refundFinalize(String id) => "${BaseUrl}/refund/$id/finalize";
   // Company side
   // static var getCompanyExchangeRequests =
   //     "${BaseUrl}/api/get/exchange/requests";
