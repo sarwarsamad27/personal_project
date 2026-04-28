@@ -12,6 +12,7 @@ import 'package:new_brand/viewModel/providers/categoryProvider/updateAndDeleteCa
 import 'package:new_brand/viewModel/providers/chatProvider/chatThread_provider.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/companyExchange_provider.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/company_refund_provider.dart';
+import 'package:new_brand/viewModel/providers/courierProvider/leopards_tracking_provider.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/companySaleChart_provider.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/acceptOrder_provider.dart';
@@ -81,6 +82,7 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CompanyExchangeProvider()),
         ChangeNotifierProvider(create: (_) => AcceptOrderProvider()),
         ChangeNotifierProvider(create: (_) => CompanyRefundProvider()),
+        ChangeNotifierProvider(create: (_) => LeopardsTrackingProvider()),
       ],
 
       child: child,

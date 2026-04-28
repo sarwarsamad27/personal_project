@@ -1,13 +1,12 @@
 // view/companySide/exchange/company_exchange_detail_screen.dart
 // ignore_for_file: deprecated_member_use
 
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/models/chatThread/exchangeRequestModel.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/companyExchange_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:new_brand/view/companySide/dashboard/orderScreen/leopards_tracking_screen.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/toast.dart';
@@ -180,28 +179,15 @@ class _CompanyExchangeDetailScreenState
                 SizedBox(height: 6.h),
 
                 /// 🔥 ORDER ID FIX
-                Row(
-                  children: [
-                    Text(
-                      "Order ID: ",
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        ex.orderId ?? "N/A",
-                        maxLines: 1,
+                Text(
+                  ex.orderId ?? "N/A",
+                  maxLines: 1,
 
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                  ],
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
                 ),
 
                 SizedBox(height: 4.h),
@@ -254,136 +240,164 @@ class _CompanyExchangeDetailScreenState
   }
 
   // ── Info Card ─────────────────────────────────────────────────
-// ── Info Card update ─────────────────────────────────────────
-Widget _buildInfoCard(ExchangeRequest ex) {
-  return _card(
-    title: "Request Info",
-    icon: Icons.info_outline,
-    children: [
-      if (ex.buyerName?.isNotEmpty == true)
-        _row("Customer", ex.buyerName!),
-      _row("Reason", ex.reason ?? "N/A"),
-      _row("Reason Type", _reasonLabel(ex.reasonCategory)),
-      if (ex.resolutionType != null)
-        _row(
-          "Resolution",
-          ex.resolutionType == "refund" ? "Wallet Refund" : "Replacement",
-        ),
-      if (ex.returnTrackingNumber?.isNotEmpty == true)
-        _row("Return Tracking", ex.returnTrackingNumber!),
-      if (ex.returnCourierName?.isNotEmpty == true)
-        _row("Return Courier", ex.returnCourierName!),
-      if (ex.inspectionNote?.isNotEmpty == true)
-        _row("Inspection Note", ex.inspectionNote!),
-      if (ex.replacementTrackingNumber?.isNotEmpty == true)
-        _row("Replacement Track #", ex.replacementTrackingNumber!),
-      if (ex.refundAmount != null && ex.refundAmount! > 0)
-        _row("Refund Amount", "Rs ${ex.refundAmount!.toStringAsFixed(0)}"),
-    ],
-  );
-}
-
-// ── Ship Replacement Section — Leopards slip show karo ────────
-Widget _buildShipReplacementSection(
-  ExchangeRequest ex,
-  CompanyExchangeProvider provider,
-) {
-  // ✅ Agar Leopards se already booked hai
-  if (ex.replacementTrackingNumber?.isNotEmpty == true) {
+  // ── Info Card update ─────────────────────────────────────────
+  Widget _buildInfoCard(ExchangeRequest ex) {
     return _card(
-      title: "Replacement Shipped ✅",
-      icon: Icons.local_shipping_rounded,
+      title: "Request Info",
+      icon: Icons.info_outline,
       children: [
-        _row("Tracking #", ex.replacementTrackingNumber!),
-        if (ex.replacementCourierName?.isNotEmpty == true)
-          _row("Courier", ex.replacementCourierName!),
-
-        // ✅ Leopards slip download button
-        if (ex.replacementSlipLink?.isNotEmpty == true) ...[
-          SizedBox(height: 12.h),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () async {
-                final uri = Uri.parse(ex.replacementSlipLink!);
-                // url_launcher import karo
-                // await launchUrl(uri, mode: LaunchMode.externalApplication);
-              },
-              icon: Icon(Icons.download_rounded, size: 18.sp),
-              label: const Text("Download Replacement Slip"),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.indigo,
-                side: const BorderSide(color: Colors.indigo),
-                padding: EdgeInsets.symmetric(vertical: 12.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-              ),
-            ),
+        if (ex.buyerName?.isNotEmpty == true) _row("Customer", ex.buyerName!),
+        _row("Reason", ex.reason ?? "N/A"),
+        _row("Reason Type", _reasonLabel(ex.reasonCategory)),
+        if (ex.resolutionType != null)
+          _row(
+            "Resolution",
+            ex.resolutionType == "refund" ? "Wallet Refund" : "Replacement",
           ),
-        ],
+        if (ex.returnTrackingNumber?.isNotEmpty == true)
+          _row(
+            "Return Tracking",
+            ex.returnTrackingNumber!,
+            valueColor: Colors.blue,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => LeopardsTrackingScreen(
+                    trackNumber: ex.returnTrackingNumber!,
+                  ),
+                ),
+              );
+            },
+          ),
+        if (ex.returnCourierName?.isNotEmpty == true)
+          _row("Return Courier", ex.returnCourierName!),
+        if (ex.inspectionNote?.isNotEmpty == true)
+          _row("Inspection Note", ex.inspectionNote!),
+        if (ex.replacementTrackingNumber?.isNotEmpty == true)
+          _row(
+            "Replacement Track #",
+            ex.replacementTrackingNumber!,
+            valueColor: Colors.blue,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => LeopardsTrackingScreen(
+                    trackNumber: ex.replacementTrackingNumber!,
+                  ),
+                ),
+              );
+            },
+          ),
+        if (ex.refundAmount != null && ex.refundAmount! > 0)
+          _row("Refund Amount", "Rs ${ex.refundAmount!.toStringAsFixed(0)}"),
       ],
     );
   }
 
-  // ✅ Abhi ship nahi hua — form dikhao
-  final trackCtrl = TextEditingController();
-  final courierCtrl = TextEditingController();
+  // ── Ship Replacement Section — Leopards slip show karo ────────
+  Widget _buildShipReplacementSection(
+    ExchangeRequest ex,
+    CompanyExchangeProvider provider,
+  ) {
+    // ✅ Agar Leopards se already booked hai
+    if (ex.replacementTrackingNumber?.isNotEmpty == true) {
+      return _card(
+        title: "Replacement Shipped ✅",
+        icon: Icons.local_shipping_rounded,
+        children: [
+          _row("Tracking #", ex.replacementTrackingNumber!),
+          if (ex.replacementCourierName?.isNotEmpty == true)
+            _row("Courier", ex.replacementCourierName!),
 
-  return _card(
-    title: "Ship Replacement",
-    icon: Icons.replay_circle_filled_outlined,
-    children: [
-      // ✅ Info: Leopards auto-book hoga
-      Container(
-        padding: EdgeInsets.all(12.w),
-        decoration: BoxDecoration(
-          color: Colors.indigo.withOpacity(0.06),
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: Colors.indigo.withOpacity(0.2)),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.info_outline, color: Colors.indigo, size: 18.sp),
-            SizedBox(width: 8.w),
-            Expanded(
-              child: Text(
-                "Leopards courier will be booked automatically.",
-                style: TextStyle(fontSize: 12.sp, color: Colors.indigo),
+          // ✅ Leopards slip download button
+          if (ex.replacementSlipLink?.isNotEmpty == true) ...[
+            SizedBox(height: 12.h),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final uri = Uri.parse(ex.replacementSlipLink!);
+                  // url_launcher import karo
+                  // await launchUrl(uri, mode: LaunchMode.externalApplication);
+                },
+                icon: Icon(Icons.download_rounded, size: 18.sp),
+                label: const Text("Download Replacement Slip"),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.indigo,
+                  side: const BorderSide(color: Colors.indigo),
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                ),
               ),
             ),
           ],
+        ],
+      );
+    }
+
+    // ✅ Abhi ship nahi hua — form dikhao
+    final trackCtrl = TextEditingController();
+    final courierCtrl = TextEditingController();
+
+    return _card(
+      title: "Ship Replacement",
+      icon: Icons.replay_circle_filled_outlined,
+      children: [
+        // ✅ Info: Leopards auto-book hoga
+        Container(
+          padding: EdgeInsets.all(12.w),
+          decoration: BoxDecoration(
+            color: Colors.indigo.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(color: Colors.indigo.withOpacity(0.2)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.indigo, size: 18.sp),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  "Leopards courier will be booked automatically.",
+                  style: TextStyle(fontSize: 12.sp, color: Colors.indigo),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      SizedBox(height: 16.h),
-      SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: provider.processing
-              ? null
-              : () async {
-                  final ok = await provider.shipReplacement(
-                    exchangeId: ex.id ?? "",
-                    trackingNumber: "AUTO",
-                    courierName: "Leopards",
-                  );
-                  _showResult(ok, "Replacement booked via Leopards!");
-                },
-          icon: Icon(Icons.local_shipping_rounded, size: 18.sp),
-          label: const Text("Book & Ship via Leopards"),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColor.primaryColor,
-            foregroundColor: Colors.white,
-            padding: EdgeInsets.symmetric(vertical: 14.h),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.r),
+        SizedBox(height: 16.h),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: provider.processing
+                ? null
+                : () async {
+                    final ok = await provider.shipReplacement(
+                      exchangeId: ex.id ?? "",
+                      trackingNumber: "AUTO",
+                      courierName: "Leopards",
+                    );
+                    _showResult(ok, "Replacement booked via Leopards!");
+                  },
+            icon: Icon(Icons.local_shipping_rounded, size: 18.sp),
+            label: const Text("Book & Ship via Leopards"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColor.primaryColor,
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(vertical: 14.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
             ),
           ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
+
   // ── Courier Card ──────────────────────────────────────────────
   Widget _buildCourierCard(ExchangeRequest ex) {
     final isSeller = ex.courierPaidBy == "seller";
@@ -612,7 +626,6 @@ Widget _buildShipReplacementSection(
       return _buildShipReplacementSection(ex, provider);
     }
   }
-
 
   Widget _buildRefundSection(
     ExchangeRequest ex,
@@ -1014,7 +1027,12 @@ Widget _buildShipReplacementSection(
     );
   }
 
-  Widget _row(String label, String value) {
+  Widget _row(
+    String label,
+    String value, {
+    Color? valueColor,
+    VoidCallback? onTap,
+  }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 8.h),
       child: Row(
@@ -1032,12 +1050,16 @@ Widget _buildShipReplacementSection(
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
+            child: GestureDetector(
+              onTap: onTap,
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: valueColor ?? Colors.black87,
+                  decoration: onTap != null ? TextDecoration.underline : null,
+                ),
               ),
             ),
           ),

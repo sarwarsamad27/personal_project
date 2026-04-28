@@ -21,6 +21,7 @@ class CompanyExchangeListScreen extends StatefulWidget {
 class _CompanyExchangeListScreenState extends State<CompanyExchangeListScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tab;
+  bool _hasLoaded = false;
 
   static const _tabs = [
     _TabDef("All", null),
@@ -36,7 +37,12 @@ class _CompanyExchangeListScreenState extends State<CompanyExchangeListScreen>
     super.initState();
     _tab = TabController(length: _tabs.length, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CompanyExchangeProvider>().fetchRequests();
+      final provider = context.read<CompanyExchangeProvider>();
+      // Only fetch if not already loaded — prevents reload on every navigation
+      if (!_hasLoaded && provider.requests.isEmpty) {
+        provider.fetchRequests();
+        _hasLoaded = true;
+      }
     });
     _tab.addListener(() {
       if (!_tab.indexIsChanging) {

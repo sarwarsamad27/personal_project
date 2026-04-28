@@ -55,11 +55,14 @@ class Global {
   //     "${BaseUrl}/api/buyer/create/exchange/request";
   // static var getExchangeRequests = "${BaseUrl}/api/buyer/get/exchange/requests";
   // static var getExchangePdf = "${BaseUrl}/api/buyer/get/exchange";
-static var getCompanyRefundRequests = "${BaseUrl}/get/refund/requests";
-static String refundMarkReceived(String id) => "${BaseUrl}/refund/$id/mark-received";
-static String refundStartInspection(String id) => "${BaseUrl}/refund/$id/start-inspection";
-static String refundInspectionResult(String id) => "${BaseUrl}/refund/$id/inspection-result";
-static String refundFinalize(String id) => "${BaseUrl}/refund/$id/finalize";
+  static var getCompanyRefundRequests = "${BaseUrl}/get/refund/requests";
+  static String refundMarkReceived(String id) =>
+      "${BaseUrl}/refund/$id/mark-received";
+  static String refundStartInspection(String id) =>
+      "${BaseUrl}/refund/$id/start-inspection";
+  static String refundInspectionResult(String id) =>
+      "${BaseUrl}/refund/$id/inspection-result";
+  static String refundFinalize(String id) => "${BaseUrl}/refund/$id/finalize";
   // Company side
   // static var getCompanyExchangeRequests =
   //     "${BaseUrl}/api/get/exchange/requests";
@@ -81,6 +84,7 @@ static String refundFinalize(String id) => "${BaseUrl}/refund/$id/finalize";
   /// Body: { decision: "Accepted"|"Denied", resolutionType: "replacement"|"refund", note? }
   static String exchangeDecision(String exchangeId) =>
       "${BaseUrl}/exchange/$exchangeId/decision";
+  static var leopardsCities = "${BaseUrl}/leopards/cities";
 
   /// PUT  /exchange/:id/mark-received
   /// Body: { inspectionImages?: base64[] }
@@ -116,6 +120,11 @@ static String refundFinalize(String id) => "${BaseUrl}/refund/$id/finalize";
 
   static String updateRefundStatus(String refundId) =>
       "${BaseUrl}/refund/$refundId/status";
+
+  static String leopardsTrack(String trackNumber) =>
+      "${BaseUrl}/leopards/track/$trackNumber";
+
+  static String leopardsRequestPickup = "${BaseUrl}/leopards/request-pickup";
 
   static String getImageUrl(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) {

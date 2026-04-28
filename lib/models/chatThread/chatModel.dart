@@ -231,9 +231,10 @@ class ExchangeRequestData {
   }
 
   static String _normalizeStatus(String? s) {
-    final v = (s ?? "pending").toLowerCase();
-    if (v == "denied" || v == "reject") return "rejected";
-    if (v == "approved") return "accepted";
+    final v = (s ?? "pending").toLowerCase().trim();
+    if (v == "denied" || v == "reject" || v == "rejected") return "rejected";
+    if (v == "approved" || v == "accepted" || v == "accept") return "accepted";
+    if (v == "pending") return "pending";
     return v;
   }
 

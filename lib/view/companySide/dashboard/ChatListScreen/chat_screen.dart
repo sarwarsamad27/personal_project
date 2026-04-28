@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 
 import '../../../../viewModel/providers/chatProvider/chat_provider.dart';
 
-
 class CompanyChatScreen extends StatelessWidget {
   final String threadId;
   final String toType;
@@ -41,8 +40,9 @@ class CompanyChatScreen extends StatelessWidget {
           children: [
             const Expanded(child: CompanyChatList()),
             Consumer<CompanyChatProvider>(
-              builder: (_, p, __) =>
-                  p.isTyping ? const TypingIndicator() : const SizedBox.shrink(),
+              builder: (_, p, __) => p.isTyping
+                  ? const TypingIndicator()
+                  : const SizedBox.shrink(),
             ),
             const CompanyMessageInput(),
           ],

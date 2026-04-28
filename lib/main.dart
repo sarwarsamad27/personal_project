@@ -10,7 +10,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
- // ✅ ADD
+// ✅ ADD
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -34,7 +34,8 @@ Future<void> _initLocalNotifications() async {
 
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
+        AndroidFlutterLocalNotificationsPlugin
+      >()
       ?.createNotificationChannel(channel);
 }
 
@@ -104,9 +105,7 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
 
           // ✅ wrap Splash with SessionGuard
-          home: SessionGuard(
-            child: SplashScreen(),
-          ),
+          home: SessionGuard(child: SplashScreen()),
         );
       },
     );

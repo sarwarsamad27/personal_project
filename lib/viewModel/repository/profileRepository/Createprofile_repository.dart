@@ -14,6 +14,8 @@ class ProfileRepository {
     required String phone,
     required String address,
     required String description,
+     String? cityId,    // ✅ NEW
+    String? cityName,
 
     File? image,
   }) async {
@@ -25,6 +27,9 @@ class ProfileRepository {
         "phone": phone,
         "address": address,
         "description": description,
+        if (cityId != null) "cityId": cityId,       // ✅
+        if (cityName != null) "cityName": cityName,
+        
       };
 
       final images = <File>[];

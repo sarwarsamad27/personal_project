@@ -32,6 +32,8 @@ class Profile {
   String? createdAt;
   String? updatedAt;
   int? iV;
+   String? leopardsCityId;   // ✅ NEW
+  String? leopardsCityName;
 
   Profile(
       {this.userId,
@@ -44,7 +46,9 @@ class Profile {
       this.sId,
       this.createdAt,
       this.updatedAt,
-      this.iV});
+      this.iV,
+      this.leopardsCityId,
+      this.leopardsCityName});
 
   Profile.fromJson(Map<String, dynamic> json) {
     userId = json['userId'];
@@ -58,6 +62,8 @@ class Profile {
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     iV = json['__v'];
+    leopardsCityId = json['leopardsCityId'];     // ✅
+    leopardsCityName = json['leopardsCityName'];
   }
 
   Map<String, dynamic> toJson() {
@@ -73,6 +79,8 @@ class Profile {
     data['createdAt'] = this.createdAt;
     data['updatedAt'] = this.updatedAt;
     data['__v'] = this.iV;
+    data['leopardsCityId'] = leopardsCityId;
+    data['leopardsCityName'] = leopardsCityName;
     return data;
   }
 }

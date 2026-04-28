@@ -11,7 +11,8 @@ class CompanyRefundListScreen extends StatefulWidget {
   const CompanyRefundListScreen({super.key});
 
   @override
-  State<CompanyRefundListScreen> createState() => _CompanyRefundListScreenState();
+  State<CompanyRefundListScreen> createState() =>
+      _CompanyRefundListScreenState();
 }
 
 class _CompanyRefundListScreenState extends State<CompanyRefundListScreen>
@@ -27,12 +28,18 @@ class _CompanyRefundListScreenState extends State<CompanyRefundListScreen>
     _TabDef("Rejected", "Rejected"),
   ];
 
+  bool _hasLoaded = false;
+
   @override
   void initState() {
     super.initState();
     _tab = TabController(length: _tabs.length, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CompanyRefundProvider>().fetchRequests();
+      if (!_hasLoaded) {
+        context.read<CompanyRefundProvider>().fetchRequests().then((_) {
+          if (mounted) setState(() => _hasLoaded = true);
+        });
+      }
     });
     _tab.addListener(() {
       if (!_tab.indexIsChanging) {
@@ -59,7 +66,11 @@ class _CompanyRefundListScreenState extends State<CompanyRefundListScreen>
         elevation: 0,
         title: Text(
           "Refund Requests",
-          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
         bottom: TabBar(
           controller: _tab,
@@ -74,7 +85,9 @@ class _CompanyRefundListScreenState extends State<CompanyRefundListScreen>
       body: Consumer<CompanyRefundProvider>(
         builder: (context, provider, _) {
           if (provider.loading) {
-            return const Center(child: CircularProgressIndicator(color: AppColor.primaryColor));
+            return const Center(
+              child: CircularProgressIndicator(color: AppColor.primaryColor),
+            );
           }
 
           var requests = provider.requests;
@@ -82,9 +95,14 @@ class _CompanyRefundListScreenState extends State<CompanyRefundListScreen>
           // In progress filter (client-side)
           if (_tabs[_tab.index].isInProgress) {
             const inProgressStatuses = [
-              "ReturnShipped", "ReturnReceived", "Inspecting", "ApprovedInspection",
+              "ReturnShipped",
+              "ReturnReceived",
+              "Inspecting",
+              "ApprovedInspection",
             ];
-            requests = requests.where((r) => inProgressStatuses.contains(r.status)).toList();
+            requests = requests
+                .where((r) => inProgressStatuses.contains(r.status))
+                .toList();
           }
 
           if (requests.isEmpty) {
@@ -92,10 +110,16 @@ class _CompanyRefundListScreenState extends State<CompanyRefundListScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.assignment_return_rounded, size: 72.w, color: Colors.grey[300]),
+                  Icon(
+                    Icons.assignment_return_rounded,
+                    size: 72.w,
+                    color: Colors.grey[300],
+                  ),
                   SizedBox(height: 16.h),
-                  Text("No refund requests",
-                      style: TextStyle(fontSize: 17.sp, color: Colors.grey[600])),
+                  Text(
+                    "No refund requests",
+                    style: TextStyle(fontSize: 17.sp, color: Colors.grey[600]),
+                  ),
                 ],
               ),
             );
@@ -146,7 +170,11 @@ class _RefundCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         child: Column(
@@ -160,7 +188,11 @@ class _RefundCard extends StatelessWidget {
                     color: Colors.blue.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
-                  child: Icon(Icons.assignment_return_rounded, color: Colors.blue, size: 20.sp),
+                  child: Icon(
+                    Icons.assignment_return_rounded,
+                    color: Colors.blue,
+                    size: 20.sp,
+                  ),
                 ),
                 SizedBox(width: 12.w),
                 Expanded(
@@ -169,29 +201,48 @@ class _RefundCard extends StatelessWidget {
                     children: [
                       Text(
                         request.orderId ?? "Refund Request",
-                        style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold, color: Colors.black87),
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
                       ),
                       SizedBox(height: 2.h),
-                      Text(_formatDate(request.createdAt),
-                          style: TextStyle(fontSize: 12.sp, color: Colors.grey)),
+                      Text(
+                        _formatDate(request.createdAt),
+                        style: TextStyle(fontSize: 12.sp, color: Colors.grey),
+                      ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 5.h,
+                  ),
                   decoration: BoxDecoration(
                     color: statusStyle.color.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(20.r),
-                    border: Border.all(color: statusStyle.color.withOpacity(0.4)),
+                    border: Border.all(
+                      color: statusStyle.color.withOpacity(0.4),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(statusStyle.icon, size: 12.sp, color: statusStyle.color),
+                      Icon(
+                        statusStyle.icon,
+                        size: 12.sp,
+                        color: statusStyle.color,
+                      ),
                       SizedBox(width: 4.w),
                       Text(
                         request.statusLabel,
-                        style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600, color: statusStyle.color),
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                          color: statusStyle.color,
+                        ),
                       ),
                     ],
                   ),
@@ -208,19 +259,29 @@ class _RefundCard extends StatelessWidget {
             // ✅ Refund amount
             if (request.refundAmount != null && request.refundAmount! > 0) ...[
               SizedBox(height: 6.h),
-              _row(Icons.currency_rupee_rounded,
-                  "Rs ${request.refundAmount!.toStringAsFixed(0)}",
-                  color: Colors.green),
+              _row(
+                Icons.currency_rupee_rounded,
+                "Rs ${request.refundAmount!.toStringAsFixed(0)}",
+                color: Colors.green,
+              ),
             ],
 
             // ✅ Action hint
             if (request.status == "ReturnShipped") ...[
               SizedBox(height: 8.h),
-              _actionHint(Icons.notifications_active, "Action: Mark parcel received", Colors.indigo),
+              _actionHint(
+                Icons.notifications_active,
+                "Action: Mark parcel received",
+                Colors.indigo,
+              ),
             ],
             if (request.status == "ApprovedInspection") ...[
               SizedBox(height: 8.h),
-              _actionHint(Icons.notifications_active, "Action: Finalize refund", Colors.green),
+              _actionHint(
+                Icons.notifications_active,
+                "Action: Finalize refund",
+                Colors.green,
+              ),
             ],
           ],
         ),
@@ -234,10 +295,12 @@ class _RefundCard extends StatelessWidget {
         Icon(icon, size: 15.sp, color: color ?? Colors.grey[500]),
         SizedBox(width: 8.w),
         Expanded(
-          child: Text(value,
-              style: TextStyle(fontSize: 13.sp, color: color ?? Colors.black87),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis),
+          child: Text(
+            value,
+            style: TextStyle(fontSize: 13.sp, color: color ?? Colors.black87),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
@@ -255,7 +318,14 @@ class _RefundCard extends StatelessWidget {
         children: [
           Icon(icon, size: 15.sp, color: color),
           SizedBox(width: 6.w),
-          Text(text, style: TextStyle(fontSize: 12.sp, color: color, fontWeight: FontWeight.w600)),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -283,17 +353,28 @@ class _TabDef {
 // ── Status Style ──────────────────────────────────────────────────────────────
 _RefundStatusStyle _refundStatusStyle(String? status) {
   switch (status) {
-    case "Pending": return _RefundStatusStyle(Colors.orange, Icons.pending);
-    case "Accepted": return _RefundStatusStyle(Colors.blue, Icons.check_circle_outline);
-    case "Rejected": return _RefundStatusStyle(Colors.red, Icons.cancel);
-    case "ReturnShipped": return _RefundStatusStyle(Colors.indigo, Icons.local_shipping);
-    case "ReturnReceived": return _RefundStatusStyle(Colors.teal, Icons.inventory);
-    case "Inspecting": return _RefundStatusStyle(Colors.purple, Icons.search);
-    case "ApprovedInspection": return _RefundStatusStyle(Colors.green, Icons.verified);
-    case "Disputed": return _RefundStatusStyle(Colors.red.shade400, Icons.warning_amber);
-    case "Refunded": return _RefundStatusStyle(Colors.green, Icons.account_balance_wallet);
-    case "Completed": return _RefundStatusStyle(Colors.green, Icons.check_circle);
-    default: return _RefundStatusStyle(Colors.grey, Icons.help_outline);
+    case "Pending":
+      return _RefundStatusStyle(Colors.orange, Icons.pending);
+    case "Accepted":
+      return _RefundStatusStyle(Colors.blue, Icons.check_circle_outline);
+    case "Rejected":
+      return _RefundStatusStyle(Colors.red, Icons.cancel);
+    case "ReturnShipped":
+      return _RefundStatusStyle(Colors.indigo, Icons.local_shipping);
+    case "ReturnReceived":
+      return _RefundStatusStyle(Colors.teal, Icons.inventory);
+    case "Inspecting":
+      return _RefundStatusStyle(Colors.purple, Icons.search);
+    case "ApprovedInspection":
+      return _RefundStatusStyle(Colors.green, Icons.verified);
+    case "Disputed":
+      return _RefundStatusStyle(Colors.red.shade400, Icons.warning_amber);
+    case "Refunded":
+      return _RefundStatusStyle(Colors.green, Icons.account_balance_wallet);
+    case "Completed":
+      return _RefundStatusStyle(Colors.green, Icons.check_circle);
+    default:
+      return _RefundStatusStyle(Colors.grey, Icons.help_outline);
   }
 }
 

@@ -22,6 +22,8 @@ class ProfileProvider with ChangeNotifier {
     required String phone,
     required String address,
     required String description,
+    String? cityId,    // ✅ NEW
+    String? cityName,
     File? image,
   }) async {
     _loading = true;
@@ -46,6 +48,8 @@ class ProfileProvider with ChangeNotifier {
       phone: phone,
       address: address,
       description: description,
+       cityId: cityId,     // ✅
+      cityName: cityName,
       image: image,
     );
 

@@ -2,9 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/models/chatThread/exchangeRequestModel.dart';
+import 'package:new_brand/view/companySide/dashboard/orderScreen/leopards_tracking_screen.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/company_refund_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:new_brand/resources/appColor.dart';
 
 import 'package:new_brand/resources/global.dart';
@@ -232,29 +232,23 @@ class _CompanyRefundDetailScreenState extends State<CompanyRefundDetailScreen> {
           ),
         if (rf.companyNote?.isNotEmpty == true) _row("Note", rf.companyNote!),
         if (rf.returnTrackingNumber?.isNotEmpty == true)
-          _row("Return Tracking", rf.returnTrackingNumber!),
+          _row(
+            "Return Tracking",
+            rf.returnTrackingNumber!,
+            valueColor: Colors.blue,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => LeopardsTrackingScreen(
+                    trackNumber: rf.returnTrackingNumber!,
+                  ),
+                ),
+              );
+            },
+          ),
         if (rf.returnCourierName?.isNotEmpty == true)
           _row("Return Courier", rf.returnCourierName!),
-        if (rf.returnSlipLink?.isNotEmpty == true) ...[
-          SizedBox(height: 12.h),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () async {
-                final uri = Uri.parse(rf.returnSlipLink!);
-                if (await canLaunchUrl(uri))
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-              },
-              icon: Icon(Icons.download_rounded, size: 16.sp),
-              label: const Text("Download Return Label"),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.blue[700],
-                side: BorderSide(color: Colors.blue[300]!),
-                padding: EdgeInsets.symmetric(vertical: 10.h),
-              ),
-            ),
-          ),
-        ],
         if (rf.inspectionNote?.isNotEmpty == true)
           _row("Inspection Note", rf.inspectionNote!),
         if (rf.disputeNote?.isNotEmpty == true)
@@ -831,7 +825,12 @@ class _CompanyRefundDetailScreenState extends State<CompanyRefundDetailScreen> {
     );
   }
 
-  Widget _row(String label, String value, {Color? valueColor}) {
+  Widget _row(
+    String label,
+    String value, {
+    Color? valueColor,
+    VoidCallback? onTap,
+  }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 8.h),
       child: Row(
@@ -849,12 +848,16 @@ class _CompanyRefundDetailScreenState extends State<CompanyRefundDetailScreen> {
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-                color: valueColor ?? Colors.black87,
+            child: GestureDetector(
+              onTap: onTap,
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: valueColor ?? Colors.black87,
+                  decoration: onTap != null ? TextDecoration.underline : null,
+                ),
               ),
             ),
           ),
