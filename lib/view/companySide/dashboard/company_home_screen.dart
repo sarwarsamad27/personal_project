@@ -78,9 +78,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
               builder: (context, index, child) {
                 return Scaffold(
                   extendBody: true,
-                  // index == 0 || index == 3 || index == 4,
-                  // backgroundColor: const Color(0xFFF9FAFB),
-                  body: screens[index],
+                  body: IndexedStack(index: index, children: screens),
                   bottomNavigationBar: _PremiumNavBar(
                     currentIndex: index,
                     onTap: (i) => _currentIndex.value = i,

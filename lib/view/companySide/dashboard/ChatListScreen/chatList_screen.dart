@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/socketServices.dart';
 import 'package:new_brand/view/companySide/dashboard/ChatListScreen/chat_screen.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/admin_messages_screen.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/chatThread_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -20,30 +21,26 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() async {
-      await context.read<CompanyChatThreadsProvider>().fetchThreads();
+    // Provider already fetches on creation (in CompanyHomeScreen).
+    // Only set up socket listeners here — no extra API call needed.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _setupSocketListeners();
     });
   }
 
   void _setupSocketListeners() {
     final socket = SocketService().socket;
-    if (socket == null || !socket.connected) {
-      print("⚠️ Socket not connected in company chat list");
-      return;
-    }
+    if (socket == null || !socket.connected) return;
 
     socket.off("chat:message");
     socket.off("exchange:new");
 
-    socket.on("chat:message", (data) {
-      print("📩 Company chat list received message");
-      context.read<CompanyChatThreadsProvider>().fetchThreads();
+    socket.on("chat:message", (_) {
+      if (mounted) context.read<CompanyChatThreadsProvider>().fetchThreads();
     });
 
-    socket.on("exchange:new", (data) {
-      print("📩 Company chat list received exchange request");
-      context.read<CompanyChatThreadsProvider>().fetchThreads();
+    socket.on("exchange:new", (_) {
+      if (mounted) context.read<CompanyChatThreadsProvider>().fetchThreads();
     });
   }
 
@@ -102,17 +99,17 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
       ),
       body: provider.loading
           ? const Center(child: CircularProgressIndicator())
-          : threads.isEmpty
-          ? _buildEmptyState()
           : RefreshIndicator(
               onRefresh: () => provider.fetchThreads(),
               child: ListView.separated(
                 padding: EdgeInsets.zero,
-                itemCount: threads.length,
+                // +1 for pinned admin tile at index 0
+                itemCount: threads.length + 1,
                 separatorBuilder: (_, __) =>
                     Divider(height: 1.h, indent: 80.w, color: Colors.black12),
                 itemBuilder: (context, i) {
-                  final thread = threads[i];
+                  if (i == 0) return _buildAdminTile(context);
+                  final thread = threads[i - 1];
                   return _buildChatTile(thread);
                 },
               ),
@@ -120,27 +117,60 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.chat_bubble_outline, size: 100.sp, color: Colors.black12),
-          SizedBox(height: 20.h),
-          Text(
-            "No conversations yet",
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
+  Widget _buildAdminTile(BuildContext context) {
+    return InkWell(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SellerAdminMessagesScreen()),
+      ),
+      child: ListTile(
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(28.r),
+          child: Image.asset(
+            'assets/images/shookoo_image.png',
+            width: 56.r,
+            height: 56.r,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => CircleAvatar(
+              radius: 28.r,
+              backgroundColor: AppColor.primaryColor.withValues(alpha: 0.15),
+              child: Icon(
+                Icons.shield_outlined,
+                color: AppColor.primaryColor,
+                size: 26.sp,
+              ),
             ),
           ),
-          SizedBox(height: 8.h),
-          Text(
-            "Customer messages will appear here",
-            style: TextStyle(fontSize: 14.sp, color: Colors.black45),
+        ),
+        title: Text(
+          'SHOOKOO',
+          style: TextStyle(
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w700,
+            color: Colors.black87,
           ),
-        ],
+        ),
+        subtitle: Text(
+          'Support & announcements',
+          style: TextStyle(fontSize: 12.sp, color: Colors.black45),
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: Container(
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+          decoration: BoxDecoration(
+            color: AppColor.primaryColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8.r),
+          ),
+          child: Text(
+            'Official',
+            style: TextStyle(
+              fontSize: 10.sp,
+              color: AppColor.primaryColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -154,7 +184,7 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
         children: [
           CircleAvatar(
             radius: 28.r,
-            backgroundColor: AppColor.primaryColor.withOpacity(0.1),
+            backgroundColor: AppColor.primaryColor.withValues(alpha: 0.1),
             backgroundImage: thread.image != null
                 ? NetworkImage(thread.image!)
                 : null,
@@ -251,7 +281,7 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
             ),
           ),
         ).then((_) {
-          context.read<CompanyChatThreadsProvider>().fetchThreads();
+          if (mounted) context.read<CompanyChatThreadsProvider>().fetchThreads();
         });
       },
     );

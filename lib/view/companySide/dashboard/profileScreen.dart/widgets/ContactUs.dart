@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/global.dart';
+import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/admin_messages_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 
 class ContactUsScreen extends StatefulWidget {
@@ -31,11 +36,38 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
     setState(() => _isSending = true);
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() {
-      _isSending = false;
-      _sent = true;
-    });
+    try {
+      final token = await LocalStorage.getToken();
+      final res = await http.post(
+        Uri.parse(Global.SellerContactAdmin),
+        headers: {
+          'Authorization': 'Bearer ${token ?? ''}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'message': _messageController.text.trim(),
+          'name': _nameController.text.trim(),
+          'email': _emailController.text.trim(),
+        }),
+      );
+      if (res.statusCode == 201) {
+        if (mounted) setState(() => _sent = true);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to send message. Try again.')),
+          );
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Network error. Check your connection.')),
+        );
+      }
+    } finally {
+      setState(() => _isSending = false);
+    }
   }
 
   Future<void> _launch(String url) async {
@@ -395,6 +427,26 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                             ),
                           ),
                           SizedBox(height: 16.h),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.chat_bubble_outline, size: 16),
+                              label: const Text('View Admin Replies'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColor.appimagecolor,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                ),
+                              ),
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const SellerAdminMessagesScreen(),
+                                ),
+                              ),
+                            ),
+                          ),
                           TextButton(
                             onPressed: () => setState(() {
                               _sent = false;

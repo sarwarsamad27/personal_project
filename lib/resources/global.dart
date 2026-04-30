@@ -74,6 +74,9 @@ class Global {
   // static var buyerExchangeBase = "${BaseUrl}/api/buyer/exchange";
 
   static var getCompanyExchangeRequests = "${BaseUrl}/get/exchange/requests";
+  // Admin Messages
+  static var SellerContactAdmin = "${BaseUrl}/seller/contact/admin";
+  static var SellerGetAdminMessages = "${BaseUrl}/seller/admin/messages";
   // static var exchangeDecision = "${BaseUrl}/exchange";
   static var exchangeBase = "${BaseUrl}/exchange";
 
