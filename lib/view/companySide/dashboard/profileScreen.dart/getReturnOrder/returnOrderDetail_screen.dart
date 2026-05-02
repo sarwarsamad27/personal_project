@@ -80,22 +80,39 @@ class ReturnedOrderDetailScreen extends StatelessWidget {
 
               CustomAppContainer(
                 padding: EdgeInsets.all(12.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Shipment: Rs. ${order.shipmentCharges}",
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    Text(
-                      "Grand Total: Rs. ${order.grandTotal}",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                child: Builder(builder: (_) {
+                  final productTotal = (order.products ?? []).fold<int>(
+                    0,
+                    (sum, p) => sum + ((p.price ?? 0) * (p.quantity ?? 1)),
+                  );
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Order ID: ${order.orderId ?? '-'}",
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
                       ),
-                    ),
-                  ],
-                ),
+                      const Divider(color: Colors.white24),
+                      Text(
+                        "Product Amount: Rs. $productTotal",
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      const Divider(color: Colors.white24),
+                      const Text(
+                        "Status: Returned",
+                        style: TextStyle(
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        "Courier fee deducted from your wallet",
+                        style: TextStyle(color: Colors.white38, fontSize: 11),
+                      ),
+                    ],
+                  );
+                }),
               ),
             ],
           ),

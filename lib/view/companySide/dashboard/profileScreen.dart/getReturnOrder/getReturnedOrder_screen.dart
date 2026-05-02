@@ -112,16 +112,20 @@ class _GetReturnedorderScreenState extends State<GetReturnedorderScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
-                            "Rs. ${order.grandTotal}",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
                           const Text(
                             "Returned",
-                            style: TextStyle(color: Colors.red, fontSize: 13),
+                            style: TextStyle(
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          Text(
+                            "Courier fee deducted",
+                            style: TextStyle(
+                              color: Colors.white38,
+                              fontSize: 11.sp,
+                            ),
                           ),
                         ],
                       ),

@@ -114,7 +114,12 @@ class _GetdeliveredorderScreenState extends State<GetdeliveredorderScreen> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            "Net: Rs. ${((order.grandTotal ?? 0) * 0.90).toStringAsFixed(0)}",
+                            () {
+                              final shipment = order.shipmentCharges ?? 200;
+                              final products = (order.grandTotal ?? 0) - shipment;
+                              final net = (products * 0.90).round();
+                              return "Net: Rs. $net";
+                            }(),
                             style: const TextStyle(
                               color: Colors.greenAccent,
                               fontWeight: FontWeight.bold,

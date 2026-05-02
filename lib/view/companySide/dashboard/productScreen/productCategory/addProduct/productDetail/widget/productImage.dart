@@ -15,8 +15,8 @@ class ProductImage extends StatelessWidget {
   final String price;
   final String categoryId;
   final String productId;
-  final int quantity;       // ✅ stock ki jagah
-  final int weightInGrams;  // ✅ new
+  final int quantity; // ✅ stock ki jagah
+  final int weightInGrams; // ✅ new
 
   ProductImage({
     super.key,
@@ -28,8 +28,8 @@ class ProductImage extends StatelessWidget {
     required this.size,
     required this.price,
     required this.categoryId,
-    required this.quantity,       // ✅
-    required this.weightInGrams,  // ✅
+    required this.quantity, // ✅
+    required this.weightInGrams, // ✅
   });
 
   final PageController _pageController = PageController();
@@ -54,12 +54,11 @@ class ProductImage extends StatelessWidget {
         color: color,
         size: size,
         price: price,
-        quantity: quantity,           // ✅
+        quantity: quantity, // ✅
         weightInGrams: weightInGrams, // ✅
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -68,13 +67,7 @@ class ProductImage extends StatelessWidget {
         .where((e) => e.trim().isNotEmpty)
         .toList();
 
-    // 2) Base URL safety (optional but helpful)
-   
-
-    // If baseUrl is empty, we should not attempt network load.
-    final bool canLoadNetwork = Global.getImageUrl('') != '';
-
-    final bool hasImages = validImages.isNotEmpty && canLoadNetwork;
+    final bool hasImages = validImages.isNotEmpty;
 
     return SizedBox(
       height: 0.45.sh,
@@ -96,7 +89,7 @@ class ProductImage extends StatelessWidget {
                       final url = Global.getImageUrl(validImages[index]);
 
                       return Image.network(
-                        validImages[index],
+                        url,
                         fit: BoxFit.cover,
                         width: double.infinity,
                         errorBuilder: (_, __, ___) =>

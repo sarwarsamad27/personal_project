@@ -92,9 +92,30 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   String _title(dynamic tx) {
-    if (_isReversal(tx)) return "Amount Reversal";
-    if (_isDebit(tx)) return "Withdrawal (${tx.method ?? '-'})";
-    return "Transaction (${tx.method ?? '-'})";
+    final method = (tx.method ?? '').toString().trim();
+    final m = method.toLowerCase();
+
+    // ── Credits ──────────────────────────────────────────────────────────────
+    if (!_isDebit(tx)) {
+      if (m.contains('order delivered')) return 'Order Credited';
+      if (m.contains('refund')) return 'Refund Received';
+      if (m.contains('jazzcash') || m.contains('easypaisa')) return 'Top-Up ($method)';
+      if (method.isNotEmpty) return method;
+      return 'Amount Credited';
+    }
+
+    // ── Debits ───────────────────────────────────────────────────────────────
+    if (m.contains('return courier') || m.contains('courier fee')) return 'Return Courier Fee';
+    if (m.contains('refund reversal') || m.contains('reversal')) return 'Refund Reversal';
+    if (m.contains('refund')) return 'Refund';
+    if (method.isNotEmpty) return 'Withdrawal ($method)';
+    return 'Withdrawal';
+  }
+
+  // Order reference from meta (if available)
+  String? _orderRef(dynamic tx) {
+    final name = tx.meta?.name?.toString().trim() ?? '';
+    return name.isNotEmpty ? name : null;
   }
 
   String _prettyStatus(dynamic tx) {
@@ -232,6 +253,18 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                 fontSize: 12.sp,
                               ),
                             ),
+                            if (_orderRef(tx) != null) ...[
+                              SizedBox(height: 2.h),
+                              Text(
+                                _orderRef(tx)!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 11.sp,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),

@@ -15,7 +15,7 @@ class DeliveredOrderDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColor.primaryColor,
-        title: const Text("Detail"),
+        title: const Text("Detail", style: TextStyle(color: Colors.white)),
       ),
       body: CustomBgContainer(
         child: Padding(
@@ -60,15 +60,20 @@ class DeliveredOrderDetailScreen extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      Text(
-                        "Color: ${p.selectedColor?.join(', ') ?? ''}",
-                        style: const TextStyle(color: Colors.white70),
-                      ),
-
-                      Text(
-                        "Size: ${p.selectedSize?.join(', ') ?? ''}",
-                        style: const TextStyle(color: Colors.white70),
-                      ),
+                      if (p.selectedColor != null &&
+                          p.selectedColor!.isNotEmpty) ...[
+                        Text(
+                          "Color: ${p.selectedColor?.join(', ') ?? ''}",
+                          style: const TextStyle(color: Colors.white70),
+                        ),
+                      ],
+                      if (p.selectedSize != null &&
+                          p.selectedSize!.isNotEmpty) ...[
+                        Text(
+                          "Size: ${p.selectedSize?.join(', ') ?? ''}",
+                          style: const TextStyle(color: Colors.white70),
+                        ),
+                      ],
                       Text(
                         "Qty: ${p.quantity}",
                         style: const TextStyle(color: Colors.white70),
@@ -91,22 +96,44 @@ class DeliveredOrderDetailScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Divider(color: Colors.white24),
-                    Text(
-                      "Total Amount: Rs. ${order.grandTotal ?? 0}",
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    Text(
-                      "Shookoo Share (10%): Rs. ${((order.grandTotal ?? 0) * 0.10).toStringAsFixed(0)}",
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    const Divider(color: Colors.white24),
-                    Text(
-                      "Net to Company (90%): Rs. ${((order.grandTotal ?? 0) * 0.90).toStringAsFixed(0)}",
-                      style: const TextStyle(
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
+                    Builder(
+                      builder: (_) {
+                        final shipment = order.shipmentCharges ?? 200;
+                        final products = (order.grandTotal ?? 0) - shipment;
+                        final platformFee = (products * 0.10).round();
+                        final net = (products * 0.90).round();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Product Amount:      Rs. $products",
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              "Platform Fee (10%):  - Rs. $platformFee",
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            const Divider(color: Colors.white24),
+                            Text(
+                              "Net to You: Rs. $net",
+                              style: const TextStyle(
+                                color: Colors.greenAccent,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              "(90% of product price)",
+                              style: const TextStyle(
+                                color: Colors.white38,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
