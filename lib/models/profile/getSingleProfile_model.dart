@@ -6,16 +6,15 @@ class ProfileScreenModel {
 
   ProfileScreenModel.fromJson(Map<String, dynamic> json) {
     message = json['message'];
-    profile =
-        json['profile'] != null ? new Profile.fromJson(json['profile']) : null;
+    profile = json['profile'] != null
+        ? Profile.fromJson(json['profile'])
+        : null;
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['message'] = this.message;
-    if (this.profile != null) {
-      data['profile'] = this.profile!.toJson();
-    }
+    final data = <String, dynamic>{};
+    data['message'] = message;
+    if (profile != null) data['profile'] = profile!.toJson();
     return data;
   }
 }
@@ -33,22 +32,29 @@ class Profile {
   String? updatedAt;
   int? iV;
   List<String>? fcmTokens;
+  List<dynamic>? followers;
   int? followersCount;
+  int? leopardsCityId; // ← new
+  String? leopardsCityName; // ← new
 
-  Profile(
-      {this.sId,
-      this.userId,
-      this.image,
-      this.name,
-      this.email,
-      this.phone,
-      this.address,
-      this.description,
-      this.createdAt,
-      this.updatedAt,
-      this.iV,
-      this.fcmTokens,
-      this.followersCount});
+  Profile({
+    this.sId,
+    this.userId,
+    this.image,
+    this.name,
+    this.email,
+    this.phone,
+    this.address,
+    this.description,
+    this.createdAt,
+    this.updatedAt,
+    this.iV,
+    this.fcmTokens,
+    this.followers,
+    this.followersCount,
+    this.leopardsCityId,
+    this.leopardsCityName,
+  });
 
   Profile.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
@@ -62,25 +68,31 @@ class Profile {
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     iV = json['__v'];
-    fcmTokens = json['fcmTokens'].cast<String>();
+    fcmTokens = (json['fcmTokens'] as List?)?.cast<String>();
+    followers = (json['followers'] as List?)?.cast<dynamic>();
     followersCount = json['followersCount'];
+    leopardsCityId = json['leopardsCityId']; // ← new
+    leopardsCityName = json['leopardsCityName']; // ← new
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['_id'] = this.sId;
-    data['userId'] = this.userId;
-    data['image'] = this.image;
-    data['name'] = this.name;
-    data['email'] = this.email;
-    data['phone'] = this.phone;
-    data['address'] = this.address;
-    data['description'] = this.description;
-    data['createdAt'] = this.createdAt;
-    data['updatedAt'] = this.updatedAt;
-    data['__v'] = this.iV;
-    data['fcmTokens'] = this.fcmTokens;
-    data['followersCount'] = this.followersCount;
+    final data = <String, dynamic>{};
+    data['_id'] = sId;
+    data['userId'] = userId;
+    data['image'] = image;
+    data['name'] = name;
+    data['email'] = email;
+    data['phone'] = phone;
+    data['address'] = address;
+    data['description'] = description;
+    data['createdAt'] = createdAt;
+    data['updatedAt'] = updatedAt;
+    data['__v'] = iV;
+    data['fcmTokens'] = fcmTokens;
+    data['followers'] = followers;
+    data['followersCount'] = followersCount;
+    data['leopardsCityId'] = leopardsCityId; // ← new
+    data['leopardsCityName'] = leopardsCityName; // ← new
     return data;
   }
 }

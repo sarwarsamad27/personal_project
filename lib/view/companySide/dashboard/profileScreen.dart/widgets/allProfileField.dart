@@ -48,6 +48,7 @@ class AllField extends StatelessWidget {
             controller: TextEditingController(text: profile.description ?? ""),
             headerText: "Description",
             readOnly: true,
+            maxLines: null,
           ),
         ],
       ),
