@@ -116,13 +116,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     productId: prods.sId ?? '',
                     categoryId: widget.categoryId,
                     imageUrls: prods.images ?? [],
+                    videoUrl: prods.videoUrl, // ✅ PASS VIDEO URL
                     name: prods.name ?? '',
                     description: prods.description ?? '',
                     color: prods.color?.join(',') ?? '',
                     size: prods.size?.join(',') ?? '',
                     price: prods.afterDiscountPrice?.toString() ?? '0',
-                    quantity: prods.quantity ?? 0, // ✅
-                    weightInGrams: prods.weightInGrams ?? 500, // ✅
+                    quantity: prods.quantity ?? 0,
+                    weightInGrams: prods.weightInGrams ?? 500,
                   ),
                   SizedBox(height: 12.h),
 

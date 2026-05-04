@@ -34,7 +34,8 @@ class CompanyChatThreadsProvider extends ChangeNotifier {
     for (final t in threads) {
       // ⚠️ apne model field ke hisaab se yahan adjust:
       // e.g: t.unreadCount / t.unreadMessages / t.unread
-      final c = (t.unreadCount ?? 0); // <-- if field name different, change here
+      final c =
+          (t.unreadCount ?? 0); // <-- if field name different, change here
       total += c;
     }
     return total;

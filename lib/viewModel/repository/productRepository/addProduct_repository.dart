@@ -36,25 +36,34 @@ class AddProductRepository {
         if (weightInGrams != null) 'weightInGrams': weightInGrams.toString(),
       };
 
-      final request = http.MultipartRequest('POST', Uri.parse(Global.CreateProduct));
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse(Global.CreateProduct),
+      );
       final headers = await apiServices.getHeaders(isMultipart: true);
       request.headers.addAll(headers);
       request.fields.addAll(fields);
 
       for (final img in (images ?? [])) {
-        request.files.add(await http.MultipartFile.fromPath('images', img.path));
+        request.files.add(
+          await http.MultipartFile.fromPath('images', img.path),
+        );
       }
 
       if (video != null) {
         final ext = video.path.split('.').last.toLowerCase();
-        request.files.add(await http.MultipartFile.fromPath(
-          'video',
-          video.path,
-          contentType: MediaType('video', ext),
-        ));
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'video',
+            video.path,
+            contentType: MediaType('video', ext),
+          ),
+        );
       }
 
-      final streamed = await request.send().timeout(const Duration(seconds: 60));
+      final streamed = await request.send().timeout(
+        const Duration(seconds: 300),
+      );
       final response = await http.Response.fromStream(streamed);
 
       if (response.statusCode == 200 || response.statusCode == 201) {

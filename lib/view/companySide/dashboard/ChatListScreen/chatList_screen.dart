@@ -12,6 +12,7 @@ import 'package:new_brand/resources/socketServices.dart';
 import 'package:new_brand/view/companySide/dashboard/ChatListScreen/chat_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/admin_messages_screen.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/chatThread_provider.dart';
+import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
 import 'package:provider/provider.dart';
 
 class CompanyChatListScreen extends StatefulWidget {
@@ -46,14 +47,39 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
       );
       if (res.statusCode == 200 && mounted) {
         final msgs = (jsonDecode(res.body)['messages'] as List? ?? []);
-        // Messages FROM admin (replies + broadcasts to all sellers)
-        final fromAdmin = msgs.where((m) => m['fromType'] == 'admin').toList();
-        if (fromAdmin.isNotEmpty) {
-          final last = fromAdmin.last;
+
+        if (msgs.isNotEmpty) {
+          final last = msgs.last; // Absolute last message (admin or seller)
+
+          // ✅ Get userId for broadcast read check
+          final profile = context
+              .read<ProfileFetchProvider>()
+              .profileData
+              ?.profile;
+          final userId = profile?.userId;
+
+          // ✅ Messages FROM admin (replies + broadcasts)
+          final fromAdmin = msgs
+              .where((m) => m['fromType'] == 'admin')
+              .toList();
+
+          // ✅ Correct unread calculation
+          final unreadCount = fromAdmin.where((m) {
+            if (m['toType'] == 'seller') return m['isRead'] == false;
+            if (m['toType'] == 'all_sellers') {
+              final readBy = (m['readBy'] as List? ?? []);
+              return userId != null && !readBy.contains(userId);
+            }
+            return false;
+          }).length;
+
           setState(() {
-            _adminLastMsg  = last['message']?.toString() ?? 'Support & announcements';
-            _adminLastTime = DateTime.tryParse(last['createdAt']?.toString() ?? '');
-            _adminUnread   = fromAdmin.length; // simple: all admin messages = unread until opened
+            _adminLastMsg =
+                last['message']?.toString() ?? 'Support & announcements';
+            _adminLastTime = DateTime.tryParse(
+              last['createdAt']?.toString() ?? '',
+            );
+            _adminUnread = unreadCount;
           });
         }
       }
@@ -82,8 +108,10 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
       if (!mounted) return;
       final msg = (data is Map) ? data : {};
       setState(() {
-        _adminUnread++;
-        _adminLastMsg  = msg['message']?.toString() ?? _adminLastMsg;
+        if (msg['fromType'] == 'admin') {
+          _adminUnread++;
+        }
+        _adminLastMsg = msg['message']?.toString() ?? _adminLastMsg;
         _adminLastTime = DateTime.now();
       });
     });
@@ -91,11 +119,10 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
     socket.on("admin:broadcast", (data) {
       if (!mounted) return;
       final msg = (data is Map) ? data : {};
-      // Only highlight if targeted at sellers
       if (msg['toType'] == 'all_sellers') {
         setState(() {
           _adminUnread++;
-          _adminLastMsg  = msg['message']?.toString() ?? _adminLastMsg;
+          _adminLastMsg = msg['message']?.toString() ?? _adminLastMsg;
           _adminLastTime = DateTime.now();
         });
       }
@@ -177,7 +204,9 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
 
   Widget _buildAdminTile(BuildContext context) {
     final hasUnread = _adminUnread > 0;
-    final timeStr   = _adminLastTime != null ? _formatTime(_adminLastTime.toString()) : '';
+    final timeStr = _adminLastTime != null
+        ? _formatTime(_adminLastTime.toString())
+        : '';
 
     return InkWell(
       onTap: () {
@@ -186,7 +215,7 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const SellerAdminMessagesScreen()),
-        );
+        ).then((_) => _fetchAdminMessageState()); // Refresh on return
       },
       child: ListTile(
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
@@ -201,8 +230,14 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => CircleAvatar(
                   radius: 28.r,
-                  backgroundColor: AppColor.primaryColor.withValues(alpha: 0.15),
-                  child: Icon(Icons.shield_outlined, color: AppColor.primaryColor, size: 26.sp),
+                  backgroundColor: AppColor.primaryColor.withValues(
+                    alpha: 0.15,
+                  ),
+                  child: Icon(
+                    Icons.shield_outlined,
+                    color: AppColor.primaryColor,
+                    size: 26.sp,
+                  ),
                 ),
               ),
             ),
@@ -269,7 +304,11 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
                 ),
                 child: Text(
                   '$_adminUnread',
-                  style: TextStyle(fontSize: 11.sp, color: Colors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
           ],
@@ -384,7 +423,8 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
             ),
           ),
         ).then((_) {
-          if (mounted) context.read<CompanyChatThreadsProvider>().fetchThreads();
+          if (mounted)
+            context.read<CompanyChatThreadsProvider>().fetchThreads();
         });
       },
     );

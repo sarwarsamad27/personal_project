@@ -70,15 +70,28 @@ class AddProductScreen extends StatelessWidget {
     _discountController.text = "${discount.toStringAsFixed(1)}%";
   }
 
+  static const int _maxVideoMB = 50;
+
   Future<void> _pickVideo(BuildContext context) async {
     final picker = ImagePicker();
     final picked = await picker.pickVideo(
       source: ImageSource.gallery,
       maxDuration: const Duration(seconds: 30),
     );
-    if (picked != null) {
-      selectedVideoNotifier.value = File(picked.path);
+    if (picked == null) return;
+
+    final file = File(picked.path);
+    final bytes = await file.length();
+    final mb = bytes / (1024 * 1024);
+
+    if (mb > _maxVideoMB) {
+      AppToast.show(
+        "Video is ${mb.toStringAsFixed(1)} MB — max allowed is $_maxVideoMB MB. Please trim or compress it.",
+      );
+      return;
     }
+
+    selectedVideoNotifier.value = file;
   }
 
   void _saveProduct(BuildContext context) async {
@@ -133,10 +146,17 @@ class AddProductScreen extends StatelessWidget {
       bottomNavigationBar: Padding(
         padding: EdgeInsets.only(bottom: 20.h, left: 24.w, right: 24.w),
         child: Consumer<AddProductProvider>(
-          builder: (context, provider, _) => CustomButton(
-            text: provider.isLoading ? "Adding..." : "Add Product",
-            onTap: provider.isLoading ? null : () => _saveProduct(context),
-          ),
+          builder: (context, provider, _) {
+            final hasVideo = selectedVideoNotifier.value != null;
+            String btnText = "Add Product";
+            if (provider.isLoading) {
+              btnText = hasVideo ? "Uploading… (video may take 1-2 min)" : "Adding...";
+            }
+            return CustomButton(
+              text: btnText,
+              onTap: provider.isLoading ? null : () => _saveProduct(context),
+            );
+          },
         ),
       ),
       body: CustomBgContainer(
@@ -275,7 +295,7 @@ class _VideoUploadSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Product Video (optional, max 30 sec)",
+              "Product Video (optional — max 30 sec, max 50 MB)",
               style: TextStyle(color: Colors.white70, fontSize: 12.sp),
             ),
             SizedBox(height: 8.h),
@@ -301,21 +321,37 @@ class _VideoUploadSection extends StatelessWidget {
                 ),
               )
             else
-              Stack(
-                children: [
-                  _LocalVideoPreview(file: video),
-                  Positioned(
-                    top: 6, right: 6,
-                    child: GestureDetector(
-                      onTap: () => videoNotifier.value = null,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                        child: const Icon(Icons.close, color: Colors.white, size: 16),
+              FutureBuilder<int>(
+                future: video.length(),
+                builder: (_, snap) {
+                  final mb = snap.hasData ? (snap.data! / (1024 * 1024)).toStringAsFixed(1) : "…";
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Stack(
+                        children: [
+                          _LocalVideoPreview(file: video),
+                          Positioned(
+                            top: 6, right: 6,
+                            child: GestureDetector(
+                              onTap: () => videoNotifier.value = null,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                child: const Icon(Icons.close, color: Colors.white, size: 16),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                ],
+                      SizedBox(height: 4.h),
+                      Text(
+                        "Video size: $mb MB",
+                        style: TextStyle(color: Colors.white54, fontSize: 11.sp),
+                      ),
+                    ],
+                  );
+                },
               ),
           ],
         );

@@ -5,9 +5,11 @@ import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/widget/delete_product_dialog.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/widget/edit_product_dialog.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:video_player/video_player.dart';
 
-class ProductImage extends StatelessWidget {
+class ProductImage extends StatefulWidget {
   final List<String> imageUrls;
+  final String? videoUrl;
   final String name;
   final String description;
   final String color;
@@ -15,12 +17,13 @@ class ProductImage extends StatelessWidget {
   final String price;
   final String categoryId;
   final String productId;
-  final int quantity; // ✅ stock ki jagah
-  final int weightInGrams; // ✅ new
+  final int quantity;
+  final int weightInGrams;
 
-  ProductImage({
+  const ProductImage({
     super.key,
     required this.imageUrls,
+    this.videoUrl,
     required this.name,
     required this.productId,
     required this.description,
@@ -28,16 +31,48 @@ class ProductImage extends StatelessWidget {
     required this.size,
     required this.price,
     required this.categoryId,
-    required this.quantity, // ✅
-    required this.weightInGrams, // ✅
+    required this.quantity,
+    required this.weightInGrams,
   });
 
+  @override
+  State<ProductImage> createState() => _ProductImageState();
+}
+
+class _ProductImageState extends State<ProductImage> {
   final PageController _pageController = PageController();
+
+  // ── Video controller initialised once in initState ──────────────────────────
+  VideoPlayerController? _videoCtrl;
+  bool _videoReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initVideo();
+  }
+
+  Future<void> _initVideo() async {
+    final url = widget.videoUrl?.trim();
+    if (url == null || url.isEmpty) return;
+    _videoCtrl = VideoPlayerController.networkUrl(Uri.parse(url));
+    try {
+      await _videoCtrl!.initialize();
+      if (mounted) setState(() => _videoReady = true);
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _videoCtrl?.dispose();
+    super.dispose();
+  }
 
   void _deleteProduct(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => DeleteProductDialog(productId: productId),
+      builder: (_) => DeleteProductDialog(productId: widget.productId),
     );
   }
 
@@ -46,28 +81,29 @@ class ProductImage extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (_) => EditProductDialog(
-        productId: productId,
-        categoryId: categoryId,
-        imageUrls: imageUrls,
-        name: name,
-        description: description,
-        color: color,
-        size: size,
-        price: price,
-        quantity: quantity, // ✅
-        weightInGrams: weightInGrams, // ✅
+        productId: widget.productId,
+        categoryId: widget.categoryId,
+        imageUrls: widget.imageUrls,
+        name: widget.name,
+        description: widget.description,
+        color: widget.color,
+        size: widget.size,
+        price: widget.price,
+        quantity: widget.quantity,
+        weightInGrams: widget.weightInGrams,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // 1) Empty/blank paths remove
-    final List<String> validImages = imageUrls
+    final List<String> validImages = widget.imageUrls
         .where((e) => e.trim().isNotEmpty)
         .toList();
 
-    final bool hasImages = validImages.isNotEmpty;
+    final bool hasVideo =
+        widget.videoUrl != null && widget.videoUrl!.trim().isNotEmpty;
+    final int itemCount = validImages.length + (hasVideo ? 1 : 0);
 
     return SizedBox(
       height: 0.45.sh,
@@ -75,38 +111,49 @@ class ProductImage extends StatelessWidget {
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [
-          // ---------- IMAGE / PLACEHOLDER ----------
+          // ---------- MEDIA CAROUSEL ----------
           ClipRRect(
             borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(24.r),
               bottomRight: Radius.circular(24.r),
             ),
-            child: hasImages
+            child: itemCount > 0
                 ? PageView.builder(
                     controller: _pageController,
-                    itemCount: validImages.length,
+                    itemCount: itemCount,
+                    onPageChanged: (i) {
+                      // Pause video when swiping away from it
+                      if (i < validImages.length) _videoCtrl?.pause();
+                    },
                     itemBuilder: (context, index) {
-                      final url = Global.getImageUrl(validImages[index]);
-
-                      return Image.network(
-                        url,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        errorBuilder: (_, __, ___) =>
-                            const _NoImagePlaceholder(),
-                      );
+                      if (index < validImages.length) {
+                        final url = Global.getImageUrl(validImages[index]);
+                        return Image.network(
+                          url,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (_, __, ___) =>
+                              const _NoImagePlaceholder(),
+                        );
+                      } else {
+                        // Pass pre-initialised controller — no re-fetch on swipe
+                        return _ProductVideoPlayer(
+                          controller: _videoCtrl,
+                          isReady: _videoReady,
+                        );
+                      }
                     },
                   )
                 : const _NoImagePlaceholder(),
           ),
 
-          // ---------- INDICATOR (only if images) ----------
-          if (hasImages)
+          // ---------- INDICATOR ----------
+          if (itemCount > 1)
             Positioned(
               bottom: 16.h,
               child: SmoothPageIndicator(
                 controller: _pageController,
-                count: validImages.length,
+                count: itemCount,
                 effect: ExpandingDotsEffect(
                   activeDotColor: Colors.black,
                   dotColor: Colors.grey[400]!,
@@ -146,13 +193,6 @@ class ProductImage extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.9),
                       shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 5,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
                     child: Icon(
                       Icons.edit,
@@ -169,13 +209,6 @@ class ProductImage extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.9),
                       shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 5,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
                     child: const Icon(
                       Icons.delete,
@@ -193,7 +226,78 @@ class ProductImage extends StatelessWidget {
   }
 }
 
-/// Simple placeholder widget
+// ── Video player — receives pre-initialised controller, no re-init on rebuild ──
+class _ProductVideoPlayer extends StatefulWidget {
+  final VideoPlayerController? controller;
+  final bool isReady;
+
+  const _ProductVideoPlayer({
+    required this.controller,
+    required this.isReady,
+  });
+
+  @override
+  State<_ProductVideoPlayer> createState() => _ProductVideoPlayerState();
+}
+
+class _ProductVideoPlayerState extends State<_ProductVideoPlayer> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller?.addListener(_onUpdate);
+  }
+
+  @override
+  void didUpdateWidget(_ProductVideoPlayer old) {
+    super.didUpdateWidget(old);
+    if (old.controller != widget.controller) {
+      old.controller?.removeListener(_onUpdate);
+      widget.controller?.addListener(_onUpdate);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller?.removeListener(_onUpdate);
+    super.dispose();
+  }
+
+  void _onUpdate() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ctrl = widget.controller;
+
+    if (!widget.isReady || ctrl == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final isPlaying = ctrl.value.isPlaying;
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        AspectRatio(
+          aspectRatio: ctrl.value.aspectRatio,
+          child: VideoPlayer(ctrl),
+        ),
+        GestureDetector(
+          onTap: () => isPlaying ? ctrl.pause() : ctrl.play(),
+          child: CircleAvatar(
+            backgroundColor: Colors.black26,
+            child: Icon(
+              isPlaying ? Icons.pause : Icons.play_arrow,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _NoImagePlaceholder extends StatelessWidget {
   const _NoImagePlaceholder();
 
