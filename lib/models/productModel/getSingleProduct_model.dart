@@ -51,8 +51,9 @@ class Product {
   int? discountPercentage;
   List<String>? size;
   List<String>? color;
-  int? quantity;        // ✅ stock ki jagah
-  int? weightInGrams;   // ✅ new
+  int? quantity;
+  int? weightInGrams;
+  String? videoUrl;
   String? createdAt;
   String? updatedAt;
   int? iV;
@@ -69,8 +70,9 @@ class Product {
     this.discountPercentage,
     this.size,
     this.color,
-    this.quantity,        // ✅
-    this.weightInGrams,   // ✅
+    this.quantity,
+    this.weightInGrams,
+    this.videoUrl,
     this.createdAt,
     this.updatedAt,
     this.iV,
@@ -94,8 +96,9 @@ class Product {
     color = json['color'] != null
         ? List<String>.from(json['color'])
         : [];
-    quantity = json['quantity'];          // ✅
-    weightInGrams = json['weightInGrams']; // ✅
+    quantity = json['quantity'];
+    weightInGrams = json['weightInGrams'];
+    videoUrl = json['videoUrl'];
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     iV = json['__v'];
@@ -114,8 +117,9 @@ class Product {
     data['discountPercentage'] = discountPercentage;
     data['size'] = size;
     data['color'] = color;
-    data['quantity'] = quantity;          // ✅
-    data['weightInGrams'] = weightInGrams; // ✅
+    data['quantity'] = quantity;
+    data['weightInGrams'] = weightInGrams;
+    data['videoUrl'] = videoUrl;
     data['createdAt'] = createdAt;
     data['updatedAt'] = updatedAt;
     data['__v'] = iV;
@@ -130,6 +134,8 @@ class Reviews {
   UserId? userId;
   int? stars;
   String? text;
+  List<String>? images;
+  String? video;
   String? createdAt;
   String? updatedAt;
   int? iV;
@@ -141,6 +147,8 @@ class Reviews {
     this.userId,
     this.stars,
     this.text,
+    this.images,
+    this.video,
     this.createdAt,
     this.updatedAt,
     this.iV,
@@ -150,11 +158,11 @@ class Reviews {
     reply = json['reply'] != null ? Reply.fromJson(json['reply']) : null;
     sId = json['_id'];
     productId = json['productId'];
-    userId = json['userId'] != null
-        ? UserId.fromJson(json['userId'])
-        : null;
+    userId = json['userId'] != null ? UserId.fromJson(json['userId']) : null;
     stars = json['stars'];
     text = json['text'];
+    images = json['images'] != null ? List<String>.from(json['images']) : [];
+    video = json['video'];
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     iV = json['__v'];
@@ -162,16 +170,14 @@ class Reviews {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    if (reply != null) {
-      data['reply'] = reply!.toJson();
-    }
+    if (reply != null) data['reply'] = reply!.toJson();
     data['_id'] = sId;
     data['productId'] = productId;
-    if (userId != null) {
-      data['userId'] = userId!.toJson();
-    }
+    if (userId != null) data['userId'] = userId!.toJson();
     data['stars'] = stars;
     data['text'] = text;
+    data['images'] = images;
+    data['video'] = video;
     data['createdAt'] = createdAt;
     data['updatedAt'] = updatedAt;
     data['__v'] = iV;
@@ -182,18 +188,24 @@ class Reviews {
 class Reply {
   String? text;
   String? repliedAt;
+  List<String>? images;
+  String? video;
 
-  Reply({this.text, this.repliedAt});
+  Reply({this.text, this.repliedAt, this.images, this.video});
 
   Reply.fromJson(Map<String, dynamic> json) {
     text = json['text'];
     repliedAt = json['repliedAt'];
+    images = json['images'] != null ? List<String>.from(json['images']) : [];
+    video = json['video'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['text'] = text;
     data['repliedAt'] = repliedAt;
+    data['images'] = images;
+    data['video'] = video;
     return data;
   }
 }

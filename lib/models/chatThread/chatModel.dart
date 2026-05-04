@@ -8,10 +8,13 @@ class ChatMessage {
   final String? deliveredAt;
   final String? readAt;
   final bool isExchangeRequest;
-  final bool isRefundRequest; // ✅
+  final bool isRefundRequest;
   final ExchangeRequestData? exchangeData;
-  final RefundRequestData? refundData; // ✅
+  final RefundRequestData? refundData;
   final ProductCard? productCard;
+  final String? replyToId;
+  final String? replyToText;
+  final String? replyToFromType;
 
   ChatMessage({
     this.id,
@@ -23,10 +26,13 @@ class ChatMessage {
     this.deliveredAt,
     this.readAt,
     this.isExchangeRequest = false,
-    this.isRefundRequest = false, // ✅
+    this.isRefundRequest = false,
     this.exchangeData,
-    this.refundData, // ✅
+    this.refundData,
     this.productCard,
+    this.replyToId,
+    this.replyToText,
+    this.replyToFromType,
   });
 
   static String? _extractThreadId(Map<String, dynamic> json) {
@@ -83,6 +89,9 @@ class ChatMessage {
               (json["productCard"] as Map).cast<String, dynamic>(),
             )
           : null,
+      replyToId: json["replyToId"]?.toString(),
+      replyToText: json["replyToText"]?.toString(),
+      replyToFromType: json["replyToFromType"]?.toString(),
     );
   }
 }

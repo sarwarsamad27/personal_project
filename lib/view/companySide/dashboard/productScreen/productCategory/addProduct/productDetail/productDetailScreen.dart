@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:new_brand/models/productModel/relatedProduct_model.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
@@ -13,6 +16,7 @@ import 'package:new_brand/viewModel/providers/productProvider/getSingleProduct_p
 import 'package:new_brand/viewModel/providers/reviewProvider/replyReview_provider.dart';
 import 'package:new_brand/widgets/productCard.dart';
 import 'package:provider/provider.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../../../../../models/productModel/getSingleProduct_model.dart';
 
@@ -467,8 +471,44 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
 
+          // Review images
+          if ((review.images?.isNotEmpty ?? false)) ...[
+            SizedBox(height: 10.h),
+            SizedBox(
+              height: 80.h,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: review.images!.length,
+                separatorBuilder: (_, __) => SizedBox(width: 8.w),
+                itemBuilder: (_, i) => GestureDetector(
+                  onTap: () =>
+                      _openFullscreenImages(context, review.images!, i),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8.r),
+                    child: Image.network(
+                      Global.getImageUrl(review.images![i]),
+                      width: 80.w,
+                      height: 80.h,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+
+          // Review video
+          if (review.video?.isNotEmpty ?? false) ...[
+            SizedBox(height: 10.h),
+            GestureDetector(
+              onTap: () => _openFullscreenVideo(context, review.video!),
+              child: _PdVideoThumb(url: review.video!),
+            ),
+          ],
+
           SizedBox(height: 12.h),
 
+          // Seller reply block
           if (hasReply)
             Container(
               width: double.infinity,
@@ -478,14 +518,56 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 borderRadius: BorderRadius.circular(14.r),
                 border: Border.all(color: const Color(0xFFE5E7EB)),
               ),
-              child: Text(
-                "Author reply: ${review.reply!.text}",
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  height: 1.45,
-                  color: const Color(0xFF111827),
-                  fontStyle: FontStyle.italic,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Author reply: ${review.reply!.text}",
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      height: 1.45,
+                      color: const Color(0xFF111827),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  // Reply images
+                  if (review.reply!.images?.isNotEmpty ?? false) ...[
+                    SizedBox(height: 8.h),
+                    SizedBox(
+                      height: 70.h,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: review.reply!.images!.length,
+                        separatorBuilder: (_, __) => SizedBox(width: 6.w),
+                        itemBuilder: (_, i) => GestureDetector(
+                          onTap: () => _openFullscreenImages(
+                            context,
+                            review.reply!.images!,
+                            i,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6.r),
+                            child: Image.network(
+                              Global.getImageUrl(review.reply!.images![i]),
+                              width: 70.w,
+                              height: 70.h,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  // Reply video
+                  if (review.reply!.video?.isNotEmpty ?? false) ...[
+                    SizedBox(height: 8.h),
+                    GestureDetector(
+                      onTap: () =>
+                          _openFullscreenVideo(context, review.reply!.video!),
+                      child: _PdVideoThumb(url: review.reply!.video!),
+                    ),
+                  ],
+                ],
               ),
             ),
 
@@ -497,10 +579,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: TextButton.icon(
                 onPressed: () async {
                   _replyDialog(review, replyController, provider);
-
-                  Future.delayed(const Duration(minutes: 1), () {
-                    provider.setShowReplyButton(reviewId, false);
-                  });
+                  Future.delayed(
+                    const Duration(minutes: 1),
+                    () => provider.setShowReplyButton(reviewId, false),
+                  );
                 },
                 icon: Icon(
                   Icons.reply,
@@ -522,64 +604,428 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  void _openFullscreenImages(BuildContext ctx, List<String> urls, int idx) {
+    Navigator.push(
+      ctx,
+      MaterialPageRoute(
+        builder: (_) => _PdFullscreenImages(urls: urls, initial: idx),
+      ),
+    );
+  }
+
+  void _openFullscreenVideo(BuildContext ctx, String url) {
+    Navigator.push(
+      ctx,
+      MaterialPageRoute(builder: (_) => _PdFullscreenVideo(url: url)),
+    );
+  }
+
   void _replyDialog(
     Reviews review,
     TextEditingController controller,
     GetSingleProductProvider provider,
   ) {
+    final List<File> replyImages = [];
+    File? replyVideo;
+    final picker = ImagePicker();
+
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Reply to Review"),
-        content: TextField(
-          controller: controller,
-          maxLines: 3,
-          decoration: const InputDecoration(
-            hintText: "Write your reply...",
-            border: OutlineInputBorder(),
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          scrollable: false,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+          title: const Text("Reply to Review"),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: controller,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      hintText: "Write your reply...",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Photos Section
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Photos (${replyImages.length}/5)",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (replyImages.length < 5)
+                        TextButton.icon(
+                          onPressed: () async {
+                            final picked = await picker.pickMultiImage(
+                              imageQuality: 50,
+                            );
+                            if (picked.isNotEmpty) {
+                              final add = picked
+                                  .take(5 - replyImages.length)
+                                  .map((x) => File(x.path))
+                                  .toList();
+                              setDialogState(() => replyImages.addAll(add));
+                            }
+                          },
+                          icon: const Icon(Icons.add_a_photo, size: 18),
+                          label: const Text("Add"),
+                        ),
+                    ],
+                  ),
+
+                  if (replyImages.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: SizedBox(
+                        height: 80,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: replyImages.length,
+                          itemBuilder: (_, i) => Stack(
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  image: DecorationImage(
+                                    image: FileImage(replyImages[i]),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: GestureDetector(
+                                  onTap: () => setDialogState(
+                                    () => replyImages.removeAt(i),
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 12),
+
+                  // Video Section
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          replyVideo == null
+                              ? "Video (optional)"
+                              : "Video selected ✓",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      if (replyVideo == null)
+                        TextButton.icon(
+                          onPressed: () async {
+                            final v = await picker.pickVideo(
+                              source: ImageSource.gallery,
+                              maxDuration: const Duration(seconds: 30),
+                            );
+                            if (v != null) {
+                              setDialogState(() => replyVideo = File(v.path));
+                            }
+                          },
+                          icon: const Icon(Icons.videocam, size: 18),
+                          label: const Text("Add"),
+                        ),
+                      if (replyVideo != null)
+                        TextButton(
+                          onPressed: () =>
+                              setDialogState(() => replyVideo = null),
+                          child: const Text(
+                            "Remove",
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
-          Consumer<ReplyReviewProvider>(
-            builder: (_, replyProvider, __) {
-              return ElevatedButton(
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: const Text("Cancel"),
+            ),
+            Consumer<ReplyReviewProvider>(
+              builder: (_, replyProvider, __) => ElevatedButton(
                 onPressed: replyProvider.isLoading
                     ? null
                     : () async {
+                        debugPrint(
+                          "🚀 Save clicked. Image count: ${replyImages.length}",
+                        );
+                        // Encode to base64
+                        final b64Images = <String>[];
+                        for (final img in replyImages) {
+                          final bytes = await img.readAsBytes();
+                          b64Images.add(
+                            "data:image/jpg;base64,${base64Encode(bytes)}",
+                          );
+                        }
+                        String? b64Video;
+                        if (replyVideo != null) {
+                          final bytes = await replyVideo!.readAsBytes();
+                          b64Video =
+                              "data:video/mp4;base64,${base64Encode(bytes)}";
+                        }
+
+                        debugPrint(
+                          "📤 Sending reply with ${b64Images.length} images",
+                        );
                         final success = await replyProvider.replyOnReview(
                           reviewId: review.sId!,
                           replyText: controller.text,
+                          replyImages: b64Images,
+                          replyVideo: b64Video,
                         );
 
                         if (success) {
-                          // Mark as replied
                           provider.markAsReplied(review.sId!);
-
-                          // Refresh product
                           final token = await LocalStorage.getToken() ?? "";
                           await provider.fetchSingleProducts(
                             token: token,
                             categoryId: widget.categoryId,
                             productId: widget.productId,
                           );
-
-                          Navigator.pop(context);
+                          if (dialogCtx.mounted) {
+                            Navigator.pop(dialogCtx);
+                          }
                         }
                       },
                 child: replyProvider.isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
                     : const Text("Save"),
-              );
-            },
-          ),
-        ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+// ── Video thumbnail widget ────────────────────────────────────────────────────
+class _PdVideoThumb extends StatefulWidget {
+  final String url;
+  const _PdVideoThumb({required this.url});
+  @override
+  State<_PdVideoThumb> createState() => _PdVideoThumbState();
+}
+
+class _PdVideoThumbState extends State<_PdVideoThumb> {
+  late VideoPlayerController _ctrl;
+  bool _ready = false;
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = VideoPlayerController.networkUrl(Uri.parse(widget.url))
+      ..initialize().then((_) {
+        if (mounted) setState(() => _ready = true);
+      });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 110.h,
+    width: double.infinity,
+    decoration: BoxDecoration(
+      color: Colors.black,
+      borderRadius: BorderRadius.circular(10.r),
+    ),
+    child: Stack(
+      alignment: Alignment.center,
+      children: [
+        if (_ready)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10.r),
+            child: AspectRatio(
+              aspectRatio: _ctrl.value.aspectRatio,
+              child: VideoPlayer(_ctrl),
+            ),
+          ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.black38,
+            borderRadius: BorderRadius.circular(10.r),
+          ),
+        ),
+        const Icon(Icons.play_circle_fill, color: Colors.white, size: 44),
+      ],
+    ),
+  );
+}
+
+// ── Fullscreen image viewer ──────────────────────────────────────────────────
+class _PdFullscreenImages extends StatefulWidget {
+  final List<String> urls;
+  final int initial;
+  const _PdFullscreenImages({required this.urls, required this.initial});
+  @override
+  State<_PdFullscreenImages> createState() => _PdFullscreenImagesState();
+}
+
+class _PdFullscreenImagesState extends State<_PdFullscreenImages> {
+  late PageController _page;
+  late int _cur;
+  @override
+  void initState() {
+    super.initState();
+    _cur = widget.initial;
+    _page = PageController(initialPage: widget.initial);
+  }
+
+  @override
+  void dispose() {
+    _page.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: Colors.black,
+    appBar: AppBar(
+      backgroundColor: Colors.black,
+      foregroundColor: Colors.white,
+      title: Text("${_cur + 1} / ${widget.urls.length}"),
+    ),
+    body: PageView.builder(
+      controller: _page,
+      itemCount: widget.urls.length,
+      onPageChanged: (i) => setState(() => _cur = i),
+      itemBuilder: (_, i) => InteractiveViewer(
+        child: Center(
+          child: Image.network(
+            Global.getImageUrl(widget.urls[i]),
+            fit: BoxFit.contain,
+            loadingBuilder: (_, c, p) => p == null
+                ? c
+                : const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.broken_image, color: Colors.white54, size: 60),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+// ── Fullscreen video player ──────────────────────────────────────────────────
+class _PdFullscreenVideo extends StatefulWidget {
+  final String url;
+  const _PdFullscreenVideo({required this.url});
+  @override
+  State<_PdFullscreenVideo> createState() => _PdFullscreenVideoState();
+}
+
+class _PdFullscreenVideoState extends State<_PdFullscreenVideo> {
+  late VideoPlayerController _ctrl;
+  bool _ready = false;
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = VideoPlayerController.networkUrl(Uri.parse(widget.url))
+      ..initialize().then((_) {
+        if (mounted) {
+          setState(() => _ready = true);
+          _ctrl.play();
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: Colors.black,
+    appBar: AppBar(
+      backgroundColor: Colors.black,
+      foregroundColor: Colors.white,
+    ),
+    body: Center(
+      child: _ready
+          ? GestureDetector(
+              onTap: () {
+                _ctrl.value.isPlaying ? _ctrl.pause() : _ctrl.play();
+                setState(() {});
+              },
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  AspectRatio(
+                    aspectRatio: _ctrl.value.aspectRatio,
+                    child: VideoPlayer(_ctrl),
+                  ),
+                  if (!_ctrl.value.isPlaying)
+                    const Icon(
+                      Icons.play_circle_fill,
+                      color: Colors.white70,
+                      size: 64,
+                    ),
+                ],
+              ),
+            )
+          : const CircularProgressIndicator(color: Colors.white),
+    ),
+  );
 }
 
 class _BlinkingDot extends StatefulWidget {

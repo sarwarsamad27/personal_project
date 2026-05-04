@@ -9,16 +9,17 @@ class ReplyReviewRepository {
     required String replyText,
     required String reviewId,
     required String token,
+    List<String> replyImages = const [],
+    String? replyVideo,
   }) async {
     try {
-      final url = Global.ReplyReviews;
-
-      final response = await apiServices.postApi(url, ({
+      final body = <String, dynamic>{
         "replyText": replyText,
         "reviewId": reviewId,
-      }));
-      print(response);
-
+        if (replyImages.isNotEmpty) "replyImages": replyImages,
+        if (replyVideo != null) "replyVideo": replyVideo,
+      };
+      final response = await apiServices.postApi(Global.ReplyReviews, body);
       return ReplyReviewModel.fromJson(response);
     } catch (e) {
       return ReplyReviewModel(message: "Error: $e");

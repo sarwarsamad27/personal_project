@@ -1,75 +1,87 @@
-  import 'package:flutter/material.dart';
-  import 'package:new_brand/models/auth/login_model.dart';
-  import 'package:new_brand/resources/local_storage.dart';
-  import 'package:new_brand/viewModel/repository/authRepository/login_repository.dart';
+import 'package:flutter/material.dart';
+import 'package:new_brand/models/auth/login_model.dart';
+import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/viewModel/repository/authRepository/login_repository.dart';
 
-  class LoginProvider with ChangeNotifier {
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-    bool _loading = false;
-    bool get loading => _loading;
+class LoginProvider with ChangeNotifier {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  bool _loading = false;
+  bool get loading => _loading;
 
-    String? _errorMessage;
-    String? get errorMessage => _errorMessage;
+  String? _errorMessage;
+  String? get errorMessage => _errorMessage;
 
-    LoginModel? _loginData;
-    LoginModel? get loginData => _loginData;
+  LoginModel? _loginData;
+  LoginModel? get loginData => _loginData;
 
-    final LoginRepository repository = LoginRepository();
+  bool _isSuspended = false;
+  bool get isSuspended => _isSuspended;
+  String? _suspendReason;
+  String? get suspendReason => _suspendReason;
+  String? _suspendedUntil;
+  String? get suspendedUntil => _suspendedUntil;
 
-    Future<void> loginProvider({
-      required String email,
-      required String password,
-    }) async {
-      _loading = true;
-      _errorMessage = null;
-      notifyListeners();
+  final LoginRepository repository = LoginRepository();
 
-      // VALIDATIONS
-      if (email.isEmpty) {
-        _errorMessage = "Email is required";
-        _loading = false;
-        notifyListeners();
-        return;
-      }
+  Future<void> loginProvider({
+    required String email,
+    required String password,
+  }) async {
+    _loading = true;
+    _errorMessage = null;
+    _isSuspended = false;
+    notifyListeners();
 
-      if (!RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$").hasMatch(email)) {
-        _errorMessage = "Invalid email format";
-        _loading = false;
-        notifyListeners();
-        return;
-      }
-
-      if (password.isEmpty) {
-        _errorMessage = "Password is required";
-        _loading = false;
-        notifyListeners();
-        return;
-      }
-
-      if (password.length < 6) {
-        _errorMessage = "Password must be at least 6 characters";
-        _loading = false;
-        notifyListeners();
-        return;
-      }
-
-      // API CALL
-      _loginData = await repository.login(email, password);
-
+    if (email.isEmpty) {
+      _errorMessage = "Email is required";
       _loading = false;
       notifyListeners();
-
-      if (_loginData?.token != null && _loginData!.token!.isNotEmpty) {
-        await LocalStorage.saveToken(_loginData!.token!);
-      } else {
-        _errorMessage = _loginData?.message ?? "Login failed";
-        notifyListeners();
-      }
+      return;
+    }
+    if (!RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$").hasMatch(email)) {
+      _errorMessage = "Invalid email format";
+      _loading = false;
+      notifyListeners();
+      return;
+    }
+    if (password.isEmpty) {
+      _errorMessage = "Password is required";
+      _loading = false;
+      notifyListeners();
+      return;
+    }
+    if (password.length < 6) {
+      _errorMessage = "Password must be at least 6 characters";
+      _loading = false;
+      notifyListeners();
+      return;
     }
 
-    void clearError() {
-      _errorMessage = null;
+    _loginData = await repository.login(email, password);
+    _loading = false;
+
+    // Suspension check
+    if (_loginData?.suspended == true) {
+      _isSuspended = true;
+      _suspendReason = _loginData?.suspendReason;
+      _suspendedUntil = _loginData?.suspendedUntil;
+      notifyListeners();
+      return;
+    }
+
+    notifyListeners();
+
+    if (_loginData?.token != null && _loginData!.token!.isNotEmpty) {
+      await LocalStorage.saveToken(_loginData!.token!);
+    } else {
+      _errorMessage = _loginData?.message ?? "Login failed";
       notifyListeners();
     }
   }
+
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+}

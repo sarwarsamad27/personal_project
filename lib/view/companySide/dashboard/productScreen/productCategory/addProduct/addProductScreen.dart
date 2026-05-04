@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:new_brand/models/categoryModel/getCategory_model.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/local_storage.dart';
@@ -16,6 +17,7 @@ import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
 import 'package:new_brand/widgets/customValidation.dart';
 import 'package:provider/provider.dart';
+import 'package:video_player/video_player.dart';
 
 // ignore: must_be_immutable
 class AddProductScreen extends StatelessWidget {
@@ -28,27 +30,17 @@ class AddProductScreen extends StatelessWidget {
   final TextEditingController _afterPriceController = TextEditingController();
   final TextEditingController _discountController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
-  final TextEditingController _quantityController =
-      TextEditingController(); // ✅
-  final ValueNotifier<String> selectedStockNotifier = ValueNotifier("In Stock");
-  final List<String> stockOptions = const ["In Stock", "Out of Stock"];
+  final TextEditingController _quantityController = TextEditingController();
   final ValueNotifier<List<File>> selectedImagesNotifier = ValueNotifier([]);
+  final ValueNotifier<File?> selectedVideoNotifier = ValueNotifier(null);
   final ValueNotifier<List<String>> selectedSizesNotifier = ValueNotifier([]);
-  final ValueNotifier<List<Map<String, dynamic>>> selectedColorsNotifier =
-      ValueNotifier([]);
+  final ValueNotifier<List<Map<String, dynamic>>> selectedColorsNotifier = ValueNotifier([]);
 
-  // ✅ Analyze image call
   Future<void> _analyzeImage(BuildContext context, File image) async {
     final token = await LocalStorage.getToken();
-    final analyzeProvider = Provider.of<AnalyzeProductProvider>(
-      context,
-      listen: false,
-    );
-
-    // ✅ Placeholder dikhao
+    final analyzeProvider = Provider.of<AnalyzeProductProvider>(context, listen: false);
     _nameController.text = "Analyzing...";
     _descriptionController.text = "Please wait...";
-
     analyzeProvider.analyzeImage(
       token: token ?? '',
       image: image,
@@ -65,37 +57,34 @@ class AddProductScreen extends StatelessWidget {
   }
 
   void _calculateDiscount(BuildContext context) {
-    final beforeText = _beforePriceController.text.trim();
-    final afterText = _afterPriceController.text.trim();
-
-    if (beforeText.isEmpty || afterText.isEmpty) {
-      _discountController.text = "";
-      return;
-    }
-
-    final before = double.tryParse(beforeText);
-    final after = double.tryParse(afterText);
-
-    if (before == null || after == null) return;
-
+    final before = double.tryParse(_beforePriceController.text.trim());
+    final after = double.tryParse(_afterPriceController.text.trim());
+    if (before == null || after == null) { _discountController.text = ""; return; }
     if (after > before) {
-      AppToast.show(
-        "After discount price must be less than before discount price",
-      );
+      AppToast.show("After discount price must be less than before discount price");
       _afterPriceController.clear();
       _discountController.text = "";
       return;
     }
-
     final discount = ((before - after) / before) * 100;
     _discountController.text = "${discount.toStringAsFixed(1)}%";
+  }
+
+  Future<void> _pickVideo(BuildContext context) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickVideo(
+      source: ImageSource.gallery,
+      maxDuration: const Duration(seconds: 30),
+    );
+    if (picked != null) {
+      selectedVideoNotifier.value = File(picked.path);
+    }
   }
 
   void _saveProduct(BuildContext context) async {
     final token = await LocalStorage.getToken();
     final provider = Provider.of<AddProductProvider>(context, listen: false);
 
-    // ✅ Validation
     if (selectedImagesNotifier.value.isEmpty ||
         _nameController.text.isEmpty ||
         _nameController.text == "Analyzing..." ||
@@ -103,29 +92,18 @@ class AddProductScreen extends StatelessWidget {
         _afterPriceController.text.isEmpty ||
         _weightController.text.isEmpty ||
         _quantityController.text.isEmpty) {
-      AppToast.show("Please fill all required fields");
+      AppToast.show("Please fill all required fields and add at least one image");
       return;
     }
 
     final weight = int.tryParse(_weightController.text.trim());
-    if (weight == null || weight <= 0) {
-      AppToast.show("Please enter valid weight in grams");
-      return;
-    }
+    if (weight == null || weight <= 0) { AppToast.show("Please enter valid weight in grams"); return; }
 
     final quantity = int.tryParse(_quantityController.text.trim());
-    if (quantity == null || quantity < 0) {
-      AppToast.show("Please enter valid quantity");
-      return;
-    }
+    if (quantity == null || quantity < 0) { AppToast.show("Please enter valid quantity"); return; }
 
-    final original = List<File>.from(selectedImagesNotifier.value);
-    final validImages = original.where((f) => f.existsSync()).toList();
-
-    if (validImages.isEmpty) {
-      AppToast.show("Selected images not found. Please re-select images.");
-      return;
-    }
+    final validImages = selectedImagesNotifier.value.where((f) => f.existsSync()).toList();
+    if (validImages.isEmpty) { AppToast.show("Selected images not found. Please re-select."); return; }
 
     provider.addProduct(
       token: token,
@@ -133,21 +111,18 @@ class AddProductScreen extends StatelessWidget {
       name: _nameController.text.trim(),
       description: _descriptionController.text.trim(),
       images: validImages,
+      video: selectedVideoNotifier.value,
       beforePrice: int.tryParse(_beforePriceController.text),
       afterPrice: int.tryParse(_afterPriceController.text),
       size: selectedSizesNotifier.value,
-      color: selectedColorsNotifier.value
-          .map((e) => e["name"].toString())
-          .toList(),
-      quantity: quantity, // ✅
+      color: selectedColorsNotifier.value.map((e) => e["name"].toString()).toList(),
+      quantity: quantity,
       weightInGrams: weight,
       onSuccess: () {
         AppToast.show("Product added successfully!");
         Navigator.pop(context);
       },
-      onError: (msg) {
-        AppToast.show(msg);
-      },
+      onError: (msg) => AppToast.show(msg),
     );
   }
 
@@ -158,12 +133,10 @@ class AddProductScreen extends StatelessWidget {
       bottomNavigationBar: Padding(
         padding: EdgeInsets.only(bottom: 20.h, left: 24.w, right: 24.w),
         child: Consumer<AddProductProvider>(
-          builder: (context, provider, _) {
-            return CustomButton(
-              text: provider.isLoading ? "Adding..." : "Add Product",
-              onTap: provider.isLoading ? null : () => _saveProduct(context),
-            );
-          },
+          builder: (context, provider, _) => CustomButton(
+            text: provider.isLoading ? "Adding..." : "Add Product",
+            onTap: provider.isLoading ? null : () => _saveProduct(context),
+          ),
         ),
       ),
       body: CustomBgContainer(
@@ -178,42 +151,39 @@ class AddProductScreen extends StatelessWidget {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        // ✅ UploadImages with onImageSelected callback
+                        // ── IMAGES (mandatory) ──
                         UploadImages(
                           selectedImages: selectedImagesNotifier,
-                          onImageSelected: (File firstImage) {
-                            _analyzeImage(context, firstImage);
-                          },
+                          onImageSelected: (File firstImage) => _analyzeImage(context, firstImage),
                         ),
-                        SizedBox(height: 30.h),
+                        SizedBox(height: 12.h),
 
-                        // ✅ Analyzing loader dikhao
+                        // ── AI analyzing indicator ──
                         Consumer<AnalyzeProductProvider>(
                           builder: (context, analyzeProvider, _) {
-                            if (!analyzeProvider.isAnalyzing) {
-                              return const SizedBox.shrink();
-                            }
+                            if (!analyzeProvider.isAnalyzing) return const SizedBox.shrink();
                             return Padding(
                               padding: EdgeInsets.only(bottom: 12.h),
                               child: Row(
                                 children: [
                                   SizedBox(
-                                    width: 16.w,
-                                    height: 16.h,
-                                    child: const CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
+                                    width: 16.w, height: 16.h,
+                                    child: const CircularProgressIndicator(strokeWidth: 2),
                                   ),
                                   SizedBox(width: 8.w),
-                                  Text(
-                                    "AI analyzing image...",
-                                    style: TextStyle(fontSize: 12.sp),
-                                  ),
+                                  Text("AI analyzing image...", style: TextStyle(fontSize: 12.sp)),
                                 ],
                               ),
                             );
                           },
                         ),
+
+                        // ── VIDEO (optional, 30 sec) ──
+                        _VideoUploadSection(
+                          videoNotifier: selectedVideoNotifier,
+                          onPick: () => _pickVideo(context),
+                        ),
+                        SizedBox(height: 20.h),
 
                         CustomTextField(
                           controller: _nameController,
@@ -256,60 +226,27 @@ class AddProductScreen extends StatelessWidget {
                           readOnly: true,
                         ),
                         SizedBox(height: 20.h),
+
                         CustomTextField(
                           controller: _weightController,
                           hintText: "Enter weight in grams (e.g. 500)",
                           headerText: 'Weight (grams) *',
                           keyboardType: TextInputType.number,
                         ),
-
                         SizedBox(height: 20.h),
 
-                        // ✅ Quantity field (stock dropdown hatao, ye lagao)
                         CustomTextField(
                           controller: _quantityController,
                           hintText: "Enter available quantity (e.g. 50)",
                           headerText: 'Quantity *',
                           keyboardType: TextInputType.number,
                         ),
-
                         SizedBox(height: 20.h),
+
                         SizeSelect(selectedSizes: selectedSizesNotifier),
                         SizedBox(height: 20.h),
-
                         ColorSelect(colorNotifier: selectedColorsNotifier),
                         SizedBox(height: 20.h),
-
-                        // Column(
-                        //   crossAxisAlignment: CrossAxisAlignment.start,
-                        //   children: [
-                        //     Text("Stock"),
-                        //     SizedBox(height: 8.h),
-                        //     ValueListenableBuilder<String>(
-                        //       valueListenable: selectedStockNotifier,
-                        //       builder: (context, value, _) {
-                        //         return DropdownButtonFormField<String>(
-                        //           value: value,
-                        //           items: stockOptions
-                        //               .map(
-                        //                 (s) => DropdownMenuItem<String>(
-                        //                   value: s,
-                        //                   child: Text(s),
-                        //                 ),
-                        //               )
-                        //               .toList(),
-                        //           onChanged: (v) {
-                        //             if (v == null) return;
-                        //             selectedStockNotifier.value = v;
-                        //           },
-                        //           decoration: const InputDecoration(
-                        //             hintText: "Select stock status",
-                        //           ),
-                        //         );
-                        //       },
-                        //     ),
-                        //   ],
-                        // ),
                       ],
                     ),
                   ),
@@ -317,6 +254,135 @@ class AddProductScreen extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _VideoUploadSection extends StatelessWidget {
+  final ValueNotifier<File?> videoNotifier;
+  final VoidCallback onPick;
+
+  const _VideoUploadSection({required this.videoNotifier, required this.onPick});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<File?>(
+      valueListenable: videoNotifier,
+      builder: (context, video, _) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Product Video (optional, max 30 sec)",
+              style: TextStyle(color: Colors.white70, fontSize: 12.sp),
+            ),
+            SizedBox(height: 8.h),
+            if (video == null)
+              GestureDetector(
+                onTap: onPick,
+                child: Container(
+                  height: 80.h,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white10,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.videocam_outlined, color: Colors.white54, size: 26.sp),
+                      SizedBox(width: 8.w),
+                      Text("Add Video", style: TextStyle(color: Colors.white54, fontSize: 13.sp)),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Stack(
+                children: [
+                  _LocalVideoPreview(file: video),
+                  Positioned(
+                    top: 6, right: 6,
+                    child: GestureDetector(
+                      onTap: () => videoNotifier.value = null,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                        child: const Icon(Icons.close, color: Colors.white, size: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _LocalVideoPreview extends StatefulWidget {
+  final File file;
+  const _LocalVideoPreview({required this.file});
+
+  @override
+  State<_LocalVideoPreview> createState() => _LocalVideoPreviewState();
+}
+
+class _LocalVideoPreviewState extends State<_LocalVideoPreview> {
+  late VideoPlayerController _controller;
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.file(widget.file)
+      ..initialize().then((_) {
+        if (mounted) setState(() => _initialized = true);
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        if (_initialized) {
+          _controller.value.isPlaying ? _controller.pause() : _controller.play();
+          setState(() {});
+        }
+      },
+      child: Container(
+        height: 140.h,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (_initialized)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12.r),
+                child: AspectRatio(
+                  aspectRatio: _controller.value.aspectRatio,
+                  child: VideoPlayer(_controller),
+                ),
+              )
+            else
+              const CircularProgressIndicator(color: Colors.white),
+            if (_initialized && !_controller.value.isPlaying)
+              const Icon(Icons.play_circle_fill, color: Colors.white70, size: 48),
+          ],
         ),
       ),
     );

@@ -36,6 +36,11 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool isProcessing = false;
   bool isLoadingHistory = true;
 
+  // ===== Reply-to state =====
+  ChatMessage? replyTo;
+  void setReplyTo(ChatMessage msg) { replyTo = msg; notifyListeners(); }
+  void clearReplyTo() { replyTo = null; notifyListeners(); }
+
   // ===== Typing =====
   Timer? _typingTimer;
   String? _lastTypingValue;
@@ -520,6 +525,15 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
     msgController.clear();
     scrollToBottom();
     onTyping("");
+    final replyPayload = replyTo != null
+        ? {
+            "replyToId": replyTo!.id,
+            "replyToText": replyTo!.text,
+            "replyToFromType": replyTo!.fromType,
+          }
+        : <String, dynamic>{};
+    clearReplyTo();
+
     socket.emitWithAck(
       "chat:send",
       {
@@ -528,6 +542,7 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
         "toId": toId,
         "text": text,
         "clientId": clientId,
+        ...replyPayload,
       },
       ack: (resp) {
         if (resp is Map && resp["ok"] != true)

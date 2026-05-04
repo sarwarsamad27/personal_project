@@ -6,6 +6,7 @@ import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/auth/forgotScreen.dart';
 import 'package:new_brand/view/companySide/auth/signUpScreen.dart';
+import 'package:new_brand/view/companySide/auth/suspendedScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/profileForm.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/appleLogin_provider.dart';
@@ -126,6 +127,17 @@ class LoginScreen extends StatelessWidget {
                             password: loginProvider.passwordController.text
                                 .trim(),
                           );
+
+                          // ── Suspension check ──────────────────────────────
+                          if (loginProvider.isSuspended) {
+                            nav.pushReplacement(MaterialPageRoute(
+                              builder: (_) => SuspendedScreen(
+                                reason: loginProvider.suspendReason,
+                                until: loginProvider.suspendedUntil,
+                              ),
+                            ));
+                            return;
+                          }
 
                           final jwt = loginProvider.loginData?.token;
                           if (jwt == null || jwt.isEmpty) {

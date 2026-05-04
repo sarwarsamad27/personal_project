@@ -4,12 +4,13 @@ import 'package:new_brand/viewModel/repository/reviewRepository/replyReview_repo
 
 class ReplyReviewProvider with ChangeNotifier {
   final ReplyReviewRepository repo = ReplyReviewRepository();
-
   bool isLoading = false;
 
   Future<bool> replyOnReview({
     required String reviewId,
     required String replyText,
+    List<String> replyImages = const [],
+    String? replyVideo,
   }) async {
     try {
       isLoading = true;
@@ -19,11 +20,11 @@ class ReplyReviewProvider with ChangeNotifier {
         replyText: replyText,
         reviewId: reviewId,
         token: token ?? '',
+        replyImages: replyImages,
+        replyVideo: replyVideo,
       );
-
       isLoading = false;
       notifyListeners();
-
       return res.reply != null;
     } catch (e) {
       isLoading = false;

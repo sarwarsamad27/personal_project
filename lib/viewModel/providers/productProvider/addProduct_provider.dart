@@ -15,11 +15,12 @@ class AddProductProvider with ChangeNotifier {
     required String name,
     String? description,
     List<File>? images,
+    File? video,
     int? beforePrice,
     int? afterPrice,
     List<String>? size,
     List<String>? color,
-    int? quantity,        // ✅ stock ki jagah quantity
+    int? quantity,
     int? weightInGrams,
     required VoidCallback onSuccess,
     required Function(String) onError,
@@ -33,11 +34,12 @@ class AddProductProvider with ChangeNotifier {
         name: name,
         description: description,
         images: images,
+        video: video,
         beforePrice: beforePrice,
         afterPrice: afterPrice,
         size: size,
         color: color,
-        quantity: quantity,           // ✅
+        quantity: quantity,
         weightInGrams: weightInGrams,
       );
       isLoading = false;

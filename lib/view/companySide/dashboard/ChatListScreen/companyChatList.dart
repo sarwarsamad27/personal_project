@@ -48,7 +48,10 @@ class CompanyChatList extends StatelessWidget {
               );
             }
 
-            return MessageBubble(message: message);
+            return MessageBubble(
+              message: message,
+              onReply: p.setReplyTo,
+            );
           },
         );
       },

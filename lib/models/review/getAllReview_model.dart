@@ -28,44 +28,48 @@ class Data {
   String? reviewId;
   int? stars;
   String? text;
+  List<String>? images;
+  String? video;
   Product? product;
   User? user;
   String? createdAt;
   String? updatedAt;
 
-  Data(
-      {this.reviewId,
-      this.stars,
-      this.text,
-      this.product,
-      this.user,
-      this.createdAt,
-      this.updatedAt});
+  Data({
+    this.reviewId,
+    this.stars,
+    this.text,
+    this.images,
+    this.video,
+    this.product,
+    this.user,
+    this.createdAt,
+    this.updatedAt,
+  });
 
   Data.fromJson(Map<String, dynamic> json) {
     reviewId = json['reviewId'];
     stars = json['stars'];
     text = json['text'];
-    product =
-        json['product'] != null ? new Product.fromJson(json['product']) : null;
-    user = json['user'] != null ? new User.fromJson(json['user']) : null;
+    images = json['images'] != null ? List<String>.from(json['images']) : [];
+    video = json['video'];
+    product = json['product'] != null ? Product.fromJson(json['product']) : null;
+    user = json['user'] != null ? User.fromJson(json['user']) : null;
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['reviewId'] = this.reviewId;
-    data['stars'] = this.stars;
-    data['text'] = this.text;
-    if (this.product != null) {
-      data['product'] = this.product!.toJson();
-    }
-    if (this.user != null) {
-      data['user'] = this.user!.toJson();
-    }
-    data['createdAt'] = this.createdAt;
-    data['updatedAt'] = this.updatedAt;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['reviewId'] = reviewId;
+    data['stars'] = stars;
+    data['text'] = text;
+    data['images'] = images;
+    data['video'] = video;
+    if (product != null) data['product'] = product!.toJson();
+    if (user != null) data['user'] = user!.toJson();
+    data['createdAt'] = createdAt;
+    data['updatedAt'] = updatedAt;
     return data;
   }
 }
