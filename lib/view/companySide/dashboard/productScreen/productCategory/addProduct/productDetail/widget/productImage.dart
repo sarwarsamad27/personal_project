@@ -84,6 +84,7 @@ class _ProductImageState extends State<ProductImage> {
         productId: widget.productId,
         categoryId: widget.categoryId,
         imageUrls: widget.imageUrls,
+        videoUrl: widget.videoUrl,
         name: widget.name,
         description: widget.description,
         color: widget.color,

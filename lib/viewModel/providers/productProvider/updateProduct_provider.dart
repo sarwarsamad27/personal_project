@@ -20,9 +20,11 @@ class UpdateProductProvider with ChangeNotifier {
     required List<String> color,
     required List<String> keepImages,
     required List<String> deleteImages,
-    required int quantity,        // ✅ stock ki jagah
-    required int weightInGrams,   // ✅
+    required int quantity,
+    required int weightInGrams,
     required List<File> images,
+    File? video,
+    bool removeVideo = false,
   }) async {
     isLoading = true;
     notifyListeners();
@@ -39,9 +41,11 @@ class UpdateProductProvider with ChangeNotifier {
         color: color,
         keepImages: keepImages,
         deleteImages: deleteImages,
-        quantity: quantity,        // ✅
-        weightInGrams: weightInGrams, // ✅
+        quantity: quantity,
+        weightInGrams: weightInGrams,
         images: images,
+        video: video,
+        removeVideo: removeVideo,
       );
     } catch (e) {
       updateProductModel = UpdateProductModel(message: e.toString());
