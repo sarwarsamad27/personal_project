@@ -8,8 +8,10 @@ import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/socketServices.dart';
 import 'package:new_brand/resources/toast.dart';
+import 'package:new_brand/viewModel/providers/chatProvider/company_refund_provider.dart';
 import 'package:new_brand/viewModel/repository/chatThread/exchangeDisicion_repository.dart';
 import 'package:new_brand/viewModel/repository/chatThread/refundDecision_repository.dart';
+import 'package:provider/provider.dart';
 
 class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
   final String threadId;
@@ -693,13 +695,18 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
             ? "Your refund has been approved."
             : "Sorry, we cannot process this refund.",
       );
-      if (success)
+      if (success) {
         _updateRefundStatusLocally(
           refundId,
           decision == "Denied" ? "Rejected" : "Accepted",
         );
-      else
+        // Keep the refund list screen in sync
+        if (context.mounted) {
+          context.read<CompanyRefundProvider>().refresh();
+        }
+      } else {
         AppToast.error("Failed to process refund decision");
+      }
     } catch (e) {
       AppToast.error("Error: $e");
     } finally {

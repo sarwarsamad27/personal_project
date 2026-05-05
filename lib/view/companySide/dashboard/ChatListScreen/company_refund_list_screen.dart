@@ -28,25 +28,19 @@ class _CompanyRefundListScreenState extends State<CompanyRefundListScreen>
     _TabDef("Rejected", "Rejected"),
   ];
 
-  bool _hasLoaded = false;
-
   @override
   void initState() {
     super.initState();
     _tab = TabController(length: _tabs.length, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_hasLoaded) {
-        context.read<CompanyRefundProvider>().fetchRequests().then((_) {
-          if (mounted) setState(() => _hasLoaded = true);
-        });
+      final provider = context.read<CompanyRefundProvider>();
+      // Only fetch if we have no data yet — never re-fetch on re-entry
+      if (provider.requests.isEmpty) {
+        provider.fetchRequests();
       }
     });
-    _tab.addListener(() {
-      if (!_tab.indexIsChanging) {
-        final filter = _tabs[_tab.index].statusFilter;
-        context.read<CompanyRefundProvider>().fetchRequests(status: filter);
-      }
-    });
+    // Tab changes are handled by client-side filtering — no API call
+    _tab.addListener(() => setState(() {}));
   }
 
   @override
@@ -90,20 +84,26 @@ class _CompanyRefundListScreenState extends State<CompanyRefundListScreen>
             );
           }
 
+          // ── Client-side filtering (no API call on tab switch) ────
+          final tab = _tabs[_tab.index];
           var requests = provider.requests;
 
-          // In progress filter (client-side)
-          if (_tabs[_tab.index].isInProgress) {
-            const inProgressStatuses = [
+          if (tab.isInProgress) {
+            const inProgress = [
               "ReturnShipped",
               "ReturnReceived",
               "Inspecting",
               "ApprovedInspection",
             ];
             requests = requests
-                .where((r) => inProgressStatuses.contains(r.status))
+                .where((r) => inProgress.contains(r.status))
+                .toList();
+          } else if (tab.statusFilter != null) {
+            requests = requests
+                .where((r) => r.status == tab.statusFilter)
                 .toList();
           }
+          // else: "All" tab — show everything
 
           if (requests.isEmpty) {
             return Center(
@@ -141,7 +141,7 @@ class _CompanyRefundListScreenState extends State<CompanyRefundListScreen>
                       refundId: requests[i].id ?? "",
                     ),
                   ),
-                ).then((_) => provider.refresh()),
+                ),
               ),
             ),
           );
@@ -200,7 +200,7 @@ class _RefundCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        request.orderId ?? "Refund Request",
+                        _fmtOrderId(request.orderId),
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.bold,
@@ -382,4 +382,15 @@ class _RefundStatusStyle {
   final Color color;
   final IconData icon;
   const _RefundStatusStyle(this.color, this.icon);
+}
+
+// Normalise any orderId to a readable format.
+// Raw 24-char hex ObjectId → "ORD-XXXXXXXX" (last 8 uppercase).
+// Already formatted (starts with ORD-) → as-is.
+String _fmtOrderId(String? raw) {
+  if (raw == null || raw.isEmpty) return "Refund Request";
+  if (raw.toUpperCase().startsWith("ORD-")) return raw.toUpperCase();
+  final hex = RegExp(r'^[0-9a-fA-F]{24}$');
+  if (hex.hasMatch(raw)) return "ORD-${raw.substring(16).toUpperCase()}";
+  return raw;
 }

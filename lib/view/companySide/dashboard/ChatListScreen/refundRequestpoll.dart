@@ -21,24 +21,35 @@ class RefundRequestPoll extends StatelessWidget {
     final status = p.normalizeStatus(data.status);
     final isPending = status == "pending";
     final isAccepted = status == "accepted";
+    final isRefunded = status == "refunded";
+    final isRejected = status == "rejected" || status == "disputed";
 
-    final statusColor = isPending
-        ? const Color(0xFFE67E22)
-        : isAccepted
-        ? const Color(0xFF27AE60)
-        : const Color(0xFFE74C3C);
+    Color statusColor;
+    IconData statusIcon;
+    String statusText;
 
-    final statusIcon = isPending
-        ? Icons.hourglass_top_rounded
-        : isAccepted
-        ? Icons.check_circle_rounded
-        : Icons.cancel_rounded;
-
-    final statusText = isPending
-        ? 'Pending'
-        : isAccepted
-        ? 'Accepted'
-        : 'Rejected';
+    if (isPending) {
+      statusColor = const Color(0xFFE67E22);
+      statusIcon = Icons.hourglass_top_rounded;
+      statusText = 'Pending';
+    } else if (isAccepted) {
+      statusColor = const Color(0xFF2980B9);
+      statusIcon = Icons.check_circle_rounded;
+      statusText = 'Accepted';
+    } else if (isRefunded) {
+      statusColor = const Color(0xFF27AE60);
+      statusIcon = Icons.account_balance_wallet_rounded;
+      statusText = 'Refunded';
+    } else if (isRejected) {
+      statusColor = const Color(0xFFE74C3C);
+      statusIcon = Icons.cancel_rounded;
+      statusText = status == "disputed" ? 'Disputed' : 'Rejected';
+    } else {
+      // Intermediate: ReturnShipped, ReturnReceived, Inspecting, ApprovedInspection
+      statusColor = const Color(0xFF8E44AD);
+      statusIcon = Icons.sync_rounded;
+      statusText = _statusLabel(status);
+    }
 
     return Container(
       margin: EdgeInsets.symmetric(vertical: 10.h),
@@ -309,9 +320,9 @@ class RefundRequestPoll extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.all(12.w),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.08),
+                      color: statusColor.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: statusColor.withOpacity(0.3)),
+                      border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
@@ -319,9 +330,13 @@ class RefundRequestPoll extends StatelessWidget {
                         SizedBox(width: 10.w),
                         Expanded(
                           child: Text(
-                            isAccepted
-                                ? "✅ Refund approved. Amount will be credited to customer's wallet."
-                                : "❌ Refund request rejected.",
+                            isRefunded
+                                ? "💰 Refund completed. Amount credited to customer's wallet."
+                                : isAccepted
+                                ? "✅ Refund approved. Waiting for customer to ship back."
+                                : isRejected
+                                ? "❌ Refund request ${status == 'disputed' ? 'disputed' : 'rejected'}."
+                                : "🔄 Status: ${_statusLabel(status)}",
                             style: TextStyle(
                               fontSize: 13.sp,
                               color: statusColor,
@@ -385,6 +400,16 @@ class RefundRequestPoll extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case "returnshipped": return "Return Shipped";
+      case "returnreceived": return "Return Received";
+      case "inspecting": return "Inspecting";
+      case "approvedinspection": return "Inspection Approved";
+      default: return status;
+    }
   }
 
   String _formatTime(String? timestamp) {

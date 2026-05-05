@@ -28,16 +28,30 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
   String _adminLastMsg = 'Support & announcements';
   DateTime? _adminLastTime;
 
+  // Guard: only fetch admin state once on first open
+  bool _adminFetched = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Fetch threads only once — never on re-entry
+      final p = context.read<CompanyChatThreadsProvider>();
+      if (p.threadListModel == null) {
+        p.fetchThreads();
+      }
+
+      // Fetch admin state only once
+      if (!_adminFetched) {
+        _adminFetched = true;
+        _fetchAdminMessageState();
+      }
+
       _setupSocketListeners();
-      _fetchAdminMessageState();
     });
   }
 
-  // Fetch admin messages to populate last-message + count unreads
+  // ── Admin messages: one-time HTTP fetch ──────────────────────────────────
   Future<void> _fetchAdminMessageState() async {
     try {
       final token = await LocalStorage.getToken();
@@ -47,23 +61,12 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
       );
       if (res.statusCode == 200 && mounted) {
         final msgs = (jsonDecode(res.body)['messages'] as List? ?? []);
-
         if (msgs.isNotEmpty) {
-          final last = msgs.last; // Absolute last message (admin or seller)
-
-          // ✅ Get userId for broadcast read check
-          final profile = context
-              .read<ProfileFetchProvider>()
-              .profileData
-              ?.profile;
+          final last = msgs.last;
+          final profile = context.read<ProfileFetchProvider>().profileData?.profile;
           final userId = profile?.userId;
 
-          // ✅ Messages FROM admin (replies + broadcasts)
-          final fromAdmin = msgs
-              .where((m) => m['fromType'] == 'admin')
-              .toList();
-
-          // ✅ Correct unread calculation
+          final fromAdmin = msgs.where((m) => m['fromType'] == 'admin').toList();
           final unreadCount = fromAdmin.where((m) {
             if (m['toType'] == 'seller') return m['isRead'] == false;
             if (m['toType'] == 'all_sellers') {
@@ -73,47 +76,78 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
             return false;
           }).length;
 
-          setState(() {
-            _adminLastMsg =
-                last['message']?.toString() ?? 'Support & announcements';
-            _adminLastTime = DateTime.tryParse(
-              last['createdAt']?.toString() ?? '',
-            );
-            _adminUnread = unreadCount;
-          });
+          if (mounted) {
+            setState(() {
+              _adminLastMsg = last['message']?.toString() ?? 'Support & announcements';
+              _adminLastTime = DateTime.tryParse(last['createdAt']?.toString() ?? '');
+              _adminUnread = unreadCount;
+            });
+          }
         }
       }
     } catch (_) {}
   }
 
+  // ── Socket listeners ─────────────────────────────────────────────────────
+  // Called on initState AND after returning from chat/admin screen
+  // (because CompanyChatProvider.init() calls socket.off("chat:message")
+  //  which removes our listener — we must re-register on return).
   void _setupSocketListeners() {
     final socket = SocketService().socket;
     if (socket == null || !socket.connected) return;
 
+    // Clear our own handlers first to avoid duplicates
     socket.off("chat:message");
     socket.off("exchange:new");
     socket.off("admin:message");
     socket.off("admin:broadcast");
 
-    socket.on("chat:message", (_) {
-      if (mounted) context.read<CompanyChatThreadsProvider>().fetchThreads();
+    // ── New buyer message: update thread list in-memory, no API call ─────
+    socket.on("chat:message", (data) {
+      if (!mounted || data is! Map) return;
+      final tId = data["threadId"]?.toString();
+      final text = (data["text"] ?? "").toString();
+      final ts = (data["timestamp"] ?? data["createdAt"] ?? DateTime.now().toIso8601String()).toString();
+      final fromType = data["fromType"]?.toString();
+
+      if (tId != null) {
+        context.read<CompanyChatThreadsProvider>().onNewMessage(
+          threadId: tId,
+          lastMessage: text,
+          lastMessageTime: ts,
+          // Only increment unread if the message is FROM the buyer (not seller's own)
+          incrementUnread: fromType != "seller",
+        );
+      }
     });
 
-    socket.on("exchange:new", (_) {
-      if (mounted) context.read<CompanyChatThreadsProvider>().fetchThreads();
+    // ── New exchange request: same in-memory update ───────────────────────
+    socket.on("exchange:new", (data) {
+      if (!mounted || data is! Map) return;
+      final tId = data["threadId"]?.toString();
+      final ts = DateTime.now().toIso8601String();
+      if (tId != null) {
+        context.read<CompanyChatThreadsProvider>().onNewMessage(
+          threadId: tId,
+          lastMessage: "📦 New exchange request",
+          lastMessageTime: ts,
+          incrementUnread: true,
+          isExchangeRequest: true,
+        );
+      }
     });
 
-    // Admin message / announcement received in real-time
+    // ── Admin messages: update local state ───────────────────────────────
     socket.on("admin:message", (data) {
       if (!mounted) return;
       final msg = (data is Map) ? data : {};
-      setState(() {
-        if (msg['fromType'] == 'admin') {
+      if (msg['fromType'] == 'admin') {
+        setState(() {
           _adminUnread++;
-        }
-        _adminLastMsg = msg['message']?.toString() ?? _adminLastMsg;
-        _adminLastTime = DateTime.now();
-      });
+          _adminLastMsg = msg['message']?.toString() ?? _adminLastMsg;
+          _adminLastTime = DateTime.now();
+        });
+      }
     });
 
     socket.on("admin:broadcast", (data) {
@@ -135,21 +169,13 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
       final date = DateTime.parse(timestamp);
       final now = DateTime.now();
       final difference = now.difference(date);
-
-      if (difference.inMinutes < 1) {
-        return "Just now";
-      } else if (difference.inHours < 1) {
-        return "${difference.inMinutes}m";
-      } else if (difference.inDays == 0) {
-        return DateFormat('HH:mm').format(date);
-      } else if (difference.inDays == 1) {
-        return "Yesterday";
-      } else if (difference.inDays < 7) {
-        return DateFormat('EEE').format(date);
-      } else {
-        return DateFormat('dd/MM').format(date);
-      }
-    } catch (e) {
+      if (difference.inMinutes < 1) return "Just now";
+      if (difference.inHours < 1) return "${difference.inMinutes}m";
+      if (difference.inDays == 0) return DateFormat('HH:mm').format(date);
+      if (difference.inDays == 1) return "Yesterday";
+      if (difference.inDays < 7) return DateFormat('EEE').format(date);
+      return DateFormat('dd/MM').format(date);
+    } catch (_) {
       return "";
     }
   }
@@ -157,7 +183,7 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CompanyChatThreadsProvider>();
-    final threads = provider.threadListModel?.threads ?? [];
+    final threads = provider.threads;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -169,10 +195,7 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
           children: [
             const Text(
               "Messages",
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
             ),
             if (threads.isNotEmpty)
               Text(
@@ -182,20 +205,20 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
           ],
         ),
       ),
-      body: provider.loading
+      body: provider.loading && threads.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
+              color: AppColor.primaryColor,
               onRefresh: () => provider.fetchThreads(),
               child: ListView.separated(
                 padding: EdgeInsets.zero,
-                // +1 for pinned admin tile at index 0
-                itemCount: threads.length + 1,
+                itemCount: threads.length + 1, // +1 for pinned admin tile
                 separatorBuilder: (_, __) =>
                     Divider(height: 1.h, indent: 80.w, color: Colors.black12),
                 itemBuilder: (context, i) {
                   if (i == 0) return _buildAdminTile(context);
                   final thread = threads[i - 1];
-                  return _buildChatTile(thread);
+                  return _buildChatTile(thread, provider);
                 },
               ),
             ),
@@ -204,18 +227,18 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
 
   Widget _buildAdminTile(BuildContext context) {
     final hasUnread = _adminUnread > 0;
-    final timeStr = _adminLastTime != null
-        ? _formatTime(_adminLastTime.toString())
-        : '';
+    final timeStr = _adminLastTime != null ? _formatTime(_adminLastTime.toString()) : '';
 
     return InkWell(
       onTap: () {
-        // Reset unread before navigating
         setState(() => _adminUnread = 0);
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const SellerAdminMessagesScreen()),
-        ).then((_) => _fetchAdminMessageState()); // Refresh on return
+        ).then((_) {
+          // Re-register socket listeners — chat screens remove them
+          if (mounted) _setupSocketListeners();
+        });
       },
       child: ListTile(
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
@@ -230,14 +253,8 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => CircleAvatar(
                   radius: 28.r,
-                  backgroundColor: AppColor.primaryColor.withValues(
-                    alpha: 0.15,
-                  ),
-                  child: Icon(
-                    Icons.shield_outlined,
-                    color: AppColor.primaryColor,
-                    size: 26.sp,
-                  ),
+                  backgroundColor: AppColor.primaryColor.withValues(alpha: 0.15),
+                  child: Icon(Icons.shield_outlined, color: AppColor.primaryColor, size: 26.sp),
                 ),
               ),
             ),
@@ -304,11 +321,7 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
                 ),
                 child: Text(
                   '$_adminUnread',
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 11.sp, color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
           ],
@@ -317,7 +330,7 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
     );
   }
 
-  Widget _buildChatTile(thread) {
+  Widget _buildChatTile(thread, CompanyChatThreadsProvider provider) {
     final hasUnread = thread.unreadCount > 0;
 
     return ListTile(
@@ -327,9 +340,7 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
           CircleAvatar(
             radius: 28.r,
             backgroundColor: AppColor.primaryColor.withValues(alpha: 0.1),
-            backgroundImage: thread.image != null
-                ? NetworkImage(thread.image!)
-                : null,
+            backgroundImage: thread.image != null ? NetworkImage(thread.image!) : null,
             child: thread.image == null
                 ? Icon(Icons.person, size: 28.sp, color: AppColor.primaryColor)
                 : null,
@@ -401,16 +412,15 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
               ),
               child: Text(
                 "${thread.unreadCount}",
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 11.sp, color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
         ],
       ),
       onTap: () {
+        // Mark thread as read immediately — no API call
+        provider.markThreadRead(thread.threadId);
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -423,8 +433,9 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
             ),
           ),
         ).then((_) {
-          if (mounted)
-            context.read<CompanyChatThreadsProvider>().fetchThreads();
+          // Re-register socket listeners because CompanyChatProvider.init()
+          // calls socket.off("chat:message") which removes our listener.
+          if (mounted) _setupSocketListeners();
         });
       },
     );

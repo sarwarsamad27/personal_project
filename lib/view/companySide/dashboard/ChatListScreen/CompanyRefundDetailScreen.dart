@@ -6,7 +6,6 @@ import 'package:new_brand/view/companySide/dashboard/orderScreen/leopards_tracki
 import 'package:new_brand/viewModel/providers/chatProvider/company_refund_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:new_brand/resources/appColor.dart';
-
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/toast.dart';
 
@@ -168,7 +167,7 @@ class _CompanyRefundDetailScreenState extends State<CompanyRefundDetailScreen> {
                     ),
                     Expanded(
                       child: Text(
-                        rf.orderId ?? "N/A",
+                        _fmtOrderId(rf.orderId),
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w500,
@@ -927,4 +926,12 @@ class _RefundStatusStyle {
   final Color color;
   final IconData icon;
   const _RefundStatusStyle(this.color, this.icon);
+}
+
+String _fmtOrderId(String? raw) {
+  if (raw == null || raw.isEmpty) return "N/A";
+  if (raw.toUpperCase().startsWith("ORD-")) return raw.toUpperCase();
+  final hex = RegExp(r'^[0-9a-fA-F]{24}$');
+  if (hex.hasMatch(raw)) return "ORD-${raw.substring(16).toUpperCase()}";
+  return raw;
 }

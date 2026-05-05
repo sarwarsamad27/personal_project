@@ -9,19 +9,20 @@ class CompanyRefundProvider extends ChangeNotifier {
   bool processing = false;
   String? errorMessage;
 
-  RefundRequestListModel? listModel;
-  String? _currentFilter;
+  List<ExchangeRequest> _all = [];
 
-  List<ExchangeRequest> get requests => listModel?.requests ?? [];
+  // All requests — screen filters from this list client-side
+  List<ExchangeRequest> get requests => _all;
 
-  // ── Fetch ──────────────────────────────────────────────────────
+  // ── Fetch ALL (no server filter) ───────────────────────────────
   Future<void> fetchRequests({String? status}) async {
-    _currentFilter = status;
+    // Ignore status — always load everything, screen filters locally
     loading = true;
     errorMessage = null;
     notifyListeners();
     try {
-      listModel = await _repo.listRequests(status: status);
+      final model = await _repo.listRequests(status: null);
+      _all = model.requests;
     } catch (e) {
       errorMessage = "Failed: $e";
     }
@@ -29,9 +30,11 @@ class CompanyRefundProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> refresh() => fetchRequests(status: _currentFilter);
+  // Pull-to-refresh: re-fetch all
+  Future<void> refresh() => fetchRequests();
 
-  // ── Accept / Reject ────────────────────────────────────────────
+  // ── Actions — update list in-place after success ───────────────
+
   Future<bool> decide({
     required String refundId,
     required String decision,
@@ -40,39 +43,33 @@ class CompanyRefundProvider extends ChangeNotifier {
     processing = true;
     notifyListeners();
     final ok = await _repo.decide(
-      refundId: refundId,
-      decision: decision,
-      note: note,
-    );
-    if (ok) await refresh();
+        refundId: refundId, decision: decision, note: note);
+    if (ok) await _refreshItem(refundId);
     processing = false;
     notifyListeners();
     return ok;
   }
 
-  // ── Mark received ──────────────────────────────────────────────
   Future<bool> markReceived(String refundId) async {
     processing = true;
     notifyListeners();
     final ok = await _repo.markReceived(refundId);
-    if (ok) await refresh();
+    if (ok) await _refreshItem(refundId);
     processing = false;
     notifyListeners();
     return ok;
   }
 
-  // ── Start inspection ───────────────────────────────────────────
   Future<bool> startInspection(String refundId) async {
     processing = true;
     notifyListeners();
     final ok = await _repo.startInspection(refundId);
-    if (ok) await refresh();
+    if (ok) await _refreshItem(refundId);
     processing = false;
     notifyListeners();
     return ok;
   }
 
-  // ── Inspection result ──────────────────────────────────────────
   Future<bool> submitInspectionResult({
     required String refundId,
     required String result,
@@ -81,24 +78,23 @@ class CompanyRefundProvider extends ChangeNotifier {
     processing = true;
     notifyListeners();
     final ok = await _repo.submitInspectionResult(
-      refundId: refundId,
-      result: result,
-      note: note,
-    );
-    if (ok) await refresh();
+        refundId: refundId, result: result, note: note);
+    if (ok) await _refreshItem(refundId);
     processing = false;
     notifyListeners();
     return ok;
   }
 
-  // ── Finalize refund ────────────────────────────────────────────
   Future<bool> finalizeRefund(String refundId) async {
     processing = true;
     notifyListeners();
     final ok = await _repo.finalizeRefund(refundId);
-    if (ok) await refresh();
+    if (ok) await _refreshItem(refundId);
     processing = false;
     notifyListeners();
     return ok;
   }
+
+  // ── Refresh full list after an action ─────────────────────────
+  Future<void> _refreshItem(String refundId) => fetchRequests();
 }

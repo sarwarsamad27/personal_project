@@ -36,6 +36,25 @@ class ChatThreadModel {
       unreadCount: json["unreadCount"] ?? 0,
     );
   }
+
+  ChatThreadModel copyWith({
+    String? lastMessage,
+    String? lastMessageTime,
+    int? unreadCount,
+    bool? isExchangeRequest,
+  }) {
+    return ChatThreadModel(
+      threadId: threadId,
+      toType: toType,
+      toId: toId,
+      title: title,
+      image: image,
+      lastMessage: lastMessage ?? this.lastMessage,
+      lastMessageTime: lastMessageTime ?? this.lastMessageTime,
+      isExchangeRequest: isExchangeRequest ?? this.isExchangeRequest,
+      unreadCount: unreadCount ?? this.unreadCount,
+    );
+  }
 }
 
 class ChatThreadListModel {
