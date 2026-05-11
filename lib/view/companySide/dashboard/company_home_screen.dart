@@ -78,7 +78,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
               builder: (context, index, child) {
                 return Scaffold(
                   extendBody: true,
-                  body: IndexedStack(index: index, children: screens),
+                  body: screens[index],
                   bottomNavigationBar: _PremiumNavBar(
                     currentIndex: index,
                     onTap: (i) => _currentIndex.value = i,

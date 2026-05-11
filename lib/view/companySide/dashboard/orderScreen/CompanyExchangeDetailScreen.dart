@@ -10,6 +10,7 @@ import 'package:new_brand/view/companySide/dashboard/orderScreen/leopards_tracki
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/toast.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CompanyExchangeDetailScreen extends StatefulWidget {
   final String exchangeId;
@@ -319,8 +320,9 @@ class _CompanyExchangeDetailScreenState
               child: OutlinedButton.icon(
                 onPressed: () async {
                   final uri = Uri.parse(ex.replacementSlipLink!);
-                  // url_launcher import karo
-                  // await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
                 },
                 icon: Icon(Icons.download_rounded, size: 18.sp),
                 label: const Text("Download Replacement Slip"),

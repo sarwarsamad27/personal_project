@@ -146,14 +146,13 @@ double get pendingBalance  => walletData?.pendingBalance  ?? 0.0;
       );
 
       if (res['message'] == "Wallet credited successfully") {
-        /// 🔥 refresh wallet balance
         await fetchCompanyWallet();
-
-        /// 🔥 refresh transaction history
-        if (context.mounted) {
-          await context.read<TransactionHistoryProvider>().fetchTransactions();
-        }
-
+        // refresh transaction history — don't let failure block success
+        try {
+          if (context.mounted) {
+            context.read<TransactionHistoryProvider>().fetchTransactions();
+          }
+        } catch (_) {}
         return true;
       }
 

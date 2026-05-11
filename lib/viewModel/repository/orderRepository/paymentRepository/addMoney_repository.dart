@@ -12,7 +12,7 @@ class AddMoneyRepository {
     final response = await apiServices.postApi(
       Global.AddMoneyInitiate,
       {
-        'phone': phone,
+        'mobileNumber': phone,
         'amount': amount,
       },
     );

@@ -32,7 +32,7 @@ class LeopardsTrackingProvider with ChangeNotifier {
 
     try {
       final response = await _repository.requestPickup(trackNumber);
-      if (response['status'] == 1 || response['code_status'] == true) {
+      if (response['status'] == 1) {
         // Refresh tracking to see updated status
         await fetchTracking(trackNumber);
       }

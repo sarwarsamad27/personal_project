@@ -62,4 +62,20 @@ class GetMyOrdersProvider extends ChangeNotifier {
 
     await fetchOrders();
   }
+
+  void updateOrderInList(
+    String orderId, {
+    String? status,
+    String? trackNumber,
+    String? slipLink,
+  }) {
+    final orders = orderModel?.orders;
+    if (orders == null) return;
+    final idx = orders.indexWhere((o) => o.sId == orderId);
+    if (idx == -1) return;
+    if (status != null) orders[idx].status = status;
+    if (trackNumber != null) orders[idx].trackNumber = trackNumber;
+    if (slipLink != null) orders[idx].slipLink = slipLink;
+    notifyListeners();
+  }
 }

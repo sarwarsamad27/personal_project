@@ -10,7 +10,8 @@ class CustomButton extends StatelessWidget {
   final bool isGradient;
   final bool isDisabled;
   final Color? borderColor;
-  final bool second; // NEW FLAG
+  final bool second;
+  final bool isLoading; // ← NEW
 
   const CustomButton({
     super.key,
@@ -21,13 +22,16 @@ class CustomButton extends StatelessWidget {
     this.width = double.infinity,
     this.isGradient = true,
     this.isDisabled = false,
-    this.second = false, // default false, behavior unchanged
+    this.second = false,
+    this.isLoading = false, // ← NEW
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool blocked = isDisabled || isLoading; // ← tap block karo
+
     return GestureDetector(
-      onTap: isDisabled ? null : onTap,
+      onTap: blocked ? null : onTap,
       child: Container(
         height: height.h,
         width: width.w,
@@ -41,15 +45,15 @@ class CustomButton extends StatelessWidget {
           gradient: second
               ? null
               : (isGradient
-                    ? LinearGradient(
-                        colors: [
-                          AppColor.primaryColor,
-                          AppColor.primaryColor.withOpacity(0.8),
-                        ],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      )
-                    : null),
+                  ? LinearGradient(
+                      colors: [
+                        AppColor.primaryColor,
+                        AppColor.primaryColor.withOpacity(0.8),
+                      ],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    )
+                  : null),
           color: second
               ? Colors.white
               : (isGradient ? null : AppColor.primaryColor),
@@ -62,14 +66,24 @@ class CustomButton extends StatelessWidget {
             ),
           ],
         ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: second ? AppColor.primaryColor : Colors.white,
-            fontSize: 16.sp,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        // ← Spinner ya Text
+        child: isLoading
+            ? SizedBox(
+                height: 22.h,
+                width: 22.h,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: second ? AppColor.primaryColor : Colors.white,
+                ),
+              )
+            : Text(
+                text,
+                style: TextStyle(
+                  color: second ? AppColor.primaryColor : Colors.white,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
       ),
     );
   }

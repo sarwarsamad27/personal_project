@@ -150,35 +150,40 @@ class _LeopardsTrackingScreenState extends State<LeopardsTrackingScreen> {
                                           : Colors.black87,
                                     ),
                                   ),
-                                  if (item.trackLocation?.isNotEmpty ==
-                                      true) ...[
+                                  if (item.reason?.isNotEmpty == true) ...[
+                                    SizedBox(height: 3.h),
+                                    Text(
+                                      item.reason!,
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: Colors.orange[700],
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ],
+                                  if (item.trackLocation?.isNotEmpty == true) ...[
                                     SizedBox(height: 4.h),
                                     Row(
                                       children: [
-                                        Icon(
-                                          Icons.location_on_outlined,
-                                          size: 12.sp,
-                                          color: Colors.grey,
-                                        ),
+                                        Icon(Icons.location_on_outlined,
+                                            size: 12.sp, color: Colors.grey),
                                         SizedBox(width: 4.w),
-                                        Text(
-                                          item.trackLocation!,
-                                          style: TextStyle(
-                                            fontSize: 12.sp,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
+                                        Text(item.trackLocation!,
+                                            style: TextStyle(
+                                                fontSize: 12.sp,
+                                                color: Colors.grey[600])),
                                       ],
                                     ),
                                   ],
-                                  SizedBox(height: 4.h),
-                                  Text(
-                                    "${item.trackDate} | ${item.trackTime}",
-                                    style: TextStyle(
-                                      fontSize: 11.sp,
-                                      color: Colors.grey[500],
+                                  if (item.trackDate?.isNotEmpty == true) ...[
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      item.trackDate!,
+                                      style: TextStyle(
+                                          fontSize: 11.sp,
+                                          color: Colors.grey[500]),
                                     ),
-                                  ),
+                                  ],
                                 ],
                               ),
                             ),

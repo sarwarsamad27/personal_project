@@ -252,7 +252,47 @@ class _CompanyRefundDetailScreenState extends State<CompanyRefundDetailScreen> {
           _row("Inspection Note", rf.inspectionNote!),
         if (rf.disputeNote?.isNotEmpty == true)
           _row("Dispute Note", rf.disputeNote!, valueColor: Colors.red),
+        if (rf.courierPaidBy != null) ...[
+          SizedBox(height: 10.h),
+          _buildCourierBanner(rf.courierPaidBy!),
+        ],
       ],
+    );
+  }
+
+  Widget _buildCourierBanner(String courierPaidBy) {
+    final isBuyer = courierPaidBy == "buyer";
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: isBuyer ? Colors.orange[50] : Colors.green[50],
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(
+          color: isBuyer ? Colors.orange[200]! : Colors.green[200]!,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.local_shipping_outlined,
+            size: 16.sp,
+            color: isBuyer ? Colors.orange[700] : Colors.green[700],
+          ),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              isBuyer
+                  ? "Return courier cost: Buyer's responsibility"
+                  : "Seller will cover all courier costs",
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: isBuyer ? Colors.orange[700] : Colors.green[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

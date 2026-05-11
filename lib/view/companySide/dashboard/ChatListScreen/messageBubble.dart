@@ -50,31 +50,49 @@ class MessageBubble extends StatelessWidget {
               if (hasReply)
                 Container(
                   margin: EdgeInsets.only(bottom: 6.h),
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 6.h,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.06),
                     borderRadius: BorderRadius.circular(8.r),
-                    border: Border(left: BorderSide(color: const Color(0xFF128C7E), width: 3)),
+                    border: Border(
+                      left: BorderSide(
+                        color: const Color(0xFF128C7E),
+                        width: 3,
+                      ),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         message.replyToFromType == "seller" ? "You" : "Buyer",
-                        style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w700, color: const Color(0xFF128C7E)),
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF128C7E),
+                        ),
                       ),
                       SizedBox(height: 2.h),
                       Text(
                         message.replyToText ?? "",
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12.sp, color: Colors.black54),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.black54,
+                        ),
                       ),
                     ],
                   ),
                 ),
               // ── Message text ────────────────────────────────────────
-              Text(message.text ?? "", style: TextStyle(fontSize: 14.sp, color: Colors.black87)),
+              Text(
+                message.text ?? "",
+                style: TextStyle(fontSize: 14.sp, color: Colors.black87),
+              ),
               SizedBox(height: 4.h),
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -86,9 +104,17 @@ class MessageBubble extends StatelessWidget {
                   if (isMe) ...[
                     SizedBox(width: 4.w),
                     Icon(
-                      message.readAt != null ? Icons.done_all : message.deliveredAt != null ? Icons.done_all : Icons.done,
+                      message.readAt != null
+                          ? Icons.done_all
+                          : message.deliveredAt != null
+                          ? Icons.done_all
+                          : Icons.done,
                       size: 14.sp,
-                      color: message.readAt != null ? Colors.blue : message.deliveredAt != null ? Colors.black45 : Colors.black26,
+                      color: message.readAt != null
+                          ? Colors.blue
+                          : message.deliveredAt != null
+                          ? Colors.black45
+                          : Colors.black26,
                     ),
                   ],
                 ],
@@ -110,7 +136,9 @@ class MessageBubble extends StatelessWidget {
       if (diff.inDays == 1) return "Yesterday";
       if (diff.inDays < 7) return DateFormat('EEEE').format(date);
       return DateFormat('dd/MM/yyyy').format(date);
-    } catch (_) { return ""; }
+    } catch (_) {
+      return "";
+    }
   }
 }
 
@@ -126,7 +154,8 @@ class _SwipeToReply extends StatefulWidget {
   State<_SwipeToReply> createState() => _SwipeToReplyState();
 }
 
-class _SwipeToReplyState extends State<_SwipeToReply> with SingleTickerProviderStateMixin {
+class _SwipeToReplyState extends State<_SwipeToReply>
+    with SingleTickerProviderStateMixin {
   double _offset = 0;
   bool _triggered = false;
   static const double _threshold = 55;
@@ -140,7 +169,9 @@ class _SwipeToReplyState extends State<_SwipeToReply> with SingleTickerProviderS
       onHorizontalDragUpdate: (d) {
         final delta = widget.isMe ? -d.delta.dx : d.delta.dx;
         if (delta > 0) {
-          setState(() => _offset = (_offset + delta).clamp(0, _threshold * 1.3));
+          setState(
+            () => _offset = (_offset + delta).clamp(0, _threshold * 1.3),
+          );
         }
       },
       onHorizontalDragEnd: (_) {
@@ -149,7 +180,10 @@ class _SwipeToReplyState extends State<_SwipeToReply> with SingleTickerProviderS
           HapticFeedback.lightImpact();
           widget.onSwipe!();
         }
-        setState(() { _offset = 0; _triggered = false; });
+        setState(() {
+          _offset = 0;
+          _triggered = false;
+        });
       },
       child: Stack(
         children: [
@@ -161,14 +195,22 @@ class _SwipeToReplyState extends State<_SwipeToReply> with SingleTickerProviderS
             Positioned(
               left: widget.isMe ? null : (_offset - 32).clamp(0, 30),
               right: widget.isMe ? (_offset - 32).clamp(0, 30) : null,
-              top: 0, bottom: 0,
+              top: 0,
+              bottom: 0,
               child: Center(
                 child: Opacity(
                   opacity: (_offset / _threshold).clamp(0, 1),
                   child: Container(
                     padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(color: Color(0xFFE0F2F1), shape: BoxShape.circle),
-                    child: const Icon(Icons.reply, color: Color(0xFF128C7E), size: 18),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE0F2F1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.reply,
+                      color: Color(0xFF128C7E),
+                      size: 18,
+                    ),
                   ),
                 ),
               ),

@@ -112,6 +112,7 @@ class RefundRequestData {
   final List<String> selectedColor;
   final List<String> selectedSize;
   final double? refundAmount;
+  final String? courierPaidBy; // "seller" | "buyer"
 
   RefundRequestData({
     this.refundId,
@@ -129,6 +130,7 @@ class RefundRequestData {
     this.selectedColor = const [],
     this.selectedSize = const [],
     this.refundAmount,
+    this.courierPaidBy,
   });
 
   String get reasonCategoryLabel {
@@ -177,6 +179,7 @@ class RefundRequestData {
       refundAmount: json["refundAmount"] is num
           ? (json["refundAmount"] as num).toDouble()
           : double.tryParse(json["refundAmount"]?.toString() ?? ""),
+      courierPaidBy: json["courierPaidBy"]?.toString(),
     );
   }
 }

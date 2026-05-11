@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:label="new_brand"
+        android:label="𝑺𝒉𝒐𝒐𝒌𝒐𝒐 𝑺𝒕𝒐𝒓𝒆"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:enableOnBackInvokedCallback="true">
@@ -20,7 +20,7 @@
         <!-- ✅ Recommended: default notification icon (prevents OEM drops / icon issues) -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@mipmap/ic_launcher" />
+            android:resource="@drawable/ic_notification" />
 
         <activity
             android:name=".MainActivity"

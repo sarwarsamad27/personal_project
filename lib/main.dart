@@ -24,7 +24,7 @@ const AndroidNotificationChannel channel = AndroidNotificationChannel(
 
 Future<void> _initLocalNotifications() async {
   const AndroidInitializationSettings androidInit =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
+      AndroidInitializationSettings('ic_notification');
 
   const InitializationSettings initSettings = InitializationSettings(
     android: androidInit,
@@ -55,7 +55,11 @@ Future<void> _setupFirebaseForegroundHandler() async {
             channelDescription: channel.description,
             importance: Importance.high,
             priority: Priority.high,
-            icon: '@mipmap/ic_launcher',
+            icon: 'ic_notification',
+            color: const Color(0xFFDB9F3A), // Gold color from logo
+            largeIcon: const DrawableResourceAndroidBitmap(
+              '@mipmap/ic_launcher',
+            ),
           ),
         ),
       );
@@ -97,6 +101,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ScreenUtilInit(
       designSize: const Size(390, 844),
+      minTextAdapt: true,
+      splitScreenMode: true,
       builder: (context, child) {
         return MaterialApp(
           navigatorKey: appNavKey,

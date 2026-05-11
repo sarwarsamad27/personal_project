@@ -197,8 +197,14 @@ class _OrderScreenState extends State<OrderScreen>
                     ? products.first
                     : null;
 
+                final bool isStale = isPendingTab &&
+                    _isStaleOrder(order.createdAt as String?);
+
                 return CustomAppContainer(
-                  // padding: EdgeInsets.all(120.w),
+                  color: isStale
+                      ? Colors.red.withValues(alpha: 0.12)
+                      : null,
+                  borderColor: isStale ? Colors.red : Colors.white,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -248,12 +254,37 @@ class _OrderScreenState extends State<OrderScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              "Order ID: ${order.orderId ?? ''}",
-                              style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 11.sp,
-                                  fontWeight: FontWeight.bold),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    "Order ID: ${order.orderId ?? ''}",
+                                    style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 11.sp,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                if (isStale) ...[
+                                  SizedBox(width: 6.w),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 6.w, vertical: 2.h),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius:
+                                          BorderRadius.circular(6.r),
+                                    ),
+                                    child: Text(
+                                      "48h+",
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9.sp,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                             SizedBox(height: 2.h),
                             Row(
@@ -365,6 +396,16 @@ class _OrderScreenState extends State<OrderScreen>
               },
             ),
     );
+  }
+
+  bool _isStaleOrder(String? createdAt) {
+    if (createdAt == null) return false;
+    try {
+      final created = DateTime.parse(createdAt);
+      return DateTime.now().difference(created).inHours >= 48;
+    } catch (_) {
+      return false;
+    }
   }
 
   // ✅ Changed: pass orderId only (no Orders type dependency)

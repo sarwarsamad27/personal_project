@@ -213,6 +213,12 @@ class RefundRequestPoll extends StatelessWidget {
                   maxLines: 4,
                 ),
 
+                // ── Courier responsibility ──────────────────────
+                if (data.courierPaidBy != null) ...[
+                  SizedBox(height: 10.h),
+                  _buildCourierBanner(data.courierPaidBy!),
+                ],
+
                 // Images
                 if (data.images.isNotEmpty) ...[
                   SizedBox(height: 16.h),
@@ -492,6 +498,42 @@ class RefundRequestPoll extends StatelessWidget {
               ],
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCourierBanner(String courierPaidBy) {
+    final isBuyer = courierPaidBy == "buyer";
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: isBuyer ? Colors.orange[50] : Colors.green[50],
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(
+          color: isBuyer ? Colors.orange[200]! : Colors.green[200]!,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.local_shipping_outlined,
+            size: 16.sp,
+            color: isBuyer ? Colors.orange[700] : Colors.green[700],
+          ),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              isBuyer
+                  ? "Return courier cost: Buyer's responsibility"
+                  : "Seller will cover all courier costs",
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: isBuyer ? Colors.orange[700] : Colors.green[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
         ],
       ),
     );

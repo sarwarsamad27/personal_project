@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/local_storage.dart';
@@ -14,16 +15,21 @@ import 'package:new_brand/viewModel/providers/AuthProvider/googleLogin_provider.
 import 'package:new_brand/viewModel/providers/AuthProvider/login_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
-import 'package:new_brand/widgets/customButton.dart';
+
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
 import 'package:new_brand/widgets/customValidation.dart';
 import 'package:new_brand/widgets/social_button.dart';
 import 'package:provider/provider.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<LoginProvider>();
@@ -112,80 +118,86 @@ class LoginScreen extends StatelessWidget {
                       ),
                       SizedBox(height: 10.h),
 
-                      CustomButton(
-                        text: "Login",
-                        onTap: () async {
-                          final loginProvider = context.read<LoginProvider>();
-                          final profileProvider = context
-                              .read<ProfileFetchProvider>();
-                          final nav = Navigator.of(context);
+                      // ── Login button with SpinKit loading ────────────
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52.h,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColor.primaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                            ),
+                            elevation: 0,
+                          ),
+                          onPressed: provider.loading ? null : () async {
+                            final loginProvider = context.read<LoginProvider>();
+                            final profileProvider = context.read<ProfileFetchProvider>();
+                            final nav = Navigator.of(context);
 
-                          loginProvider.clearError();
+                            loginProvider.clearError();
 
-                          await loginProvider.loginProvider(
-                            email: loginProvider.emailController.text.trim(),
-                            password: loginProvider.passwordController.text
-                                .trim(),
-                          );
-
-                          // ── Suspension check ──────────────────────────────
-                          if (loginProvider.isSuspended) {
-                            nav.pushReplacement(MaterialPageRoute(
-                              builder: (_) => SuspendedScreen(
-                                reason: loginProvider.suspendReason,
-                                until: loginProvider.suspendedUntil,
-                              ),
-                            ));
-                            return;
-                          }
-
-                          final jwt = loginProvider.loginData?.token;
-                          if (jwt == null || jwt.isEmpty) {
-                            AppToast.error(
-                              loginProvider.errorMessage ??
-                                  "Invalid email or password",
+                            await loginProvider.loginProvider(
+                              email: loginProvider.emailController.text.trim(),
+                              password: loginProvider.passwordController.text.trim(),
                             );
-                            return;
-                          }
 
-                          final userEmail = loginProvider.emailController.text
-                              .trim();
-
-                          loginProvider.emailController.clear();
-                          loginProvider.passwordController.clear();
-
-                          profileProvider.clearProfileCache();
-                          await profileProvider.getProfileOnce(refresh: true);
-
-                          final ok =
-                              profileProvider.profileData?.message ==
-                              "Profile fetched successfully";
-
-                          if (!nav.mounted) return;
-
-                          if (ok) {
-                            try {
-                              await LocalStorage.initPushAndSaveToken(
-                                jwtToken: jwt,
-                              );
-                            } catch (e) {
-                              debugPrint("⚠️ FCM save skipped: $e");
+                            if (loginProvider.isSuspended) {
+                              nav.pushReplacement(MaterialPageRoute(
+                                builder: (_) => SuspendedScreen(
+                                  reason: loginProvider.suspendReason,
+                                  until: loginProvider.suspendedUntil,
+                                ),
+                              ));
+                              return;
                             }
 
-                            nav.pushReplacement(
-                              MaterialPageRoute(
+                            final jwt = loginProvider.loginData?.token;
+                            if (jwt == null || jwt.isEmpty) {
+                              AppToast.error(loginProvider.errorMessage ?? "Invalid email or password");
+                              return;
+                            }
+
+                            final userEmail = loginProvider.emailController.text.trim();
+                            loginProvider.emailController.clear();
+                            loginProvider.passwordController.clear();
+
+                            profileProvider.clearProfileCache();
+                            await profileProvider.getProfileOnce(refresh: true);
+
+                            final ok = profileProvider.profileData?.message == "Profile fetched successfully";
+                            if (!nav.mounted) return;
+
+                            if (ok) {
+                              try {
+                                await LocalStorage.initPushAndSaveToken(jwtToken: jwt);
+                              } catch (e) {
+                                debugPrint("⚠️ FCM save skipped: $e");
+                              }
+                              AppToast.success("Welcome back! Login successful.");
+                              nav.pushReplacement(MaterialPageRoute(
                                 builder: (_) => CompanyHomeScreen(),
-                              ),
-                            );
-                          } else {
-                            nav.pushReplacement(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    ProfileFormScreen(email: userEmail),
-                              ),
-                            );
-                          }
-                        },
+                              ));
+                            } else {
+                              nav.pushReplacement(MaterialPageRoute(
+                                builder: (_) => ProfileFormScreen(email: userEmail),
+                              ));
+                            }
+                          },
+                          child: provider.loading
+                              ? SpinKitThreeBounce(
+                                  color: Colors.white,
+                                  size: 22.sp,
+                                )
+                              : Text(
+                                  "Login",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                        ),
                       ),
 
                       SizedBox(height: 20.h),

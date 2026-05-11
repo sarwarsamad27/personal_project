@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appColor.dart';
@@ -12,29 +10,31 @@ import 'package:new_brand/widgets/customImageContainer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/acceptOrder_provider.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../models/orders/getMyOrders_model.dart';
 
-class OrderDetailScreen extends StatelessWidget {
+class OrderDetailScreen extends StatefulWidget {
   final Orders order;
   const OrderDetailScreen({super.key, required this.order});
 
   @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AcceptOrderProvider(),
-      child: _OrderDetailBody(order: order),
-    );
-  }
+  State<OrderDetailScreen> createState() => _OrderDetailScreenState();
 }
 
-class _OrderDetailBody extends StatelessWidget {
-  final Orders order;
-  const _OrderDetailBody({required this.order});
+class _OrderDetailScreenState extends State<OrderDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AcceptOrderProvider>().reset();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final order = widget.order;
     return Scaffold(
       backgroundColor: AppColor.appimagecolor,
       body: CustomBgContainer(
@@ -61,167 +61,85 @@ class _OrderDetailBody extends StatelessWidget {
                       children: [
                         _buildRow("Order ID", order.orderId ?? order.sId ?? ""),
                         _buildRow("Customer", order.buyerDetails?.name ?? ""),
-                        _buildRow(
-                          "Address",
-                          order.buyerDetails?.address ?? "N/A",
-                        ),
-                        _buildRow("Date", formatDate(order.createdAt ?? "")),
+                        _buildRow("Address", order.buyerDetails?.address ?? "N/A"),
+                        _buildRow("Date", _formatDate(order.createdAt ?? "")),
                         _buildRow("Payment", "Cash on Delivery"),
-
-                        // ✅ Track number show karo agar available hai
                         if (order.trackNumber != null)
                           _buildRow("Track #", order.trackNumber!),
-
-                        Divider(color: Colors.white.withOpacity(0.3)),
-
-                        // Products
-                        ...order.products!.map((product) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ProductDetailScreen(
-                                        productId: product.productId,
-                                        categoryId: product.categoryId,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: Center(
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(20.r),
-                                    child: CustomImageContainer(
-                                      height: 100.h,
-                                      width: 100.w,
-                                      child: Image.network(
-                                        Global.getImageUrl(
-                                          product.images!.first,
-                                        ),
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
+                        Divider(color: Colors.white.withValues(alpha: 0.3)),
+                        for (final product in order.products!) ...[
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProductDetailScreen(
+                                    productId: product.productId,
+                                    categoryId: product.categoryId,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Center(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20.r),
+                                child: CustomImageContainer(
+                                  height: 100.h,
+                                  width: 100.w,
+                                  child: Image.network(
+                                    Global.getImageUrl(product.images!.first),
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
                               ),
-                              SizedBox(height: 12.h),
-                              _buildRow("Name", product.name ?? ""),
-                              if (product.selectedSize != null &&
-                                  product.selectedSize!.isNotEmpty)
-                                _buildRow(
-                                  "Size",
-                                  product.selectedSize!.join(", "),
-                                ),
-                              _buildRow(
-                                "Quantity",
-                                product.quantity.toString(),
-                              ),
-                              _buildRow(
-                                "Total Price",
-                                "Rs ${product.totalPrice ?? 0}",
-                              ),
-                              Divider(color: Colors.white.withOpacity(0.2)),
-                            ],
-                          );
-                        }).toList(),
-
+                            ),
+                          ),
+                          SizedBox(height: 12.h),
+                          _buildRow("Name", product.name ?? ""),
+                          if (product.selectedSize != null &&
+                              product.selectedSize!.isNotEmpty)
+                            _buildRow("Size", product.selectedSize!.join(", ")),
+                          _buildRow("Quantity", product.quantity.toString()),
+                          _buildRow("Total Price", "Rs ${product.totalPrice ?? 0}"),
+                          Divider(color: Colors.white.withValues(alpha: 0.2)),
+                        ],
                         SizedBox(height: 12.h),
                         _buildRow("Grand Total", "Rs ${order.grandTotal ?? 0}"),
                       ],
                     ),
                   ),
-
                   SizedBox(height: 25.h),
-
-                  // ✅ Accept + Slip Buttons
                   Consumer<AcceptOrderProvider>(
                     builder: (context, provider, _) {
-                      final String? slip = provider.slipLink ?? order.slipLink;
+                      final String? slip =
+                          provider.slipLink?.isNotEmpty == true
+                              ? provider.slipLink
+                              : (order.slipLink?.isNotEmpty == true
+                                  ? order.slipLink
+                                  : null);
                       final String? track =
                           provider.trackNumber ?? order.trackNumber;
-
-                      // ✅ Status provider se lo agar updated hai
                       final String currentStatus =
                           provider.updatedStatus ?? order.status ?? "Pending";
                       final bool accepted =
-                          provider.isAccepted || currentStatus == "Dispatched";
+                          provider.isAccepted ||
+                          currentStatus == "Dispatched" ||
+                          (order.status != null && order.status != "Pending");
 
-                      print("🎫 Slip: $slip");
-                      print("📍 Track: $track");
-                      print("✅ Accepted: ${provider.isAccepted}");
-                      print("📦 Current Status: $currentStatus");
-
-                      // ✅ Slip available
                       if (slip != null && slip.isNotEmpty) {
                         return Column(
                           children: [
-                            // ✅ Status badge
-                            Container(
-                              margin: EdgeInsets.only(bottom: 12.h),
-                              padding: EdgeInsets.all(12.w),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(12.r),
-                                border: Border.all(color: Colors.blue),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.inventory_2_outlined,
-                                    color: Colors.blue,
-                                  ),
-                                  SizedBox(width: 8.w),
-                                  Text(
-                                    "Status: $currentStatus",
-                                    style: TextStyle(
-                                      color: Colors.blue,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13.sp,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // ✅ Track number badge
-                            if (track != null)
-                              Container(
-                                margin: EdgeInsets.only(bottom: 12.h),
-                                padding: EdgeInsets.all(12.w),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  border: Border.all(color: Colors.green),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.local_shipping,
-                                      color: Colors.green,
-                                    ),
-                                    SizedBox(width: 8.w),
-                                    Expanded(
-                                      child: Text(
-                                        "Track: $track",
-                                        style: TextStyle(
-                                          color: Colors.green,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13.sp,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                            // ✅ Download Slip button
+                            _statusBadge(currentStatus),
+                            SizedBox(height: 12.h),
+                            if (track != null) ...[
+                              _trackBadge(track),
+                              SizedBox(height: 12.h),
+                            ],
                             CustomButton(
                               text: "📦 Download Shipping Slip",
                               onTap: () async {
+                                final messenger =
+                                    ScaffoldMessenger.of(context);
                                 try {
                                   final uri = Uri.parse(slip.trim());
                                   final launched = await launchUrl(
@@ -235,7 +153,7 @@ class _OrderDetailBody extends StatelessWidget {
                                     );
                                   }
                                 } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  messenger.showSnackBar(
                                     SnackBar(
                                       content: Text("Error: $e"),
                                       backgroundColor: Colors.red,
@@ -248,21 +166,17 @@ class _OrderDetailBody extends StatelessWidget {
                         );
                       }
 
-                      // ✅ Accepted lekin slip nahi
                       if (accepted) {
                         return Container(
                           padding: EdgeInsets.all(14.w),
                           decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
+                            color: Colors.green.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12.r),
                             border: Border.all(color: Colors.green),
                           ),
                           child: Row(
                             children: [
-                              const Icon(
-                                Icons.check_circle,
-                                color: Colors.green,
-                              ),
+                              const Icon(Icons.check_circle, color: Colors.green),
                               SizedBox(width: 8.w),
                               Expanded(
                                 child: Text(
@@ -279,7 +193,6 @@ class _OrderDetailBody extends StatelessWidget {
                         );
                       }
 
-                      // ✅ Pending — Accept button
                       return CustomButton(
                         text: provider.isLoading
                             ? "Processing..."
@@ -287,14 +200,32 @@ class _OrderDetailBody extends StatelessWidget {
                         onTap: provider.isLoading
                             ? null
                             : () async {
+                                final messenger = ScaffoldMessenger.of(context);
+                                final ordersProvider =
+                                    context.read<GetMyOrdersProvider>();
                                 final token =
                                     await LocalStorage.getToken() ?? "";
                                 final success = await provider.acceptOrder(
                                   token: token,
                                   orderId: order.sId!,
                                 );
-                                if (!success) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                if (success) {
+                                  order.status =
+                                      provider.updatedStatus ?? "Dispatched";
+                                  if (provider.trackNumber != null) {
+                                    order.trackNumber = provider.trackNumber;
+                                  }
+                                  if (provider.slipLink != null) {
+                                    order.slipLink = provider.slipLink;
+                                  }
+                                  ordersProvider.updateOrderInList(
+                                    order.sId!,
+                                    status: order.status,
+                                    trackNumber: order.trackNumber,
+                                    slipLink: order.slipLink,
+                                  );
+                                } else {
+                                  messenger.showSnackBar(
                                     SnackBar(
                                       content: Text(
                                         provider.errorMessage ??
@@ -318,8 +249,60 @@ class _OrderDetailBody extends StatelessWidget {
     );
   }
 
-  // ... formatDate, _monthName, _formatTime, _buildRow same rahenge
-  String formatDate(String isoDate) {
+  Widget _statusBadge(String status) {
+    return Container(
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Colors.blue.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Colors.blue),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.inventory_2_outlined, color: Colors.blue),
+          SizedBox(width: 8.w),
+          Text(
+            "Status: $status",
+            style: TextStyle(
+              color: Colors.blue,
+              fontWeight: FontWeight.bold,
+              fontSize: 13.sp,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _trackBadge(String track) {
+    return Container(
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Colors.green.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Colors.green),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.local_shipping, color: Colors.green),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              "Track: $track",
+              style: TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+                fontSize: 13.sp,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(String isoDate) {
     try {
       final date = DateTime.parse(isoDate).toLocal();
       return "${date.day.toString().padLeft(2, '0')} "
@@ -332,28 +315,18 @@ class _OrderDetailBody extends StatelessWidget {
 
   String _monthName(int month) {
     const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     ];
     return months[month - 1];
   }
 
   String _formatTime(DateTime date) {
     int hour = date.hour;
-    String period = hour >= 12 ? "PM" : "AM";
+    final period = hour >= 12 ? "PM" : "AM";
     hour = hour % 12;
     if (hour == 0) hour = 12;
-    String minute = date.minute.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
     return "$hour:$minute $period";
   }
 
@@ -366,7 +339,7 @@ class _OrderDetailBody extends StatelessWidget {
           Text(
             "$title:",
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               fontSize: 15.sp,
               fontWeight: FontWeight.w500,
             ),
@@ -375,9 +348,8 @@ class _OrderDetailBody extends StatelessWidget {
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
-                fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
               ),
             ),

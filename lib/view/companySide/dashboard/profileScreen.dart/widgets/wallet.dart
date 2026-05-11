@@ -6,9 +6,11 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/toast.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/jazzcash_payment_screen.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
+import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
-import 'package:new_brand/widgets/customTextFeld.dart';
+import 'package:new_brand/widgets/customTextFeld.dart'; // used by _openWithdrawDialog
 import 'package:provider/provider.dart';
 
 class Wallet extends StatefulWidget {
@@ -323,239 +325,149 @@ class _WalletState extends State<Wallet> {
   }
 
   void _openAddMoneyDialog() {
-    final phoneController = TextEditingController();
-    final amountController = TextEditingController();
-    final otpController = TextEditingController(); // ✅ add kiya
-    bool isInitiating = false;
-    bool isVerifying = false;
-    String? currentTxnRef;
+    final amountCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
 
     showModalBottomSheet(
-      backgroundColor: AppColor.appimagecolor,
+      backgroundColor: Colors.white,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       context: context,
-      builder: (context) {
-        return GestureDetector(
-          onTap: () => FocusScope.of(context).unfocus(),
-          child: StatefulBuilder(
-            builder: (context, setSheetState) {
-              return Padding(
-                padding: EdgeInsets.fromLTRB(
-                  20.w,
-                  20.h,
-                  20.w,
-                  MediaQuery.of(context).viewInsets.bottom + 30.h,
+      builder: (_) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          20.w,
+          14.h,
+          20.w,
+          MediaQuery.of(context).viewInsets.bottom + 24.h,
+        ),
+        child: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(4),
                 ),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        height: 5,
-                        width: 60,
-                        decoration: BoxDecoration(
-                          color: AppColor.whiteColor.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+              ),
+              SizedBox(height: 16.h),
+
+              // JazzCash header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8.r),
+                    child: Image.asset(
+                      'assets/images/JazzCashLogo.jpg',
+                      width: 32.r,
+                      height: 32.r,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.account_balance_wallet_rounded,
+                        color: AppColor.primaryColor,
+                        size: 28.sp,
                       ),
-                      SizedBox(height: 20.h),
-                      Text(
-                        "Add Money (JazzCash)",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 25.h),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Text(
+                    'Add Money via JazzCash',
+                    style: TextStyle(
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20.h),
 
-                      if (currentTxnRef == null) ...[
-                        // ── Step 1: Phone + Amount ──────────────────────────
-                        CustomTextField(
-                          hintText: "Enter JazzCash number (03XXXXXXXXX)",
-                          controller: phoneController,
-                          keyboardType: TextInputType.phone,
-                        ),
-                        SizedBox(height: 15.h),
-                        CustomTextField(
-                          hintText: "Enter amount to add (Min Rs. 100)",
-                          controller: amountController,
-                          keyboardType: TextInputType.number,
-                        ),
-                        SizedBox(height: 25.h),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            minimumSize: Size(double.infinity, 50.h),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                          ),
-                          onPressed: isInitiating
-                              ? null
-                              : () async {
-                                  final provider = context
-                                      .read<CompanyWalletProvider>();
-                                  final amount = amountController.text.trim();
-                                  final phone = phoneController.text.trim();
-
-                                  if (phone.length != 11 ||
-                                      !phone.startsWith("03")) {
-                                    AppToast.show(
-                                      "Please enter a valid 11-digit JazzCash number",
-                                    );
-                                    return;
-                                  }
-                                  if (amount.isEmpty ||
-                                      double.tryParse(amount) == null ||
-                                      double.parse(amount) < 100) {
-                                    AppToast.show("Minimum amount is Rs. 100");
-                                    return;
-                                  }
-
-                                  setSheetState(() => isInitiating = true);
-                                  final result = await provider
-                                      .initiateJazzcashCredit(
-                                        phone: phone,
-                                        amount: amount,
-                                      );
-                                  setSheetState(() => isInitiating = false);
-
-                                  if (result != null) {
-                                    setSheetState(
-                                      () => currentTxnRef = result['txnRefNo'],
-                                    );
-                                    AppToast.show("OTP sent to $phone");
-                                  } else {
-                                    AppToast.show(
-                                      "Failed to send OTP. Try again.",
-                                    );
-                                  }
-                                },
-                          child: isInitiating
-                              ? SpinKitThreeBounce(
-                                  color: Colors.white,
-                                  size: 20,
-                                )
-                              : const Text(
-                                  "Send OTP",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                        ),
-                      ] else ...[
-                        // ── Step 2: OTP Screen ──────────────────────────────
-                        Icon(
-                          LucideIcons.smartphone,
-                          color: Colors.green,
-                          size: 50.sp,
-                        ),
-                        SizedBox(height: 16.h),
-                        Text(
-                          "OTP sent to ${phoneController.text}",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14.sp,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 6.h),
-                        Text(
-                          "Enter the 6-digit OTP you received on WhatsApp.",
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12.sp,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 20.h),
-
-                        // ✅ OTP field
-                        CustomTextField(
-                          hintText: "Enter 6-digit OTP",
-                          controller: otpController,
-                          keyboardType: TextInputType.number,
-                        ),
-                        SizedBox(height: 20.h),
-
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
-                            minimumSize: Size(double.infinity, 50.h),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                          ),
-                          onPressed: isVerifying
-                              ? null
-                              : () async {
-                                  if (otpController.text.trim().length < 6) {
-                                    AppToast.show("Enter 6-digit OTP");
-                                    return;
-                                  }
-                                  setSheetState(() => isVerifying = true);
-                                  final success = await context
-                                      .read<CompanyWalletProvider>()
-                                      .confirmJazzcashCredit(
-                                        txnRefNo: currentTxnRef!,
-                                        otp: otpController.text.trim(), // ✅
-                                        context: context,
-                                      );
-                                  setSheetState(() => isVerifying = false);
-
-                                  if (success) {
-                                    if (context.mounted)
-                                      Navigator.of(context).pop();
-                                    AppToast.show(
-                                      "Payment Successful! Wallet Credited.",
-                                    );
-                                    Navigator.pop(context, true);
-                                  } else {
-                                    AppToast.show(
-                                      "Invalid OTP. Please try again.",
-                                    );
-                                    otpController.clear(); // ✅ clear on fail
-                                  }
-                                },
-                          child: isVerifying
-                              ? SpinKitThreeBounce(
-                                  color: Colors.white,
-                                  size: 20,
-                                )
-                              : const Text(
-                                  "Verify & Add Money",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                        ),
-
-                        SizedBox(height: 10.h),
-                        TextButton(
-                          onPressed: () => setSheetState(() {
-                            currentTxnRef = null;
-                            otpController.clear();
-                          }),
-                          child: const Text(
-                            "Cancel & Go Back",
-                            style: TextStyle(color: Colors.white60),
-                          ),
-                        ),
-                      ],
-                    ],
+              // Amount field
+              TextFormField(
+                controller: amountCtrl,
+                keyboardType: TextInputType.number,
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
+                decoration: InputDecoration(
+                  labelText: 'Amount (Rs)',
+                  prefixText: 'Rs  ',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFCC0000),
+                      width: 1.5,
+                    ),
                   ),
                 ),
-              );
-            },
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Enter amount';
+                  final amt = double.tryParse(v) ?? 0;
+                  if (amt < 100) return 'Minimum Rs 100';
+                  if (amt > 50000) return 'Maximum Rs 50,000';
+                  return null;
+                },
+              ),
+              SizedBox(height: 8.h),
+
+              // Quick amounts
+              Wrap(
+                spacing: 8.w,
+                children: [500, 1000, 2000, 5000]
+                    .map(
+                      (a) => ActionChip(
+                        label: Text('Rs $a'),
+                        onPressed: () => amountCtrl.text = '$a',
+                        backgroundColor: const Color(0xFFFFF0F0),
+                        labelStyle: const TextStyle(
+                          color: Color(0xFFCC0000),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+              SizedBox(height: 20.h),
+
+              SizedBox(
+                width: double.infinity,
+                height: 50.h,
+                child: CustomButton(
+                  text: "Pay with JazzCash",
+                  onTap: () {
+                    if (!formKey.currentState!.validate()) return;
+                    final amount = double.parse(amountCtrl.text.trim());
+                    Navigator.pop(context); // close sheet
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => JazzCashPaymentScreen(
+                          amount: amount,
+                          onPaymentDone: () {
+                            if (mounted) {
+                              context
+                                  .read<CompanyWalletProvider>()
+                                  .fetchCompanyWallet();
+                            }
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                  second: true,
+                ),
+              ),
+              SizedBox(height: 8.h),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 

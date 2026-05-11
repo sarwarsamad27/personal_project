@@ -1,8 +1,8 @@
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps
 
 class Global {
-    // static var BaseUrl = "https://seller-and-buyer-backend.onrender.com/api/auth";
-    // static var imageUrl = "https://seller-and-buyer-backend.onrender.com";
+//   static var BaseUrl = "https://seller-and-buyer-backend.onrender.com/api/auth";
+//   static var imageUrl = "https://seller-and-buyer-backend.onrender.com";
   // static var imageUrl = "http://192.168.30.124:5000";
   // static var BaseUrl = "http://192.168.30.124:5000/api/auth";
   static var BaseUrl = "http://10.0.2.2:5000/api/auth";
@@ -37,6 +37,8 @@ class Global {
   static var PaymentVerifycode = "${BaseUrl}/withdraw/verify";
   static var AddMoneyInitiate = "${BaseUrl}/add-money/jazzcash/initiate";
   static var AddMoneyConfirm = "${BaseUrl}/add-money/jazzcash/confirm";
+  static var JazzcashInitiate = "${BaseUrl}/jazzcash-initiate";
+  static var JazzcashSellerStart = "${BaseUrl}/seller/jazzcash/start";
   static var TransactionHistory = "${BaseUrl}/transactions";
   static var GetDashboardData = "${BaseUrl}/get/dashboard/data";
   static var GetCompanySalesChart = "${BaseUrl}/get/sales/chart";
@@ -129,22 +131,10 @@ class Global {
 
   static String leopardsRequestPickup = "${BaseUrl}/leopards/request-pickup";
 
-  static String getImageUrl(String? imagePath) {
-    if (imagePath == null || imagePath.isEmpty) {
-      return ''; // ya koi default image
-    }
-
-    // Agar already full URL hai (cloudinary)
-    if (imagePath.startsWith('http')) {
-      return imagePath;
-    }
-
-    // Agar local upload hai (/uploads/...)
-    if (imagePath.startsWith('/uploads/')) {
-      return imageUrl + imagePath; // imageUrl = "https://yourapi.com"
-    }
-
-    // Normal case
-    return imageUrl + imagePath;
+  static String getImageUrl(String? url) {
+    if (url == null) return "";
+    if (url.startsWith('upload')) return "$imageUrl/$url";
+    if (url.startsWith('http')) return url;
+    return "$imageUrl$url";
   }
 }

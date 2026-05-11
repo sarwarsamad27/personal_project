@@ -190,98 +190,100 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   SizedBox(height: 14.h),
 
                   /// REVIEWS SECTION
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: _SectionTitle(title: "Customer Reviews"),
-                  ),
-                  SizedBox(height: 8.h),
+                  if (reviews.isNotEmpty) ...[
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: _SectionTitle(title: "Customer Reviews"),
+                    ),
+                    SizedBox(height: 8.h),
 
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Column(
-                      children: [
-                        ...displayedReviews.map(
-                          (review) => buildReviewCard(review, provider),
-                        ),
-                        if (reviews.length > 3)
-                          Align(
-                            alignment: Alignment.center,
-                            child: TextButton(
-                              onPressed: () {
-                                provider.toggleShowAllReviews();
-                              },
-                              child: Text(
-                                provider.showAllReviews
-                                    ? "View Less"
-                                    : "View More",
-                                style: TextStyle(
-                                  color: AppColor.primaryColor,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14.sp,
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: Column(
+                        children: [
+                          ...displayedReviews.map(
+                            (review) => buildReviewCard(review, provider),
+                          ),
+                          if (reviews.length > 3)
+                            Align(
+                              alignment: Alignment.center,
+                              child: TextButton(
+                                onPressed: () {
+                                  provider.toggleShowAllReviews();
+                                },
+                                child: Text(
+                                  provider.showAllReviews
+                                      ? "View Less"
+                                      : "View More",
+                                  style: TextStyle(
+                                    color: AppColor.primaryColor,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14.sp,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
 
-                  SizedBox(height: 16.h),
+                    SizedBox(height: 16.h),
 
-                  /// RELATED PRODUCTS
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: _SectionTitle(title: "Related Products"),
-                  ),
-                  SizedBox(height: 10.h),
-
-                  SizedBox(
-                    height: 250.h,
-                    child: ListView.separated(
+                    /// RELATED PRODUCTS
+                    Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16.w),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: relatedProducts.length,
-                      separatorBuilder: (_, __) => SizedBox(width: 8.w),
-                      itemBuilder: (context, index) {
-                        final product = relatedProducts[index];
-                        return SizedBox(
-                          width: 190.w,
-                          child: ProductCard(
-                            name: product.name ?? "Unnamed Product",
-                            price: product.afterDiscountPrice != null
-                                ? "PKR: ${product.afterDiscountPrice}"
-                                : "Price N/A",
-                            originalPrice: product.beforeDiscountPrice != null
-                                ? "PKR ${product.beforeDiscountPrice}"
-                                : null,
-                            saveText: product.beforeDiscountPrice != null
-                                ? "Save Rs.${(product.beforeDiscountPrice! - product.afterDiscountPrice!).abs()}"
-                                : null,
-                            description:
-                                product.description ?? "No Description",
-                            imageUrl:
-                                (product.images != null &&
-                                    product.images!.isNotEmpty)
-                                ? Global.getImageUrl(product.images!.first)
-                                : "",
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => ProductDetailScreen(
-                                    productId: product.sId,
-                                    categoryId: product.categoryId,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      },
+                      child: _SectionTitle(title: "Related Products"),
                     ),
-                  ),
+                    SizedBox(height: 10.h),
 
-                  SizedBox(height: 24.h),
+                    SizedBox(
+                      height: 250.h,
+                      child: ListView.separated(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: relatedProducts.length,
+                        separatorBuilder: (_, __) => SizedBox(width: 8.w),
+                        itemBuilder: (context, index) {
+                          final product = relatedProducts[index];
+                          return SizedBox(
+                            width: 190.w,
+                            child: ProductCard(
+                              name: product.name ?? "Unnamed Product",
+                              price: product.afterDiscountPrice != null
+                                  ? "PKR: ${product.afterDiscountPrice}"
+                                  : "Price N/A",
+                              originalPrice: product.beforeDiscountPrice != null
+                                  ? "PKR ${product.beforeDiscountPrice}"
+                                  : null,
+                              saveText: product.beforeDiscountPrice != null
+                                  ? "Save Rs.${(product.beforeDiscountPrice! - product.afterDiscountPrice!).abs()}"
+                                  : null,
+                              description:
+                                  product.description ?? "No Description",
+                              imageUrl:
+                                  (product.images != null &&
+                                      product.images!.isNotEmpty)
+                                  ? Global.getImageUrl(product.images!.first)
+                                  : "",
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ProductDetailScreen(
+                                      productId: product.sId,
+                                      categoryId: product.categoryId,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    SizedBox(height: 24.h),
+                  ],
                 ],
               ),
             ),
