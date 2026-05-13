@@ -128,7 +128,10 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     if (ok) {
-      _goHome();
+     Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => CompanyHomeScreen()),
+      );
     } else {
       final email = _emailFromJwt(token); // ✅ get email from JWT
       Navigator.pushReplacement(

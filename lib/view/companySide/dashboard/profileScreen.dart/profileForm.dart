@@ -10,6 +10,7 @@ import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/profile_provider.dart';
+import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
@@ -47,6 +48,27 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
   void initState() {
     super.initState();
     _emailController.text = widget.email;
+
+    // ✅ PRE-FILL with existing data if available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final profileProvider = context.read<ProfileFetchProvider>();
+      final profile = profileProvider.profileData?.profile;
+      debugPrint("🛠️ ProfileForm Init: Profile found? ${profile != null}");
+      if (profile != null) {
+        debugPrint("🛠️ Pre-filling: ${profile.name}, ${profile.phone}");
+        setState(() {
+          _nameController.text = profile.name ?? '';
+          _phoneController.text = profile.phone ?? '';
+          _addressController.text = profile.address ?? '';
+          _descriptionController.text = profile.description ?? '';
+          if (profile.leopardsCityId != null) {
+            _selectedCityId = profile.leopardsCityId.toString();
+            _selectedCityName = profile.leopardsCityName;
+          }
+        });
+      }
+    });
+
     _fetchCities();
   }
 

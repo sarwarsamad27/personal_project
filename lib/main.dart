@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appNav.dart';
-import 'package:new_brand/resources/internet_listeners.dart';
 import 'package:new_brand/resources/sessionGuard.dart';
 import 'package:new_brand/view/companySide/auth/splashScreen.dart';
+import 'package:new_brand/view/common/no_internet_screen.dart';
+import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
 import 'package:new_brand/resources/appTheme.dart';
 import 'package:new_brand/viewModel/multiProvider/multiProvider.dart';
+import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -80,7 +82,7 @@ void main() async {
   await _setupFirebaseForegroundHandler();
 
   // ✅ start internet listener ONCE
-  await InternetListener.start();
+  // await InternetListener.start();
 
   runApp(const AppWrapper());
 }
@@ -104,14 +106,22 @@ class MyApp extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        return MaterialApp(
-          navigatorKey: appNavKey,
-          debugShowCheckedModeBanner: false,
-          title: 'SHOOKOO',
-          theme: AppTheme.lightTheme,
-
-          // ✅ wrap Splash with SessionGuard
-          home: SessionGuard(child: SplashScreen()),
+        return Consumer<ConnectivityProvider>(
+          builder: (context, connectivity, child) {
+            return MaterialApp(
+              navigatorKey: appNavKey,
+              debugShowCheckedModeBanner: false,
+              title: 'SHOOKOO',
+              theme: AppTheme.lightTheme,
+              home: !connectivity.isConnected
+                  ? NoInternetScreen(
+                      onRetry: () {
+                        // ConnectivityProvider handles auto-retry, but we can trigger it manually
+                      },
+                    )
+                  : SessionGuard(child: SplashScreen()),
+            );
+          },
         );
       },
     );

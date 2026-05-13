@@ -620,36 +620,32 @@ class _OrderScreenState extends State<OrderScreen>
                       child: Consumer<CancelOrderProvider>(
                         builder: (context, cancelProvider, _) {
                           return CustomButton(
-                            text: "Confirm Cancel",
-                            onTap: () => cancelProvider.loading
+                            text: cancelProvider.loading
+                                ? "Cancelling..."
+                                : "Confirm Cancel",
+                            onTap: cancelProvider.loading
                                 ? null
                                 : () async {
                                     final reason = reasonController.text.trim();
-
-                                    // ✅ Save BEFORE any async call
                                     final ordersProvider =
                                         Provider.of<GetMyOrdersProvider>(
-                                          context,
-                                          listen: false,
-                                        );
+                                      context,
+                                      listen: false,
+                                    );
 
-                                    // ✅ API call pehle
-                                    bool success = await cancelProvider
+                                    final success = await cancelProvider
                                         .cancelOrder(
-                                          orderId: orderId,
-                                          reason: reason.isNotEmpty
-                                              ? reason
-                                              : null,
-                                        );
+                                      orderId: orderId,
+                                      reason: reason.isNotEmpty
+                                          ? reason
+                                          : null,
+                                    );
 
-                                    // ✅ Ab pop karo
                                     if (ctx.mounted) Navigator.pop(ctx);
 
-                                    // ✅ Saved reference use karo — no crash
                                     if (success) {
                                       ordersProvider.fetchOrders(
-                                        isRefresh: true,
-                                      );
+                                          isRefresh: true);
                                       AppToast.success("Order Cancelled");
                                     } else {
                                       AppToast.error("Failed to cancel order");

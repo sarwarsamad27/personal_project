@@ -167,6 +167,81 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       }
 
                       if (accepted) {
+                        // Leopards failed — show error + retry button
+                        if (provider.leopardsError != null) {
+                          return Column(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(12.w),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  border: Border.all(color: Colors.orange),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                                    SizedBox(width: 8.w),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Order accepted but Leopards booking failed",
+                                            style: TextStyle(
+                                              color: Colors.orange.shade800,
+                                              fontSize: 13.sp,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          SizedBox(height: 4.h),
+                                          Text(
+                                            provider.leopardsError!,
+                                            style: TextStyle(
+                                              color: Colors.orange.shade700,
+                                              fontSize: 11.sp,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: 10.h),
+                              CustomButton(
+                                text: provider.isRetrying
+                                    ? "Retrying..."
+                                    : "🔄 Retry Leopards Booking",
+                                onTap: provider.isRetrying
+                                    ? null
+                                    : () async {
+                                        final messenger = ScaffoldMessenger.of(context);
+                                        final ordersProvider = context.read<GetMyOrdersProvider>();
+                                        final ok = await provider.retryLeopardsBooking(
+                                          orderId: order.sId!,
+                                        );
+                                        if (!ok) {
+                                          messenger.showSnackBar(SnackBar(
+                                            content: Text(provider.leopardsError ?? "Retry failed"),
+                                            backgroundColor: Colors.red,
+                                          ));
+                                        } else {
+                                          order.trackNumber = provider.trackNumber;
+                                          order.slipLink    = provider.slipLink;
+                                          ordersProvider.updateOrderInList(
+                                            order.sId!,
+                                            trackNumber: provider.trackNumber,
+                                            slipLink: provider.slipLink,
+                                          );
+                                        }
+                                      },
+                              ),
+                            ],
+                          );
+                        }
+
+                        // Accepted, no slip yet (booking in progress)
                         return Container(
                           padding: EdgeInsets.all(14.w),
                           decoration: BoxDecoration(

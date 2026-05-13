@@ -130,60 +130,99 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             elevation: 0,
                           ),
-                          onPressed: provider.loading ? null : () async {
-                            final loginProvider = context.read<LoginProvider>();
-                            final profileProvider = context.read<ProfileFetchProvider>();
-                            final nav = Navigator.of(context);
+                          onPressed: provider.loading
+                              ? null
+                              : () async {
+                                  final loginProvider = context
+                                      .read<LoginProvider>();
+                                  final profileProvider = context
+                                      .read<ProfileFetchProvider>();
+                                  final nav = Navigator.of(context);
 
-                            loginProvider.clearError();
+                                  loginProvider.clearError();
 
-                            await loginProvider.loginProvider(
-                              email: loginProvider.emailController.text.trim(),
-                              password: loginProvider.passwordController.text.trim(),
-                            );
+                                  await loginProvider.loginProvider(
+                                    email: loginProvider.emailController.text
+                                        .trim(),
+                                    password: loginProvider
+                                        .passwordController
+                                        .text
+                                        .trim(),
+                                  );
 
-                            if (loginProvider.isSuspended) {
-                              nav.pushReplacement(MaterialPageRoute(
-                                builder: (_) => SuspendedScreen(
-                                  reason: loginProvider.suspendReason,
-                                  until: loginProvider.suspendedUntil,
-                                ),
-                              ));
-                              return;
-                            }
+                                  if (loginProvider.isSuspended) {
+                                    nav.pushReplacement(
+                                      MaterialPageRoute(
+                                        builder: (_) => SuspendedScreen(
+                                          reason: loginProvider.suspendReason,
+                                          until: loginProvider.suspendedUntil,
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
 
-                            final jwt = loginProvider.loginData?.token;
-                            if (jwt == null || jwt.isEmpty) {
-                              AppToast.error(loginProvider.errorMessage ?? "Invalid email or password");
-                              return;
-                            }
+                                  final jwt = loginProvider.loginData?.token;
+                                  if (jwt == null || jwt.isEmpty) {
+                                    AppToast.error(
+                                      loginProvider.errorMessage ??
+                                          "Invalid email or password",
+                                    );
+                                    return;
+                                  }
 
-                            final userEmail = loginProvider.emailController.text.trim();
-                            loginProvider.emailController.clear();
-                            loginProvider.passwordController.clear();
+                                  final userEmail = loginProvider
+                                      .emailController
+                                      .text
+                                      .trim();
+                                  loginProvider.emailController.clear();
+                                  loginProvider.passwordController.clear();
 
-                            profileProvider.clearProfileCache();
-                            await profileProvider.getProfileOnce(refresh: true);
+                                  profileProvider.clearProfileCache();
+                                  await profileProvider.getProfileOnce(
+                                    refresh: true,
+                                  );
 
-                            final ok = profileProvider.profileData?.message == "Profile fetched successfully";
-                            if (!nav.mounted) return;
+                                  final hasProfile =
+                                      profileProvider.profileData?.profile !=
+                                      null;
+                                  debugPrint(
+                                    "🔎 Fetch: Profile exists? $hasProfile",
+                                  );
+                                  debugPrint(
+                                    "🔎 Fetch: Msg: ${profileProvider.profileData?.message}",
+                                  );
+                                  debugPrint(
+                                    "🔎 Fetch: Name: ${profileProvider.profileData?.profile?.name}",
+                                  );
 
-                            if (ok) {
-                              try {
-                                await LocalStorage.initPushAndSaveToken(jwtToken: jwt);
-                              } catch (e) {
-                                debugPrint("⚠️ FCM save skipped: $e");
-                              }
-                              AppToast.success("Welcome back! Login successful.");
-                              nav.pushReplacement(MaterialPageRoute(
-                                builder: (_) => CompanyHomeScreen(),
-                              ));
-                            } else {
-                              nav.pushReplacement(MaterialPageRoute(
-                                builder: (_) => ProfileFormScreen(email: userEmail),
-                              ));
-                            }
-                          },
+                                  if (!nav.mounted) return;
+
+                                  if (hasProfile) {
+                                    try {
+                                      await LocalStorage.initPushAndSaveToken(
+                                        jwtToken: jwt,
+                                      );
+                                    } catch (e) {
+                                      debugPrint("⚠️ FCM save skipped: $e");
+                                    }
+                                    AppToast.success(
+                                      "Welcome back! Login successful.",
+                                    );
+                                    nav.pushReplacement(
+                                      MaterialPageRoute(
+                                        builder: (_) => CompanyHomeScreen(),
+                                      ),
+                                    );
+                                  } else {
+                                    nav.pushReplacement(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            ProfileFormScreen(email: userEmail),
+                                      ),
+                                    );
+                                  }
+                                },
                           child: provider.loading
                               ? SpinKitThreeBounce(
                                   color: Colors.white,
@@ -261,13 +300,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 refresh: true,
                               );
 
-                              final ok =
-                                  profileProvider.profileData?.message ==
-                                  "Profile fetched successfully";
+                              final hasProfile =
+                                  profileProvider.profileData?.profile != null;
 
                               if (!nav.mounted) return;
 
-                              if (ok) {
+                              if (hasProfile) {
                                 try {
                                   await LocalStorage.initPushAndSaveToken(
                                     jwtToken: jwt,
@@ -321,13 +359,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 refresh: true,
                               );
 
-                              final ok =
-                                  profileProvider.profileData?.message ==
-                                  "Profile fetched successfully";
+                              final hasProfile =
+                                  profileProvider.profileData?.profile != null;
 
                               if (!nav.mounted) return;
 
-                              if (ok) {
+                              if (hasProfile) {
                                 try {
                                   await LocalStorage.initPushAndSaveToken(
                                     jwtToken: jwt,

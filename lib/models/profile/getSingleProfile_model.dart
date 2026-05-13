@@ -70,8 +70,12 @@ class Profile {
     iV = json['__v'];
     fcmTokens = (json['fcmTokens'] as List?)?.cast<String>();
     followers = (json['followers'] as List?)?.cast<dynamic>();
-    followersCount = json['followersCount'];
-    leopardsCityId = json['leopardsCityId']; // ← new
+    followersCount = json['followersCount'] == null
+        ? 0
+        : int.tryParse(json['followersCount'].toString()) ?? 0;
+    leopardsCityId = json['leopardsCityId'] == null
+        ? null
+        : int.tryParse(json['leopardsCityId'].toString());
     leopardsCityName = json['leopardsCityName']; // ← new
   }
 

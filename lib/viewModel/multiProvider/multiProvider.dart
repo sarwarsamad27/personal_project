@@ -36,6 +36,7 @@ import 'package:new_brand/viewModel/providers/profileProvider/profile_provider.d
 import 'package:new_brand/viewModel/providers/profileProvider/updateProfile_provider.dart';
 import 'package:new_brand/viewModel/providers/reviewProvider/getAllReview_provider.dart';
 import 'package:new_brand/viewModel/providers/reviewProvider/replyReview_provider.dart';
+import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
 import 'package:provider/provider.dart';
 
 class AppMultiProvider extends StatelessWidget {
@@ -83,6 +84,7 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AcceptOrderProvider()),
         ChangeNotifierProvider(create: (_) => CompanyRefundProvider()),
         ChangeNotifierProvider(create: (_) => LeopardsTrackingProvider()),
+        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
       ],
 
       child: child,

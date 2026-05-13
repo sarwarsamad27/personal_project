@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:new_brand/viewModel/repository/orderRepository/acceptOrder_repository.dart';
+import 'package:new_brand/network/network_api_services.dart';
+import 'package:new_brand/resources/global.dart';
 
 class AcceptOrderProvider with ChangeNotifier {
-  final AcceptOrderRepository _repo = AcceptOrderRepository();
+  final NetworkApiServices _api = NetworkApiServices();
 
   bool isLoading = false;
+  bool isRetrying = false;
   String? trackNumber;
   String? slipLink;
   String? errorMessage;
+  String? leopardsError; // Leopards booking failed but order accepted
   bool isAccepted = false;
-  String? updatedStatus; // ✅ NEW
+  String? updatedStatus;
 
   Future<bool> acceptOrder({
     required String token,
@@ -17,18 +20,19 @@ class AcceptOrderProvider with ChangeNotifier {
   }) async {
     isLoading = true;
     errorMessage = null;
+    leopardsError = null;
     notifyListeners();
 
     try {
-      final response = await _repo.acceptOrder(
-        token: token,
-        orderId: orderId,
+      final response = await _api.postApi(
+        Global.AcceptOrder,
+        {'orderId': orderId},
       );
 
-      trackNumber = response['trackNumber'];
-      slipLink = response['slipLink'];
+      trackNumber   = response['trackNumber'];
+      slipLink      = response['slipLink'];
+      leopardsError = response['leopardsError'];
 
-      // ✅ Updated status save karo
       if (response['order'] != null) {
         updatedStatus = response['order']['status'];
       }
@@ -52,11 +56,46 @@ class AcceptOrderProvider with ChangeNotifier {
     }
   }
 
+  /// Retry Leopards booking for an accepted order that failed the first time
+  Future<bool> retryLeopardsBooking({required String orderId}) async {
+    isRetrying = true;
+    leopardsError = null;
+    notifyListeners();
+
+    try {
+      final response = await _api.postApi(
+        Global.RetryLeopardsBooking,
+        {'orderId': orderId},
+      );
+
+      isRetrying = false;
+
+      if (response['trackNumber'] != null) {
+        trackNumber   = response['trackNumber'];
+        slipLink      = response['slipLink'];
+        leopardsError = null;
+        notifyListeners();
+        return true;
+      } else {
+        leopardsError = response['leopardsError'] ?? response['message'] ?? "Booking failed";
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      isRetrying = false;
+      leopardsError = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   void reset() {
-    trackNumber = null;
-    slipLink = null;
-    errorMessage = null;
-    isAccepted = false;
+    trackNumber   = null;
+    slipLink      = null;
+    errorMessage  = null;
+    leopardsError = null;
+    isAccepted    = false;
+    isRetrying    = false;
     updatedStatus = null;
     notifyListeners();
   }
