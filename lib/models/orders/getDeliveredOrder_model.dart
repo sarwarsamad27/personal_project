@@ -55,6 +55,8 @@ class Orders {
   String? createdAt;
   String? orderId;
   String? updatedAt;
+  int? sellerEarning;
+  int? commissionRate;
   int? iV;
 
   Orders({
@@ -69,6 +71,8 @@ class Orders {
     this.status,
     this.createdAt,
     this.updatedAt,
+    this.sellerEarning,
+    this.commissionRate,
     this.iV,
   });
 
@@ -91,6 +95,8 @@ class Orders {
     status = json['status'];
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
+    sellerEarning = (json['sellerEarning'] as num?)?.toInt();
+    commissionRate = (json['commissionRate'] as num?)?.toInt();
     iV = json['__v'];
   }
 
@@ -111,6 +117,8 @@ class Orders {
     data['status'] = this.status;
     data['createdAt'] = this.createdAt;
     data['updatedAt'] = this.updatedAt;
+    data['sellerEarning'] = this.sellerEarning;
+    data['commissionRate'] = this.commissionRate;
     data['__v'] = this.iV;
     return data;
   }

@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/getDeleiveredOrder/deliveredDetail_screen.dart';
+import 'package:new_brand/viewModel/providers/commissionProvider/commission_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDeliveredOrder_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:new_brand/widgets/customContainer.dart';
@@ -20,9 +21,13 @@ class _GetdeliveredorderScreenState extends State<GetdeliveredorderScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      final provider = context.read<GetDeliveredOrderProvider>();
-      if (provider.orders.isEmpty) {
-        provider.fetchDeliveredOrders(refresh: false);
+      final orderProvider = context.read<GetDeliveredOrderProvider>();
+      if (orderProvider.orders.isEmpty) {
+        orderProvider.fetchDeliveredOrders(refresh: false);
+      }
+      final commProvider = context.read<CommissionProvider>();
+      if (!commProvider.hasFetched) {
+        commProvider.fetchCommission();
       }
     });
   }
@@ -56,8 +61,8 @@ class _GetdeliveredorderScreenState extends State<GetdeliveredorderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GetDeliveredOrderProvider>(
-      builder: (context, provider, _) {
+    return Consumer2<GetDeliveredOrderProvider, CommissionProvider>(
+      builder: (context, provider, commissionProvider, _) {
         if (provider.isLoading && provider.orders.isEmpty) {
           return SpinKitThreeBounce(color: AppColor.whiteColor, size: 30);
         }
@@ -67,7 +72,10 @@ class _GetdeliveredorderScreenState extends State<GetdeliveredorderScreen> {
         }
 
         return RefreshIndicator(
-          onRefresh: () => provider.fetchDeliveredOrders(refresh: true),
+          onRefresh: () async {
+            await provider.fetchDeliveredOrders(refresh: true);
+            await commissionProvider.fetchCommission();
+          },
           color: AppColor.primaryColor,
           child: ListView.separated(
             itemCount: provider.orders.length,
@@ -115,9 +123,25 @@ class _GetdeliveredorderScreenState extends State<GetdeliveredorderScreen> {
                         children: [
                           Text(
                             () {
+                              // 1. Prefer stored earning (Historical source of truth)
+                              if (order.sellerEarning != null) {
+                                return "Net: Rs. ${order.sellerEarning}";
+                              }
+
+                              // 2. Fallback for old orders (Before model update)
+                              // If delivered before today, assume 10% was used if provider not fetched.
+                              const defaultRate = 10.0;
+                              final commissionRate =
+                                  (commissionProvider.hasFetched
+                                      ? commissionProvider.commissionPercent
+                                      : defaultRate) /
+                                  100;
+
                               final shipment = order.shipmentCharges ?? 200;
-                              final products = (order.grandTotal ?? 0) - shipment;
-                              final net = (products * 0.90).round();
+                              final products =
+                                  (order.grandTotal ?? 0) - shipment;
+                              final net = (products * (1 - commissionRate))
+                                  .round();
                               return "Net: Rs. $net";
                             }(),
                             style: const TextStyle(

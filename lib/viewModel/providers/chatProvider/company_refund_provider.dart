@@ -10,6 +10,7 @@ class CompanyRefundProvider extends ChangeNotifier {
   String? errorMessage;
 
   List<ExchangeRequest> _all = [];
+  bool hasFetched = false;
 
   // All requests — screen filters from this list client-side
   List<ExchangeRequest> get requests => _all;
@@ -23,6 +24,7 @@ class CompanyRefundProvider extends ChangeNotifier {
     try {
       final model = await _repo.listRequests(status: null);
       _all = model.requests;
+      hasFetched = true;
     } catch (e) {
       errorMessage = "Failed: $e";
     }
@@ -43,7 +45,10 @@ class CompanyRefundProvider extends ChangeNotifier {
     processing = true;
     notifyListeners();
     final ok = await _repo.decide(
-        refundId: refundId, decision: decision, note: note);
+      refundId: refundId,
+      decision: decision,
+      note: note,
+    );
     if (ok) await _refreshItem(refundId);
     processing = false;
     notifyListeners();
@@ -78,7 +83,10 @@ class CompanyRefundProvider extends ChangeNotifier {
     processing = true;
     notifyListeners();
     final ok = await _repo.submitInspectionResult(
-        refundId: refundId, result: result, note: note);
+      refundId: refundId,
+      result: result,
+      note: note,
+    );
     if (ok) await _refreshItem(refundId);
     processing = false;
     notifyListeners();

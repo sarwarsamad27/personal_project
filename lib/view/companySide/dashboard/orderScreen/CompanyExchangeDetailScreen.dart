@@ -773,36 +773,19 @@ class _CompanyExchangeDetailScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Resolution type:",
-                style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+                "Accept this exchange request. PDF slip will be generated for the customer to return the product.",
+                style: TextStyle(fontSize: 13.sp, color: Colors.grey[600]),
               ),
-              SizedBox(height: 8.h),
-              Row(
-                children: [
-                  _RadioChip(
-                    label: "Replacement",
-                    selected: _resType == "replacement",
-                    onTap: () => setDialogState(() => _resType = "replacement"),
-                  ),
-                  SizedBox(width: 10.w),
-                  _RadioChip(
-                    label: "Refund",
-                    selected: _resType == "refund",
-                    onTap: () => setDialogState(() => _resType = "refund"),
-                  ),
-                ],
-              ),
-              SizedBox(height: 12.h),
-              TextField(
-                controller: _noteCtrl,
-                maxLines: 2,
-                decoration: InputDecoration(
-                  labelText: "Note (optional)",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                ),
-              ),
+              // TextField(
+              //   controller: _noteCtrl,
+              //   maxLines: 2,
+              //   decoration: InputDecoration(
+              //     labelText: "Note (optional)",
+              //     border: OutlineInputBorder(
+              //       borderRadius: BorderRadius.circular(10.r),
+              //     ),
+              //   ),
+              // ),
             ],
           ),
           actions: [

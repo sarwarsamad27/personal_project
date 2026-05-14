@@ -34,8 +34,8 @@ class _CompanyRefundListScreenState extends State<CompanyRefundListScreen>
     _tab = TabController(length: _tabs.length, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<CompanyRefundProvider>();
-      // Only fetch if we have no data yet — never re-fetch on re-entry
-      if (provider.requests.isEmpty) {
+      // Only fetch if we haven't fetched yet — never re-fetch on re-entry
+      if (!provider.hasFetched) {
         provider.fetchRequests();
       }
     });

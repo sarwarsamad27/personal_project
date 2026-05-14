@@ -11,8 +11,8 @@ class TransactionDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDebit  = (tx.type ?? '').toLowerCase() == 'debit';
-    final amtSign  = isDebit ? '- Rs.' : '+ Rs.';
+    final isDebit = (tx.type ?? '').toLowerCase() == 'debit';
+    final amtSign = isDebit ? '- Rs.' : '+ Rs.';
     final amtColor = isDebit ? Colors.redAccent : Colors.greenAccent;
 
     // Clean up status label
@@ -21,11 +21,14 @@ class TransactionDetailScreen extends StatelessWidget {
     // Order reference stored in meta.name
     final orderRef = tx.meta?.name?.trim() ?? '';
     // Account/phone stored in meta.phone (for withdrawal transactions)
-    final acctRef  = tx.meta?.phone?.trim() ?? '';
+    final acctRef = tx.meta?.phone?.trim() ?? '';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Transaction Detail"),
+        title: const Text(
+          "Transaction Detail",
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: AppColor.primaryColor,
         foregroundColor: Colors.white,
       ),
@@ -35,24 +38,18 @@ class TransactionDetailScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _row("Type",   isDebit ? "Debit (Withdrawn)" : "Credit (Received)"),
-              _rowColored(
-                "Amount",
-                "$amtSign ${tx.amount ?? '-'}",
-                amtColor,
-              ),
+              _row("Type", isDebit ? "Debit (Withdrawn)" : "Credit (Received)"),
+              _rowColored("Amount", "$amtSign ${tx.amount ?? '-'}", amtColor),
               _row("Method", tx.method ?? "-"),
               _row("Status", status),
-              _row("Date",   _fmt(tx.createdAt)),
+              _row("Date", _fmt(tx.createdAt)),
               const Divider(color: Colors.white24),
 
               // Order reference (if available)
-              if (orderRef.isNotEmpty)
-                _row("Order ID", orderRef),
+              if (orderRef.isNotEmpty) _row("Order ID", orderRef),
 
               // Account number (if available — for JazzCash/Easypaisa withdrawals)
-              if (acctRef.isNotEmpty)
-                _row("Account",  acctRef),
+              if (acctRef.isNotEmpty) _row("Account", acctRef),
             ],
           ),
         ),
@@ -79,8 +76,18 @@ class TransactionDetailScreen extends StatelessWidget {
     try {
       final dt = DateTime.parse(raw).toLocal();
       const months = [
-        'Jan','Feb','Mar','Apr','May','Jun',
-        'Jul','Aug','Sep','Oct','Nov','Dec',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
       final m = dt.minute.toString().padLeft(2, '0');
@@ -101,7 +108,10 @@ class TransactionDetailScreen extends StatelessWidget {
           Flexible(
             child: Text(
               value,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
               textAlign: TextAlign.end,
             ),
           ),

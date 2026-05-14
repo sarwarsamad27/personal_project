@@ -2,13 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/models/orders/getDeliveredOrder_model.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/viewModel/providers/commissionProvider/commission_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customContainer.dart';
+import 'package:provider/provider.dart';
 
-class DeliveredOrderDetailScreen extends StatelessWidget {
+class DeliveredOrderDetailScreen extends StatefulWidget {
   final Orders order;
 
   const DeliveredOrderDetailScreen({super.key, required this.order});
+
+  @override
+  State<DeliveredOrderDetailScreen> createState() =>
+      _DeliveredOrderDetailScreenState();
+}
+
+class _DeliveredOrderDetailScreenState
+    extends State<DeliveredOrderDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final p = context.read<CommissionProvider>();
+      if (!p.hasFetched) {
+        p.fetchCommission();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,15 +49,15 @@ class DeliveredOrderDetailScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Buyer: ${order.buyerDetails?.name ?? ''}",
+                      "Customer: ${widget.order.buyerDetails?.name ?? ''}",
                       style: const TextStyle(color: Colors.white),
                     ),
                     Text(
-                      "Phone: ${order.buyerDetails?.phone ?? ''}",
+                      "Phone: ${widget.order.buyerDetails?.phone ?? ''}",
                       style: const TextStyle(color: Colors.white70),
                     ),
                     Text(
-                      "Address: ${order.buyerDetails?.address ?? ''}",
+                      "Address: ${widget.order.buyerDetails?.address ?? ''}",
                       style: const TextStyle(color: Colors.white70),
                     ),
                   ],
@@ -47,7 +67,7 @@ class DeliveredOrderDetailScreen extends StatelessWidget {
               SizedBox(height: 15.h),
 
               /// PRODUCTS
-              ...order.products!.map(
+              ...widget.order.products!.map(
                 (p) => CustomAppContainer(
                   padding: EdgeInsets.all(12.w),
                   child: Column(
@@ -96,12 +116,34 @@ class DeliveredOrderDetailScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Divider(color: Colors.white24),
-                    Builder(
-                      builder: (_) {
-                        final shipment = order.shipmentCharges ?? 200;
-                        final products = (order.grandTotal ?? 0) - shipment;
-                        final platformFee = (products * 0.10).round();
-                        final net = (products * 0.90).round();
+                    Consumer<CommissionProvider>(
+                      builder: (context, commissionProvider, _) {
+                        // 1. Check if we have stored historical data
+                        final hasHistory = widget.order.sellerEarning != null;
+
+                        final double commissionPct;
+                        final int platformFee;
+                        final int net;
+
+                        final shipment = widget.order.shipmentCharges ?? 200;
+                        final products =
+                            (widget.order.grandTotal ?? 0) - shipment;
+
+                        if (hasHistory) {
+                          commissionPct = (widget.order.commissionRate ?? 10)
+                              .toDouble();
+                          net = widget.order.sellerEarning!;
+                          platformFee = products - net;
+                        } else {
+                          // Fallback for old orders
+                          commissionPct = commissionProvider.hasFetched
+                              ? commissionProvider.commissionPercent
+                              : 10.0;
+                          final rate = commissionPct / 100;
+                          platformFee = (products * rate).round();
+                          net = (products * (1 - rate)).round();
+                        }
+
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -110,10 +152,19 @@ class DeliveredOrderDetailScreen extends StatelessWidget {
                               style: const TextStyle(color: Colors.white70),
                             ),
                             const SizedBox(height: 6),
-                            Text(
-                              "Platform Fee (10%):  - Rs. $platformFee",
-                              style: const TextStyle(color: Colors.white),
-                            ),
+                            if (!hasHistory && commissionProvider.isLoading)
+                              const LinearProgressIndicator(
+                                minHeight: 2,
+                                backgroundColor: Colors.white10,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white24,
+                                ),
+                              )
+                            else
+                              Text(
+                                "Platform Fee (${commissionPct.toStringAsFixed(0)}%):  - Rs. $platformFee",
+                                style: const TextStyle(color: Colors.white),
+                              ),
                             const Divider(color: Colors.white24),
                             Text(
                               "Net to You: Rs. $net",
@@ -125,7 +176,7 @@ class DeliveredOrderDetailScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              "(90% of product price)",
+                              "(${(100 - commissionPct).toStringAsFixed(0)}% of product price)",
                               style: const TextStyle(
                                 color: Colors.white38,
                                 fontSize: 11,
