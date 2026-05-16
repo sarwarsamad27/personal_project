@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -27,6 +26,8 @@ class CategoryScreen extends StatefulWidget {
 }
 
 class _CategoryScreenState extends State<CategoryScreen> {
+  String _searchQuery = "";
+
   @override
   void initState() {
     super.initState();
@@ -269,175 +270,251 @@ class _CategoryScreenState extends State<CategoryScreen> {
     );
   }
 
-  
-
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<GetCategoryProvider>(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColor.appimagecolor,
-        elevation: 4,
-        automaticallyImplyLeading: false,
-        centerTitle: true,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Product Categories",
-              style: TextStyle(
-                fontSize: 20.sp,
-                fontWeight: FontWeight.bold,
-                color: AppColor.whiteColor,
-              ),
-            ),
-          ],
-        ),
-      ),
-      body: provider.isLoading
-          ? const Center(
-              child: SpinKitThreeBounce(
-                color: AppColor.primaryColor,
-                size: 30.0,
-              ),
-            )
-          : provider.categoryData == null ||
-                provider.categoryData!.categories == null
-          ? const Center(child: Text("No categories found"))
-          : Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-              child: GridView.builder(
-                padding: EdgeInsets.only(bottom: 50.h),
-                physics: const BouncingScrollPhysics(),
-                itemCount: provider.categoryData!.categories!.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisExtent: 240.h,
-                  crossAxisSpacing: 14.w,
-                  mainAxisSpacing: 0.h,
-                ),
-                itemBuilder: (context, index) {
-                  final item = provider.categoryData!.categories![index];
-                  log(item.image.toString());
+    // Filter categories based on search query
+    final allCategories = provider.categoryData?.categories ?? [];
+    final filteredCategories = allCategories.where((c) {
+      final query = _searchQuery.toLowerCase();
+      final name = (c.name ?? "").toLowerCase();
+      // Assume Categories might not have a description field, but we check name.
+      return name.contains(query);
+    }).toList();
 
-                  return Stack(
-                    children: [
-                      CategoryTile(
-                        name: item.name ?? "",
-                        image: Global.getImageUrl(item.image),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  CategoryProductsScreen(category: item),
-                            ),
-                          );
-                        },
-                      ),
-                      Positioned(
-                        right: 10,
-                        top: 10,
-                        child: Column(
-                          children: [
-                            GestureDetector(
-                              onTap: () => _editCategory(context, item),
-                              child: Container(
-                                padding: EdgeInsets.all(6.w),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.9),
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 5,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Icon(
-                                  LucideIcons.edit,
-                                  color: AppColor.primaryColor,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 10.h),
-                            GestureDetector(
-                              onTap: () =>
-                                  _deleteCategory(context, item.sId ?? ""),
-                              child: Container(
-                                padding: EdgeInsets.all(6.w),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.9),
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 5,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  LucideIcons.trash2,
-                                  color: Colors.redAccent,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          ],
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: AppColor.appimagecolor,
+          elevation: 4,
+          automaticallyImplyLeading: false,
+          centerTitle: true,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Product Categories",
+                style: TextStyle(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.whiteColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+        body: provider.isLoading
+            ? const Center(
+                child: SpinKitThreeBounce(
+                  color: AppColor.primaryColor,
+                  size: 30.0,
+                ),
+              )
+            : Column(
+                children: [
+                  // ── Search Bar ──
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 4.h),
+                    child: TextField(
+                      onChanged: (val) {
+                        setState(() {
+                          _searchQuery = val;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: "Search categories...",
+                        hintStyle: TextStyle(
+                          color: Colors.grey.shade400,
+                          fontSize: 13.sp,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: Colors.grey.shade400,
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 0.h,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: AppColor.primaryColor.withOpacity(0.5),
+                          ),
                         ),
                       ),
-                    ],
-                  );
-                },
+                    ),
+                  ),
+
+                  // ── Grid View ──
+                  Expanded(
+                    child:
+                        provider.categoryData == null || allCategories.isEmpty
+                        ? const Center(child: Text("No categories found"))
+                        : filteredCategories.isEmpty
+                        ? const Center(child: Text("No matching categories"))
+                        : Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 12.h,
+                            ),
+                            child: GridView.builder(
+                              padding: EdgeInsets.only(bottom: 50.h),
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: filteredCategories.length,
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    mainAxisExtent: 240.h,
+                                    crossAxisSpacing: 14.w,
+                                    mainAxisSpacing: 0.h,
+                                  ),
+                              itemBuilder: (context, index) {
+                                final item = filteredCategories[index];
+
+                                return Stack(
+                                  children: [
+                                    CategoryTile(
+                                      name: item.name ?? "",
+                                      image: Global.getImageUrl(item.image),
+                                      hasLowStock: item.hasLowStock,
+                                      hasOutOfStock: item.hasOutOfStock,
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                CategoryProductsScreen(
+                                                  category: item,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    Positioned(
+                                      right: 10,
+                                      top: 10,
+                                      child: Column(
+                                        children: [
+                                          GestureDetector(
+                                            onTap: () =>
+                                                _editCategory(context, item),
+                                            child: Container(
+                                              padding: EdgeInsets.all(6.w),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withOpacity(
+                                                  0.9,
+                                                ),
+                                                shape: BoxShape.circle,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withOpacity(0.1),
+                                                    blurRadius: 5,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Icon(
+                                                LucideIcons.edit,
+                                                color: AppColor.primaryColor,
+                                                size: 20,
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(height: 10.h),
+                                          GestureDetector(
+                                            onTap: () => _deleteCategory(
+                                              context,
+                                              item.sId ?? "",
+                                            ),
+                                            child: Container(
+                                              padding: EdgeInsets.all(6.w),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withOpacity(
+                                                  0.9,
+                                                ),
+                                                shape: BoxShape.circle,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withOpacity(0.1),
+                                                    blurRadius: 5,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: const Icon(
+                                                LucideIcons.trash2,
+                                                color: Colors.redAccent,
+                                                size: 20,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                  ),
+                ],
               ),
+        floatingActionButton: Container(
+          height: 70.h,
+          width: 70.h,
+          margin: EdgeInsets.only(bottom: 70.h),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [
+                AppColor.primaryColor,
+                AppColor.primaryColor.withOpacity(0.8),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-      floatingActionButton: Container(
-        height: 70.h,
-        width: 70.h,
-        margin: EdgeInsets.only(bottom: 70.h),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            colors: [
-              AppColor.primaryColor,
-              AppColor.primaryColor.withOpacity(0.8),
+            boxShadow: [
+              BoxShadow(
+                color: AppColor.primaryColor.withOpacity(0.35),
+                blurRadius: 15,
+                offset: const Offset(0, 6),
+              ),
             ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColor.primaryColor.withOpacity(0.35),
-              blurRadius: 15,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: FloatingActionButton(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          onPressed: () async {
-            final added = await Navigator.push<bool>(
-              context,
-              MaterialPageRoute(builder: (_) => const AddCategoryScreen()),
-            );
-
-            if (!mounted) return;
-
-            if (added == true) {
-              // ✅ toast yahan show karo (safe, no navigator lock)
-              AppToast.success("Category added successfully!");
-              Provider.of<GetCategoryProvider>(
+          child: FloatingActionButton(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            onPressed: () async {
+              final added = await Navigator.push<bool>(
                 context,
-                listen: false,
-              ).getCategories(forceRefresh: true);
-            }
-          },
-          child: const Icon(LucideIcons.plus, color: Colors.white, size: 30),
+                MaterialPageRoute(builder: (_) => const AddCategoryScreen()),
+              );
+
+              if (!mounted) return;
+
+              if (added == true) {
+                // ✅ toast yahan show karo (safe, no navigator lock)
+                AppToast.success("Category added successfully!");
+                Provider.of<GetCategoryProvider>(
+                  context,
+                  listen: false,
+                ).getCategories(forceRefresh: true);
+              }
+            },
+            child: const Icon(LucideIcons.plus, color: Colors.white, size: 30),
+          ),
         ),
       ),
     );

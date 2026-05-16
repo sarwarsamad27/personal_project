@@ -61,7 +61,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       children: [
                         _buildRow("Order ID", order.orderId ?? order.sId ?? ""),
                         _buildRow("Customer", order.buyerDetails?.name ?? ""),
-                        _buildRow("Address", order.buyerDetails?.address ?? "N/A"),
+                        _buildRow(
+                          "Address",
+                          order.buyerDetails?.address ?? "N/A",
+                        ),
                         _buildRow("Date", _formatDate(order.createdAt ?? "")),
                         _buildRow("Payment", "Cash on Delivery"),
                         if (order.trackNumber != null)
@@ -100,7 +103,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               product.selectedSize!.isNotEmpty)
                             _buildRow("Size", product.selectedSize!.join(", ")),
                           _buildRow("Quantity", product.quantity.toString()),
-                          _buildRow("Total Price", "Rs ${product.totalPrice ?? 0}"),
+                          _buildRow(
+                            "Total Price",
+                            "Rs ${product.totalPrice ?? 0}",
+                          ),
                           Divider(color: Colors.white.withValues(alpha: 0.2)),
                         ],
                         SizedBox(height: 12.h),
@@ -111,12 +117,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   SizedBox(height: 25.h),
                   Consumer<AcceptOrderProvider>(
                     builder: (context, provider, _) {
-                      final String? slip =
-                          provider.slipLink?.isNotEmpty == true
-                              ? provider.slipLink
-                              : (order.slipLink?.isNotEmpty == true
-                                  ? order.slipLink
-                                  : null);
+                      final String? slip = provider.slipLink?.isNotEmpty == true
+                          ? provider.slipLink
+                          : (order.slipLink?.isNotEmpty == true
+                                ? order.slipLink
+                                : null);
                       final String? track =
                           provider.trackNumber ?? order.trackNumber;
                       final String currentStatus =
@@ -138,26 +143,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             CustomButton(
                               text: "📦 Download Shipping Slip",
                               onTap: () async {
-                                final messenger =
-                                    ScaffoldMessenger.of(context);
-                                try {
-                                  final uri = Uri.parse(slip.trim());
-                                  final launched = await launchUrl(
+                                final uri = Uri.parse(slip.trim());
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(
                                     uri,
                                     mode: LaunchMode.externalApplication,
-                                  );
-                                  if (!launched) {
-                                    await launchUrl(
-                                      uri,
-                                      mode: LaunchMode.platformDefault,
-                                    );
-                                  }
-                                } catch (e) {
-                                  messenger.showSnackBar(
-                                    SnackBar(
-                                      content: Text("Error: $e"),
-                                      backgroundColor: Colors.red,
-                                    ),
                                   );
                                 }
                               },
@@ -180,11 +170,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                                    const Icon(
+                                      Icons.warning_amber_rounded,
+                                      color: Colors.orange,
+                                    ),
                                     SizedBox(width: 8.w),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             "Order accepted but Leopards booking failed",
@@ -216,19 +210,29 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                 onTap: provider.isRetrying
                                     ? null
                                     : () async {
-                                        final messenger = ScaffoldMessenger.of(context);
-                                        final ordersProvider = context.read<GetMyOrdersProvider>();
-                                        final ok = await provider.retryLeopardsBooking(
-                                          orderId: order.sId!,
+                                        final messenger = ScaffoldMessenger.of(
+                                          context,
                                         );
+                                        final ordersProvider = context
+                                            .read<GetMyOrdersProvider>();
+                                        final ok = await provider
+                                            .retryLeopardsBooking(
+                                              orderId: order.sId!,
+                                            );
                                         if (!ok) {
-                                          messenger.showSnackBar(SnackBar(
-                                            content: Text(provider.leopardsError ?? "Retry failed"),
-                                            backgroundColor: Colors.red,
-                                          ));
+                                          messenger.showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                provider.leopardsError ??
+                                                    "Retry failed",
+                                              ),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
                                         } else {
-                                          order.trackNumber = provider.trackNumber;
-                                          order.slipLink    = provider.slipLink;
+                                          order.trackNumber =
+                                              provider.trackNumber;
+                                          order.slipLink = provider.slipLink;
                                           ordersProvider.updateOrderInList(
                                             order.sId!,
                                             trackNumber: provider.trackNumber,
@@ -251,7 +255,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.check_circle, color: Colors.green),
+                              const Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                              ),
                               SizedBox(width: 8.w),
                               Expanded(
                                 child: Text(
@@ -276,8 +283,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             ? null
                             : () async {
                                 final messenger = ScaffoldMessenger.of(context);
-                                final ordersProvider =
-                                    context.read<GetMyOrdersProvider>();
+                                final ordersProvider = context
+                                    .read<GetMyOrdersProvider>();
                                 final token =
                                     await LocalStorage.getToken() ?? "";
                                 final success = await provider.acceptOrder(
@@ -390,8 +397,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   String _monthName(int month) {
     const months = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ];
     return months[month - 1];
   }

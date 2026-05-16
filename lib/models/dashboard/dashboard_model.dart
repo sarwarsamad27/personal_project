@@ -21,6 +21,8 @@ class DashboardDataModel {
 
 class Data {
   int? totalProducts;
+  int? lowStockProducts;
+  int? outOfStockProducts;
   int? totalQuantity;
   int? totalOrders;
   int? deliveredOrders;
@@ -29,31 +31,39 @@ class Data {
   int? monthlySales;
   Wallet? wallet;
 
-  Data(
-      {this.totalProducts,
-      this.totalQuantity,
-      this.totalOrders,
-      this.deliveredOrders,
-      this.pendingOrders,
-      this.totalSales,
-      this.monthlySales,
-      this.wallet});
+  Data({
+    this.totalProducts,
+    this.lowStockProducts,
+    this.outOfStockProducts,
+    this.totalQuantity,
+    this.totalOrders,
+    this.deliveredOrders,
+    this.pendingOrders,
+    this.totalSales,
+    this.monthlySales,
+    this.wallet,
+  });
 
   Data.fromJson(Map<String, dynamic> json) {
     totalProducts = json['totalProducts'];
+    lowStockProducts = json['lowStockProducts'];
+    outOfStockProducts = json['outOfStockProducts'];
     totalQuantity = json['totalQuantity'];
     totalOrders = json['totalOrders'];
     deliveredOrders = json['deliveredOrders'];
     pendingOrders = json['pendingOrders'];
     totalSales = json['totalSales'];
     monthlySales = json['monthlySales'];
-    wallet =
-        json['wallet'] != null ? new Wallet.fromJson(json['wallet']) : null;
+    wallet = json['wallet'] != null
+        ? new Wallet.fromJson(json['wallet'])
+        : null;
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['totalProducts'] = this.totalProducts;
+    data['lowStockProducts'] = this.lowStockProducts;
+    data['outOfStockProducts'] = this.outOfStockProducts;
     data['totalQuantity'] = this.totalQuantity;
     data['totalOrders'] = this.totalOrders;
     data['deliveredOrders'] = this.deliveredOrders;
@@ -73,11 +83,12 @@ class Wallet {
   int? completedWithdraw;
   int? currentBalance;
 
-  Wallet(
-      {this.totalDelivered,
-      this.pendingWithdraw,
-      this.completedWithdraw,
-      this.currentBalance});
+  Wallet({
+    this.totalDelivered,
+    this.pendingWithdraw,
+    this.completedWithdraw,
+    this.currentBalance,
+  });
 
   Wallet.fromJson(Map<String, dynamic> json) {
     totalDelivered = json['totalDelivered'];

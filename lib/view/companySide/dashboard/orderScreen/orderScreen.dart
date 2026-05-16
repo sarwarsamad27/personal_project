@@ -4,6 +4,8 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/toast.dart';
+import 'package:new_brand/resources/socketServices.dart';
+import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/orderDetailScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
@@ -29,6 +31,7 @@ class _OrderScreenState extends State<OrderScreen>
     with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   bool _isFirstBuild = true;
+  final Set<String> _processingOrders = {};
 
   @override
   void initState() {
@@ -37,6 +40,8 @@ class _OrderScreenState extends State<OrderScreen>
     Future.microtask(() {
       Provider.of<GetMyOrdersProvider>(context, listen: false).fetchOrders();
     });
+
+    _setupSocket();
 
     _scrollController.addListener(() {
       final provider = Provider.of<GetMyOrdersProvider>(context, listen: false);
@@ -54,6 +59,37 @@ class _OrderScreenState extends State<OrderScreen>
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _setupSocket() async {
+    final token = await LocalStorage.getToken() ?? "";
+    if (token.isEmpty) return;
+
+    final socket = await SocketService().ensureConnected(
+      baseUrl: Global.imageUrl,
+      token: token,
+    );
+
+    socket?.on("order_status_updated", (data) {
+      if (!mounted) return;
+      if (data != null && data['orderId'] != null) {
+        final String orderId = data['orderId'];
+        final String status = data['status'];
+
+        final ordersProvider = Provider.of<GetMyOrdersProvider>(
+          context,
+          listen: false,
+        );
+        ordersProvider.updateOrderInList(orderId, status: status);
+
+        if (status == 'Dispatched') {
+          Provider.of<GetDispatchedOrderProvider>(
+            context,
+            listen: false,
+          ).fetchDispatchedOrders(isRefresh: true);
+        }
+      }
+    });
   }
 
   @override
@@ -197,13 +233,11 @@ class _OrderScreenState extends State<OrderScreen>
                     ? products.first
                     : null;
 
-                final bool isStale = isPendingTab &&
-                    _isStaleOrder(order.createdAt as String?);
+                final bool isStale =
+                    isPendingTab && _isStaleOrder(order.createdAt as String?);
 
                 return CustomAppContainer(
-                  color: isStale
-                      ? Colors.red.withValues(alpha: 0.12)
-                      : null,
+                  color: isStale ? Colors.red.withValues(alpha: 0.12) : null,
                   borderColor: isStale ? Colors.red : Colors.white,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,7 +251,9 @@ class _OrderScreenState extends State<OrderScreen>
                               (firstProduct != null &&
                                       firstProduct.images != null &&
                                       firstProduct.images.isNotEmpty)
-                                  ? Global.getImageUrl(firstProduct.images.first)
+                                  ? Global.getImageUrl(
+                                      firstProduct.images.first,
+                                    )
                                   : "",
                               height: 75.h,
                               width: 75.w,
@@ -260,27 +296,30 @@ class _OrderScreenState extends State<OrderScreen>
                                   child: Text(
                                     "Order ID: ${order.orderId ?? ''}",
                                     style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 11.sp,
-                                        fontWeight: FontWeight.bold),
+                                      color: Colors.white70,
+                                      fontSize: 11.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                                 if (isStale) ...[
                                   SizedBox(width: 6.w),
                                   Container(
                                     padding: EdgeInsets.symmetric(
-                                        horizontal: 6.w, vertical: 2.h),
+                                      horizontal: 6.w,
+                                      vertical: 2.h,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.red,
-                                      borderRadius:
-                                          BorderRadius.circular(6.r),
+                                      borderRadius: BorderRadius.circular(6.r),
                                     ),
                                     child: Text(
                                       "48h+",
                                       style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 9.sp,
-                                          fontWeight: FontWeight.bold),
+                                        color: Colors.white,
+                                        fontSize: 9.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -365,23 +404,24 @@ class _OrderScreenState extends State<OrderScreen>
                                   ),
                                 ),
 
-                                if(isPendingTab)
+                                if (isPendingTab)
                                   GestureDetector(
                                     onTap: () {
-                                     Navigator.push(
+                                      Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => OrderDetailScreen(order: order)
+                                          builder: (_) =>
+                                              OrderDetailScreen(order: order),
                                         ),
                                       );
                                     },
                                     child: Text(
                                       "View Details",
                                       style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 15.sp,
-                                          fontWeight: FontWeight.bold,
-                                          decoration: TextDecoration.underline
+                                        color: Colors.white,
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.bold,
+                                        decoration: TextDecoration.underline,
                                       ),
                                     ),
                                   ),
@@ -412,6 +452,19 @@ class _OrderScreenState extends State<OrderScreen>
   // ✅ Replace _buildPendingStatusDropdown in order_screen.dart with this
 
   Widget _buildPendingStatusDropdown({required String orderId}) {
+    if (_processingOrders.contains(orderId)) {
+      return Container(
+        height: 30.h,
+        width: 100.w,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white10,
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        child: SpinKitThreeBounce(color: AppColor.primaryColor, size: 15.sp),
+      );
+    }
+
     Color getStatusColor(String status) {
       switch (status) {
         case 'Pending':
@@ -446,27 +499,29 @@ class _OrderScreenState extends State<OrderScreen>
         ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
         onChanged: (newStatus) async {
           if (newStatus == "Dispatched") {
-            // ── existing dispatched logic ──
-            final dispatchProvider = Provider.of<PendingToDispatchedProvider>(
-              context,
-              listen: false,
-            );
-            bool success = await dispatchProvider.updateOrderStatus(
-              orderId: orderId,
-              status: "dispatched",
-            );
-            if (success) {
-              Provider.of<GetMyOrdersProvider>(
+            setState(() {
+              _processingOrders.add(orderId);
+            });
+            try {
+              final dispatchProvider = Provider.of<PendingToDispatchedProvider>(
                 context,
                 listen: false,
-              ).updateStatusAndRefresh();
-              Provider.of<GetDispatchedOrderProvider>(
-                context,
-                listen: false,
-              ).fetchDispatchedOrders(isRefresh: true);
-              AppToast.success("Order moved to Dispatched");
-            } else {
-              AppToast.error("Failed to update");
+              );
+              bool success = await dispatchProvider.updateOrderStatus(
+                orderId: orderId,
+                status: "dispatched",
+              );
+              if (success) {
+                // Note: Socket listener handles UI updates instantly
+                AppToast.success("Order moved to Dispatched");
+              } else {
+                AppToast.error("Failed to update");
+              }
+            } finally {
+              if (mounted)
+                setState(() {
+                  _processingOrders.remove(orderId);
+                });
             }
           } else if (newStatus == "Cancel") {
             // ── Premium cancel reason dialog ──
@@ -627,25 +682,19 @@ class _OrderScreenState extends State<OrderScreen>
                                 ? null
                                 : () async {
                                     final reason = reasonController.text.trim();
-                                    final ordersProvider =
-                                        Provider.of<GetMyOrdersProvider>(
-                                      context,
-                                      listen: false,
-                                    );
 
                                     final success = await cancelProvider
                                         .cancelOrder(
-                                      orderId: orderId,
-                                      reason: reason.isNotEmpty
-                                          ? reason
-                                          : null,
-                                    );
+                                          orderId: orderId,
+                                          reason: reason.isNotEmpty
+                                              ? reason
+                                              : null,
+                                        );
 
                                     if (ctx.mounted) Navigator.pop(ctx);
 
                                     if (success) {
-                                      ordersProvider.fetchOrders(
-                                          isRefresh: true);
+                                      // Note: Socket listener handles UI updates instantly
                                       AppToast.success("Order Cancelled");
                                     } else {
                                       AppToast.error("Failed to cancel order");

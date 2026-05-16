@@ -59,6 +59,18 @@ class StatsView extends StatelessWidget {
         'icon': LucideIcons.package,
         'gradient': [const Color(0xFFFF512F), const Color(0xFFF09819)],
       },
+      {
+        'title': 'Low Stock Products',
+        'value': '${data.lowStockProducts ?? 0}',
+        'icon': LucideIcons.alertTriangle,
+        'gradient': [const Color(0xFFF59E0B), const Color(0xFFD97706)],
+      },
+      {
+        'title': 'Out of Stock Products',
+        'value': '${data.outOfStockProducts ?? 0}',
+        'icon': LucideIcons.alertOctagon,
+        'gradient': [const Color(0xFFEF4444), const Color(0xFFB91C1C)],
+      },
 
       // ===== WALLET =====
       {

@@ -32,15 +32,20 @@ class Categories {
   String? createdAt;
   String? updatedAt;
   int? iV;
+  bool? hasLowStock;
+  bool? hasOutOfStock;
 
-  Categories(
-      {this.sId,
-      this.profileId,
-      this.name,
-      this.image,
-      this.createdAt,
-      this.updatedAt,
-      this.iV});
+  Categories({
+    this.sId,
+    this.profileId,
+    this.name,
+    this.image,
+    this.createdAt,
+    this.updatedAt,
+    this.iV,
+    this.hasLowStock,
+    this.hasOutOfStock,
+  });
 
   Categories.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
@@ -50,6 +55,8 @@ class Categories {
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     iV = json['__v'];
+    hasLowStock = json['hasLowStock'] ?? false;
+    hasOutOfStock = json['hasOutOfStock'] ?? false;
   }
 
   Map<String, dynamic> toJson() {
@@ -61,6 +68,8 @@ class Categories {
     data['createdAt'] = this.createdAt;
     data['updatedAt'] = this.updatedAt;
     data['__v'] = this.iV;
+    data['hasLowStock'] = this.hasLowStock;
+    data['hasOutOfStock'] = this.hasOutOfStock;
     return data;
   }
 }

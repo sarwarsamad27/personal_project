@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:new_brand/widgets/blinking_badge.dart'; // Add this import
 
 class ProductCard extends StatelessWidget {
   final String name;
@@ -19,6 +20,9 @@ class ProductCard extends StatelessWidget {
   /// Optional original price (cut wali)
   final String? originalPrice; // e.g. "Rs. 2000"
 
+  /// Stock quantity to determine if it should blink
+  final int? stockQuantity;
+
   const ProductCard({
     Key? key,
     required this.name,
@@ -30,6 +34,7 @@ class ProductCard extends StatelessWidget {
     this.averageRating,
     this.originalPrice,
     required this.description,
+    this.stockQuantity,
   }) : super(key: key);
 
   @override
@@ -132,6 +137,24 @@ class ProductCard extends StatelessWidget {
                     child: _BadgeChip(
                       text: saveText!,
                       background: Colors.green,
+                    ),
+                  ),
+
+                if (stockQuantity != null && stockQuantity! == 0)
+                  Positioned(
+                    bottom: 10.h,
+                    left: 6.w,
+                    child: BlinkingBadge(text: "Out of Stock", isError: true),
+                  )
+                else if (stockQuantity != null &&
+                    stockQuantity! > 0 &&
+                    stockQuantity! <= 10)
+                  Positioned(
+                    bottom: 10.h,
+                    left: 6.w,
+                    child: BlinkingBadge(
+                      text: "Low Stock: $stockQuantity left",
+                      isError: false,
                     ),
                   ),
               ],

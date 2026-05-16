@@ -2,17 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/widgets/blinking_badge.dart'; // Add this import
 
 /// ✅ Reusable custom category tile widget
 class CategoryTile extends StatelessWidget {
   final String name;
   final String image;
   final VoidCallback onTap;
+  final bool? hasLowStock;
+  final bool? hasOutOfStock;
 
   const CategoryTile({
     required this.name,
     required this.image,
     required this.onTap,
+    this.hasLowStock,
+    this.hasOutOfStock,
   });
 
   @override
@@ -58,6 +63,22 @@ class CategoryTile extends StatelessWidget {
                       ),
                     ),
                   ),
+                  // out of stock / low stock blink
+                  if (hasOutOfStock == true)
+                    Positioned(
+                      bottom: 8.h,
+                      left: 6.w,
+                      child: BlinkingBadge(text: "Out of Stock", isError: true),
+                    )
+                  else if (hasLowStock == true)
+                    Positioned(
+                      bottom: 8.h,
+                      left: 6.w,
+                      child: BlinkingBadge(
+                        text: "Low Stock Items",
+                        isError: false,
+                      ),
+                    ),
                   // small favorite button (optional)
                   Positioned(
                     top: 10,
