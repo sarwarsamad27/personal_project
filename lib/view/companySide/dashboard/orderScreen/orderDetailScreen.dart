@@ -143,7 +143,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             CustomButton(
                               text: "📦 Download Shipping Slip",
                               onTap: () async {
-                                final uri = Uri.parse(slip.trim());
+                                // Resolve relative paths (/uploads/...) to full URL
+                                final resolved =
+                                    Global.getImageUrl(slip.trim());
+                                final uri = Uri.parse(resolved);
                                 if (await canLaunchUrl(uri)) {
                                   await launchUrl(
                                     uri,

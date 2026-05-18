@@ -20,12 +20,20 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
   final String title;
   final String? buyerImage;
 
+  // Called whenever any message is added — lets the thread list stay in sync
+  final void Function({
+    required String lastMessage,
+    required String timestamp,
+    required bool isSellerMsg,
+  })? onThreadUpdate;
+
   CompanyChatProvider({
     required this.threadId,
     required this.toType,
     required this.toId,
     required this.title,
     required this.buyerImage,
+    this.onThreadUpdate,
   });
 
   // ===== Controllers owned by UI widgets =====
@@ -261,6 +269,14 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
         _markSingleMessageDelivered(newMessage.id!);
         _markSingleMessageRead(newMessage.id!);
       }
+
+      // Keep thread list last-message in sync for both directions
+      onThreadUpdate?.call(
+        lastMessage: newMessage.text ?? '',
+        timestamp:
+            newMessage.timestamp ?? DateTime.now().toIso8601String(),
+        isSellerMsg: newMessage.fromType == "seller",
+      );
 
       notifyListeners();
       scrollToBottom();

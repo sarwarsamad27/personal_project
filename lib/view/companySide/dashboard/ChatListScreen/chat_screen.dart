@@ -13,6 +13,11 @@ class CompanyChatScreen extends StatelessWidget {
   final String toId;
   final String title;
   final String? buyerImage;
+  final void Function({
+    required String lastMessage,
+    required String timestamp,
+    required bool isSellerMsg,
+  })? onThreadUpdate;
 
   const CompanyChatScreen({
     super.key,
@@ -21,6 +26,7 @@ class CompanyChatScreen extends StatelessWidget {
     required this.toId,
     required this.title,
     this.buyerImage,
+    this.onThreadUpdate,
   });
 
   @override
@@ -32,6 +38,7 @@ class CompanyChatScreen extends StatelessWidget {
         toId: toId,
         title: title,
         buyerImage: buyerImage,
+        onThreadUpdate: onThreadUpdate,
       )..init(),
       child: Scaffold(
         backgroundColor: const Color(0xFFECE5DD),

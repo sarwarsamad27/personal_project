@@ -430,6 +430,20 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
               toId: thread.toId,
               title: thread.title,
               buyerImage: thread.image,
+              onThreadUpdate: ({
+                required lastMessage,
+                required timestamp,
+                required isSellerMsg,
+              }) {
+                if (!mounted) return;
+                context.read<CompanyChatThreadsProvider>().onNewMessage(
+                  threadId: thread.threadId,
+                  lastMessage: lastMessage,
+                  lastMessageTime: timestamp,
+                  // Seller's own messages don't add to unread count
+                  incrementUnread: !isSellerMsg,
+                );
+              },
             ),
           ),
         ).then((_) {

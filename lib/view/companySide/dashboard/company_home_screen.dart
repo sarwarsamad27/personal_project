@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/chatThread_provider.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'package:new_brand/resources/appColor.dart';
@@ -105,6 +106,11 @@ class _PremiumNavBar extends StatelessWidget {
       (p) => p.unreadTotal,
     );
 
+    final pendingCount = context.select<GetMyOrdersProvider, int>((p) =>
+        (p.orderModel?.orders ?? [])
+            .where((o) => o.status == "Pending")
+            .length);
+
     final barHeight = 76.h;
 
     return SizedBox(
@@ -158,6 +164,7 @@ class _PremiumNavBar extends StatelessWidget {
                     label: "Orders",
                     selected: currentIndex == 3,
                     onTap: () => onTap(3),
+                    badgeCount: pendingCount,
                   ),
                 ),
                 _slot(
@@ -196,12 +203,14 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final int badgeCount;
 
   const _NavItem({
     required this.icon,
     required this.label,
     required this.selected,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   @override
@@ -214,22 +223,33 @@ class _NavItem extends StatelessWidget {
           duration: const Duration(milliseconds: 220),
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
           decoration: BoxDecoration(
-            color: selected ? Colors.transparent : Colors.transparent,
+            color: Colors.transparent,
             borderRadius: BorderRadius.circular(16.r),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                size: 22.sp,
-                color: selected ? AppColor.primaryColor : Colors.grey,
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    icon,
+                    size: 22.sp,
+                    color: selected ? AppColor.primaryColor : Colors.grey,
+                  ),
+                  if (badgeCount > 0)
+                    Positioned(
+                      right: -8.w,
+                      top: -6.h,
+                      child: _Badge(count: badgeCount),
+                    ),
+                ],
               ),
               SizedBox(height: 4.h),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 11.sp, // ✅ fixed, no jump
+                  fontSize: 11.sp,
                   color: selected ? AppColor.primaryColor : Colors.grey,
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                 ),
