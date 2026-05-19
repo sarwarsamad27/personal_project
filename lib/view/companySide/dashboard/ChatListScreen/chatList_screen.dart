@@ -92,11 +92,18 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
   // Called on initState AND after returning from chat/admin screen
   // (because CompanyChatProvider.init() calls socket.off("chat:message")
   //  which removes our listener — we must re-register on return).
-  void _setupSocketListeners() {
-    final socket = SocketService().socket;
-    if (socket == null || !socket.connected) return;
+  void _setupSocketListeners() async {
+    final token = await LocalStorage.getToken() ?? "";
+    if (token.isEmpty || !mounted) return;
 
-    // Clear our own handlers first to avoid duplicates
+    // ensureConnected waits if not yet connected — no early exit
+    final socket = await SocketService().ensureConnected(
+      baseUrl: Global.imageUrl,
+      token: token,
+    );
+    if (socket == null || !mounted) return;
+
+    // Clear first to avoid duplicate handlers
     socket.off("chat:message");
     socket.off("exchange:new");
     socket.off("admin:message");

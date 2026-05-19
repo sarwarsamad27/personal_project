@@ -543,6 +543,13 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
     msgController.clear();
     scrollToBottom();
     onTyping("");
+
+    // Optimistic: update thread list immediately so chatList shows latest msg
+    onThreadUpdate?.call(
+      lastMessage: text,
+      timestamp: DateTime.now().toIso8601String(),
+      isSellerMsg: true,
+    );
     final replyPayload = replyTo != null
         ? {
             "replyToId": replyTo!.id,

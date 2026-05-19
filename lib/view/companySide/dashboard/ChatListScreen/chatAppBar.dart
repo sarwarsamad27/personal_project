@@ -25,7 +25,9 @@ class CompanyChatAppBar extends StatelessWidget implements PreferredSizeWidget {
           CircleAvatar(
             radius: 18.r,
             backgroundColor: Colors.white,
-            backgroundImage: p.buyerImage != null ? NetworkImage(p.buyerImage!) : null,
+            backgroundImage: p.buyerImage != null
+                ? NetworkImage(p.buyerImage!)
+                : null,
             child: p.buyerImage == null
                 ? Icon(Icons.person, size: 20.sp, color: AppColor.primaryColor)
                 : null,
@@ -58,12 +60,6 @@ class CompanyChatAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ],
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.more_vert, color: Colors.white),
-          onPressed: () {},
-        ),
-      ],
     );
   }
 

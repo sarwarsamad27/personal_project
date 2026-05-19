@@ -381,6 +381,7 @@ class _WalletState extends State<Wallet> {
                     style: TextStyle(
                       fontSize: 17.sp,
                       fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
                 ],

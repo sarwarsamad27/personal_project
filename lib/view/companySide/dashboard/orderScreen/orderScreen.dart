@@ -15,6 +15,7 @@ import 'package:new_brand/viewModel/providers/orderProvider/pendingToDispatched_
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/paymentTabbar.dart';
 import 'package:provider/provider.dart';
+import 'package:new_brand/models/orders/getMyOrders_model.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 
 class OrderScreen extends StatefulWidget {
@@ -82,6 +83,19 @@ class _OrderScreenState extends State<OrderScreen>
           ).fetchDispatchedOrders(isRefresh: true);
         }
       }
+    });
+
+    // ── New order arrives: add instantly without refresh ─────────────────
+    socket?.on("new_order", (data) {
+      if (!mounted || data == null) return;
+      try {
+        final order = Orders.fromJson(Map<String, dynamic>.from(data as Map));
+        Provider.of<GetMyOrdersProvider>(context, listen: false)
+            .addNewOrder(order);
+        AppToast.success(
+          "New Order: ${order.orderId ?? ''} — Rs ${order.grandTotal ?? 0}",
+        );
+      } catch (_) {}
     });
   }
 

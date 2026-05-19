@@ -63,6 +63,18 @@ class GetMyOrdersProvider extends ChangeNotifier {
     await fetchOrders();
   }
 
+  // Prepend a freshly arrived order to the list (from socket new_order event)
+  void addNewOrder(Orders order) {
+    orderModel ??= GetMyPendingOrders(orders: []);
+    orderModel!.orders ??= [];
+    // Avoid duplicate if socket fires twice
+    final exists = orderModel!.orders!.any((o) => o.sId == order.sId);
+    if (!exists) {
+      orderModel!.orders!.insert(0, order);
+      notifyListeners();
+    }
+  }
+
   void updateOrderInList(
     String orderId, {
     String? status,
