@@ -20,9 +20,7 @@ class MessageBubble extends StatelessWidget {
             backgroundColor: Colors.black,
             iconTheme: const IconThemeData(color: Colors.white),
           ),
-          body: Center(
-            child: InteractiveViewer(child: Image.network(url)),
-          ),
+          body: Center(child: InteractiveViewer(child: Image.network(url))),
         ),
       ),
     );
@@ -31,7 +29,7 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMe = message.fromType == "seller";
-    final hasReply = message.replyToText?.isNotEmpty ?? false;
+    final hasReply = message.replyToId != null;
 
     return _SwipeToReply(
       isMe: isMe,
@@ -132,9 +130,15 @@ class MessageBubble extends StatelessWidget {
                           : SizedBox(
                               width: 200.w,
                               height: 160.h,
-                              child: const Center(child: CircularProgressIndicator()),
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
                             ),
-                      errorBuilder: (_, __, ___) => Icon(Icons.broken_image, size: 40.sp, color: Colors.black38),
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.broken_image,
+                        size: 40.sp,
+                        color: Colors.black38,
+                      ),
                     ),
                   ),
                 ),

@@ -26,7 +26,8 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
     required String lastMessage,
     required String timestamp,
     required bool isSellerMsg,
-  })? onThreadUpdate;
+  })?
+  onThreadUpdate;
 
   CompanyChatProvider({
     required this.threadId,
@@ -49,8 +50,15 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   // ===== Reply-to state =====
   ChatMessage? replyTo;
-  void setReplyTo(ChatMessage msg) { replyTo = msg; notifyListeners(); }
-  void clearReplyTo() { replyTo = null; notifyListeners(); }
+  void setReplyTo(ChatMessage msg) {
+    replyTo = msg;
+    notifyListeners();
+  }
+
+  void clearReplyTo() {
+    replyTo = null;
+    notifyListeners();
+  }
 
   // ===== Typing =====
   Timer? _typingTimer;
@@ -260,15 +268,20 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
 
       // ✅ own echoed message: replace temp
-      if (fromType == "seller" && clientId != null && _pendingClientMap.containsKey(clientId)) {
+      if (fromType == "seller" &&
+          clientId != null &&
+          _pendingClientMap.containsKey(clientId)) {
         final tempId = _pendingClientMap.remove(clientId);
         final serverMsg = ChatMessage.fromJson(Map<String, dynamic>.from(data));
-        final idx = tempId == null ? -1 : messages.indexWhere((m) => m.id == tempId);
+        final idx = tempId == null
+            ? -1
+            : messages.indexWhere((m) => m.id == tempId);
         if (idx != -1) {
           messages[idx] = serverMsg;
           if (tempId != null) _processedMessageIds.remove(tempId);
           if (serverMsg.id != null) _processedMessageIds.add(serverMsg.id!);
-        } else if (serverMsg.id != null && !_processedMessageIds.contains(serverMsg.id!)) {
+        } else if (serverMsg.id != null &&
+            !_processedMessageIds.contains(serverMsg.id!)) {
           messages.insert(0, serverMsg);
           _processedMessageIds.add(serverMsg.id!);
         }
@@ -636,7 +649,9 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
           }
           return;
         }
-        final serverMsg = ChatMessage.fromJson(Map<String, dynamic>.from(resp["data"]));
+        final serverMsg = ChatMessage.fromJson(
+          Map<String, dynamic>.from(resp["data"]),
+        );
         final tId = _pendingClientMap.remove(clientId);
         if (tId == null) return;
         final idx = messages.indexWhere((m) => m.id == tId);
@@ -664,7 +679,10 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
       final token = await LocalStorage.getToken();
       final response = await http.post(
         Uri.parse(Global.ChatUploadImage),
-        headers: {'Content-Type': 'application/json', if (token != null) 'Authorization': 'Bearer $token'},
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
         body: jsonEncode({'image': base64Image}),
       );
 
@@ -679,6 +697,16 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
       final tempId = "temp_$clientId";
       final tempTs = now.toIso8601String();
 
+      final currentReply = replyTo;
+      final replyPayload = currentReply != null
+          ? {
+              "replyToId": currentReply.id,
+              "replyToText": currentReply.text,
+              "replyToFromType": currentReply.fromType,
+              "replyToImageUrl": currentReply.imageUrl,
+            }
+          : <String, dynamic>{};
+
       final tempMsg = ChatMessage(
         id: tempId,
         threadId: threadId,
@@ -686,6 +714,10 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
         text: "",
         timestamp: tempTs,
         imageUrl: imageUrl,
+        replyToId: currentReply?.id,
+        replyToText: currentReply?.text,
+        replyToFromType: currentReply?.fromType,
+        replyToImageUrl: currentReply?.imageUrl,
       );
 
       _pendingClientMap[clientId] = tempId;
@@ -693,6 +725,7 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
       _processedClientIds.add(clientId);
       messages.insert(0, tempMsg);
       notifyListeners();
+      clearReplyTo();
 
       onThreadUpdate?.call(
         lastMessage: "📷 Image",
@@ -709,10 +742,14 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
           "text": "",
           "imageUrl": imageUrl,
           "clientId": clientId,
+          ...replyPayload,
         },
         ack: (resp) {
-          if (resp is! Map || resp["ok"] != true || resp["data"] == null) return;
-          final serverMsg = ChatMessage.fromJson(Map<String, dynamic>.from(resp["data"]));
+          if (resp is! Map || resp["ok"] != true || resp["data"] == null)
+            return;
+          final serverMsg = ChatMessage.fromJson(
+            Map<String, dynamic>.from(resp["data"]),
+          );
           final tId = _pendingClientMap.remove(clientId);
           if (tId == null) return;
           final idx = messages.indexWhere((m) => m.id == tId);
