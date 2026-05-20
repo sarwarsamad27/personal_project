@@ -54,7 +54,7 @@ class CompanyChatThreadsProvider extends ChangeNotifier {
       lastMessage: lastMessage,
       lastMessageTime: lastMessageTime,
       unreadCount: incrementUnread ? list[idx].unreadCount + 1 : list[idx].unreadCount,
-      isExchangeRequest: isExchangeRequest ? true : null,
+      isExchangeRequest: isExchangeRequest,
     );
 
     // Rebuild list: updated thread goes to the top

@@ -15,6 +15,8 @@ class ChatMessage {
   final String? replyToId;
   final String? replyToText;
   final String? replyToFromType;
+  final String? replyToImageUrl;
+  final String? imageUrl;
 
   ChatMessage({
     this.id,
@@ -33,6 +35,8 @@ class ChatMessage {
     this.replyToId,
     this.replyToText,
     this.replyToFromType,
+    this.replyToImageUrl,
+    this.imageUrl,
   });
 
   static String? _extractThreadId(Map<String, dynamic> json) {
@@ -92,6 +96,8 @@ class ChatMessage {
       replyToId: json["replyToId"]?.toString(),
       replyToText: json["replyToText"]?.toString(),
       replyToFromType: json["replyToFromType"]?.toString(),
+      replyToImageUrl: json["replyToImageUrl"]?.toString(),
+      imageUrl: json["imageUrl"]?.toString(),
     );
   }
 }

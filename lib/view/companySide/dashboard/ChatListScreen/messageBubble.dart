@@ -10,6 +10,24 @@ class MessageBubble extends StatelessWidget {
 
   const MessageBubble({super.key, required this.message, this.onReply});
 
+  void _openImage(BuildContext context, String url) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            iconTheme: const IconThemeData(color: Colors.white),
+          ),
+          body: Center(
+            child: InteractiveViewer(child: Image.network(url)),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMe = message.fromType == "seller";
@@ -76,23 +94,57 @@ class MessageBubble extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 2.h),
-                      Text(
-                        message.replyToText ?? "",
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: Colors.black54,
+                      if (message.replyToImageUrl != null)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4.r),
+                          child: Image.network(
+                            message.replyToImageUrl!,
+                            width: 48.w,
+                            height: 48.w,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      else
+                        Text(
+                          message.replyToText ?? "",
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.black54,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
+              // ── Image ──────────────────────────────────────────────
+              if (message.imageUrl != null)
+                GestureDetector(
+                  onTap: () => _openImage(context, message.imageUrl!),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8.r),
+                    child: Image.network(
+                      message.imageUrl!,
+                      width: 200.w,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (_, child, progress) => progress == null
+                          ? child
+                          : SizedBox(
+                              width: 200.w,
+                              height: 160.h,
+                              child: const Center(child: CircularProgressIndicator()),
+                            ),
+                      errorBuilder: (_, __, ___) => Icon(Icons.broken_image, size: 40.sp, color: Colors.black38),
+                    ),
+                  ),
+                ),
+
               // ── Message text ────────────────────────────────────────
-              Text(
-                message.text ?? "",
-                style: TextStyle(fontSize: 14.sp, color: Colors.black87),
-              ),
+              if (message.text != null && message.text!.isNotEmpty)
+                Text(
+                  message.text!,
+                  style: TextStyle(fontSize: 14.sp, color: Colors.black87),
+                ),
               SizedBox(height: 4.h),
               Row(
                 mainAxisSize: MainAxisSize.min,

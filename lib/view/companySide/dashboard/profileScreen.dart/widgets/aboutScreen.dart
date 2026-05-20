@@ -225,7 +225,8 @@ class AboutScreen extends StatelessWidget {
                         ),
                         _FeatureRow(
                           icon: LucideIcons.truck,
-                          text: 'COD delivery via PostEx, Leopards & TCS',
+                          text:
+                              'COD delivery via  Leopards Courier (nationwide coverage)',
                         ),
                         _FeatureRow(
                           icon: LucideIcons.wallet,
@@ -242,7 +243,8 @@ class AboutScreen extends StatelessWidget {
                         ),
                         _FeatureRow(
                           icon: LucideIcons.bell,
-                          text: 'Push notifications for orders & payments',
+                          text:
+                              'Push notifications for orders, stocks, messages, & payments',
                         ),
                       ],
                     ),
@@ -270,33 +272,32 @@ class AboutScreen extends StatelessWidget {
                   SizedBox(height: 14.h),
 
                   // ── Tech Stack ─────────────────────────────────────
-                  _Card(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _CardTitle(
-                          icon: LucideIcons.code2,
-                          title: 'Built With',
-                        ),
-                        SizedBox(height: 12.h),
-                        Wrap(
-                          spacing: 8.w,
-                          runSpacing: 8.h,
-                          children: [
-                            _TechChip(label: 'Flutter'),
-                            _TechChip(label: 'Node.js'),
-                            _TechChip(label: 'MongoDB'),
-                            _TechChip(label: 'Firebase'),
-                            _TechChip(label: 'Twilio'),
-                            _TechChip(label: 'Cloudinary'),
-                            _TechChip(label: 'Socket.IO'),
-                            _TechChip(label: 'PostEx API'),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
+                  // _Card(
+                  //   child: Column(
+                  //     crossAxisAlignment: CrossAxisAlignment.start,
+                  //     children: [
+                  //       _CardTitle(
+                  //         icon: LucideIcons.code2,
+                  //         title: 'Built With',
+                  //       ),
+                  //       SizedBox(height: 12.h),
+                  //       Wrap(
+                  //         spacing: 8.w,
+                  //         runSpacing: 8.h,
+                  //         children: [
+                  //           _TechChip(label: 'Flutter'),
+                  //           _TechChip(label: 'Node.js'),
+                  //           _TechChip(label: 'MongoDB'),
+                  //           _TechChip(label: 'Firebase'),
+                  //           _TechChip(label: 'Twilio'),
+                  //           _TechChip(label: 'Cloudinary'),
+                  //           _TechChip(label: 'Socket.IO'),
+                  //           _TechChip(label: 'PostEx API'),
+                  //         ],
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
                   SizedBox(height: 14.h),
 
                   // ── Legal ──────────────────────────────────────────
@@ -306,10 +307,10 @@ class AboutScreen extends StatelessWidget {
                       children: [
                         _CardTitle(icon: LucideIcons.fileText, title: 'Legal'),
                         SizedBox(height: 10.h),
-                        _LegalRow(label: 'Business Name', value: 'Shookoo.Pk'),
+                        _LegalRow(label: 'Business Name', value: 'Shookoo'),
                         _LegalRow(label: 'Type', value: 'Sole Proprietorship'),
                         _LegalRow(label: 'City', value: 'Karachi, Pakistan'),
-                        _LegalRow(label: 'Website', value: 'www.shookoo.pk'),
+                        // _LegalRow(label: 'Website', value: 'www.shookoo.pk'),
                       ],
                     ),
                   ),

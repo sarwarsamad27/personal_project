@@ -50,6 +50,7 @@ class Global {
   // static var exchangeDecision = "${BaseUrl}/exchange";
   static var companyChatThreads = "$BaseUrl/company/chat/threads";
   static var companyChatMessages = "$BaseUrl/company/chat/messages";
+  static var ChatUploadImage = "${imageUrl}/api/chat/upload-image";
   static var generateInvoicePdf = "${BaseUrl}/generate/invoice/pdf";
   static var analyzeProductImage = "${BaseUrl}/analyze-product-image";
   static var AcceptOrder = "${BaseUrl}/accept/order";

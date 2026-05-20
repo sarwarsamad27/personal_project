@@ -21,7 +21,6 @@ class CompanyExchangeListScreen extends StatefulWidget {
 class _CompanyExchangeListScreenState extends State<CompanyExchangeListScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tab;
-  bool _hasLoaded = false;
 
   static const _tabs = [
     _TabDef("All", null),
@@ -36,19 +35,13 @@ class _CompanyExchangeListScreenState extends State<CompanyExchangeListScreen>
   void initState() {
     super.initState();
     _tab = TabController(length: _tabs.length, vsync: this);
+
+    // Rebuild when tab changes (client-side filter only — no API call)
+    _tab.addListener(() => setState(() {}));
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<CompanyExchangeProvider>();
-      // Only fetch if not already loaded — prevents reload on every navigation
-      if (!_hasLoaded && provider.requests.isEmpty) {
-        provider.fetchRequests();
-        _hasLoaded = true;
-      }
-    });
-    _tab.addListener(() {
-      if (!_tab.indexIsChanging) {
-        final filter = _tabs[_tab.index].statusFilter;
-        context.read<CompanyExchangeProvider>().fetchRequests(status: filter);
-      }
+      // Only fetch once — provider guards with hasFetched
+      context.read<CompanyExchangeProvider>().fetchRequests();
     });
   }
 
@@ -94,10 +87,11 @@ class _CompanyExchangeListScreenState extends State<CompanyExchangeListScreen>
             );
           }
 
+          // All filtering is now client-side — no API call on tab change
+          final tabDef = _tabs[_tab.index];
           var requests = provider.requests;
 
-          // In progress filter (client-side)
-          if (_tabs[_tab.index].isInProgress) {
+          if (tabDef.isInProgress) {
             const inProgressStatuses = [
               "ReturnShipped",
               "ReturnReceived",
@@ -108,6 +102,10 @@ class _CompanyExchangeListScreenState extends State<CompanyExchangeListScreen>
             ];
             requests = requests
                 .where((r) => inProgressStatuses.contains(r.status))
+                .toList();
+          } else if (tabDef.statusFilter != null) {
+            requests = requests
+                .where((r) => r.status == tabDef.statusFilter)
                 .toList();
           }
 
@@ -133,7 +131,10 @@ class _CompanyExchangeListScreenState extends State<CompanyExchangeListScreen>
                       exchangeId: requests[i].id ?? "",
                     ),
                   ),
-                ).then((_) => provider.refresh()),
+                ).then((_) {
+                    // Only refresh if an action was taken in detail screen
+                    if (mounted) provider.fetchRequests(forceRefresh: true);
+                  }),
               ),
             ),
           );

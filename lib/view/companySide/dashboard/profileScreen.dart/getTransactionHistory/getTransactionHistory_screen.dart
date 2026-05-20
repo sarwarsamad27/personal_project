@@ -99,14 +99,17 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     if (!_isDebit(tx)) {
       if (m.contains('order delivered')) return 'Order Credited';
       if (m.contains('refund')) return 'Refund Received';
-      if (m.contains('jazzcash') || m.contains('easypaisa')) return 'Top-Up ($method)';
+      if (m.contains('jazzcash') || m.contains('easypaisa'))
+        return 'Top-Up ($method)';
       if (method.isNotEmpty) return method;
       return 'Amount Credited';
     }
 
     // ── Debits ───────────────────────────────────────────────────────────────
-    if (m.contains('return courier') || m.contains('courier fee')) return 'Return Courier Fee';
-    if (m.contains('refund reversal') || m.contains('reversal')) return 'Refund Reversal';
+    if (m.contains('return courier') || m.contains('courier fee'))
+      return 'Return Courier Fee';
+    if (m.contains('refund reversal') || m.contains('reversal'))
+      return 'Refund Reversal';
     if (m.contains('refund')) return 'Refund';
     if (method.isNotEmpty) return 'Withdrawal ($method)';
     return 'Withdrawal';
@@ -169,7 +172,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       builder: (context, provider, _) {
         if (provider.isLoading) {
           return Center(
-            child: SpinKitThreeBounce(color: AppColor.primaryColor, size: 30.0),
+            child: SpinKitThreeBounce(color: AppColor.whiteColor, size: 30.0),
           );
         }
 

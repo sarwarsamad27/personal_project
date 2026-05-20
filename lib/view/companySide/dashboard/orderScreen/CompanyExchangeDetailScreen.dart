@@ -707,6 +707,16 @@ class _CompanyExchangeDetailScreenState
     );
   }
 
+  // ── Full-screen image viewer ──────────────────────────────────
+  void _openFullScreen(BuildContext ctx, List<String> images, int initial) {
+    final urls = images.map((img) => img.startsWith("http")
+        ? img
+        : "${Global.imageUrl}/$img").toList();
+
+    Navigator.push(ctx, MaterialPageRoute(builder: (_) =>
+        _FullScreenImages(urls: urls, initialIndex: initial)));
+  }
+
   // ── Images Card ───────────────────────────────────────────────
   Widget _buildImagesCard(String title, List<String> images) {
     return _card(
@@ -726,17 +736,20 @@ class _CompanyExchangeDetailScreenState
             final url = images[i].startsWith("http")
                 ? images[i]
                 : "${Global.imageUrl}/${images[i]}";
-            return ClipRRect(
-              borderRadius: BorderRadius.circular(8.r),
-              child: Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey[200],
-                  child: Icon(
-                    Icons.broken_image,
-                    color: Colors.grey,
-                    size: 24.sp,
+            return GestureDetector(
+              onTap: () => _openFullScreen(context, images, i),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8.r),
+                child: Image.network(
+                  url,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: Colors.grey[200],
+                    child: Icon(
+                      Icons.broken_image,
+                      color: Colors.grey,
+                      size: 24.sp,
+                    ),
                   ),
                 ),
               ),
@@ -1145,6 +1158,74 @@ class _RadioChip extends StatelessWidget {
             fontSize: 13.sp,
             fontWeight: FontWeight.w600,
             color: selected ? AppColor.primaryColor : Colors.grey[600],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Full-screen swipeable image viewer ───────────────────────────────────────
+class _FullScreenImages extends StatefulWidget {
+  final List<String> urls;
+  final int initialIndex;
+  const _FullScreenImages({required this.urls, required this.initialIndex});
+
+  @override
+  State<_FullScreenImages> createState() => _FullScreenImagesState();
+}
+
+class _FullScreenImagesState extends State<_FullScreenImages> {
+  late PageController _pageCtrl;
+  late int _current;
+
+  @override
+  void initState() {
+    super.initState();
+    _current = widget.initialIndex;
+    _pageCtrl = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(
+          "${_current + 1} / ${widget.urls.length}",
+          style: const TextStyle(color: Colors.white70, fontSize: 14),
+        ),
+        centerTitle: true,
+      ),
+      body: PageView.builder(
+        controller: _pageCtrl,
+        itemCount: widget.urls.length,
+        onPageChanged: (i) => setState(() => _current = i),
+        itemBuilder: (_, i) => InteractiveViewer(
+          minScale: 0.8,
+          maxScale: 4.0,
+          child: Center(
+            child: Image.network(
+              widget.urls[i],
+              fit: BoxFit.contain,
+              loadingBuilder: (_, child, progress) => progress == null
+                  ? child
+                  : const Center(
+                      child: CircularProgressIndicator(color: Colors.white54)),
+              errorBuilder: (_, __, ___) => const Icon(
+                Icons.broken_image,
+                color: Colors.white38,
+                size: 64,
+              ),
+            ),
           ),
         ),
       ),

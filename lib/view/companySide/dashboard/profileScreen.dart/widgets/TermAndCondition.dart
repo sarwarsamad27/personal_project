@@ -21,7 +21,7 @@ class TermAndConditionScreen extends StatelessWidget {
         ),
         title: Text(
           'Terms & Conditions',
-          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700),
+          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700,color: Colors.white),
         ),
       ),
       body: SingleChildScrollView(
@@ -82,7 +82,7 @@ class TermAndConditionScreen extends StatelessWidget {
               number: '2',
               title: 'Seller Eligibility',
               content:
-                  'To register as a seller on Shookoo, you must:\n\n• Be at least 18 years of age\n• Have a valid CNIC (Computerized National Identity Card)\n• Have a valid Pakistani mobile number\n• Have a valid bank account or mobile wallet (JazzCash/EasyPaisa)\n• Provide accurate and truthful information during registration',
+                  'To register as a seller on Shookoo, you must:\n• Have a valid Pakistani mobile number\n• Have a valid  mobile wallet (JazzCash/EasyPaisa)\n• Provide accurate and truthful information during registration',
             ),
 
             _Section(
@@ -110,7 +110,7 @@ class TermAndConditionScreen extends StatelessWidget {
               number: '6',
               title: 'Returns, Refunds & Exchanges',
               content:
-                  'Sellers must honor Shookoo\'s return and exchange policy:\n\n• Customers may request returns/exchanges within 7 days of delivery\n• Valid reasons include: defective product, wrong item delivered, or significant mismatch from description\n• Sellers are responsible for the cost of return shipping in case of seller error\n• Refunds are processed after the returned product is inspected\n• Repeated return complaints may affect your seller rating',
+                  'Sellers must honor Shookoo\'s return and exchange policy:\n\n• Customers may request returns/exchanges within 10 days of delivery\n• Valid reasons include: defective product, wrong item delivered, or significant mismatch from description\n• Sellers are responsible for the cost of return shipping in case of seller error\n• Refunds are processed after the returned product is inspected\n• Repeated return complaints may affect your seller rating',
             ),
 
             _Section(

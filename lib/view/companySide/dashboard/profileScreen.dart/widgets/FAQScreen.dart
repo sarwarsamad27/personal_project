@@ -29,7 +29,7 @@ class _FAQScreenState extends State<FAQScreen> {
       'category': 'Account',
       'q': 'How do I register as a seller on Shookoo?',
       'a':
-          'Download the Shookoo Seller app, tap "Sign Up", fill in your details including name, email, phone number, and CNIC. After email verification, complete your store profile and you\'re ready to start selling.',
+          'Download the Shookoo Store app, tap "Sign Up", fill in your details including name, email, phone number. After login, complete your store profile and you\'re ready to start selling.',
     },
     {
       'category': 'Account',
@@ -81,7 +81,7 @@ class _FAQScreenState extends State<FAQScreen> {
       'category': 'Payments',
       'q': 'When will I receive payment for delivered orders?',
       'a':
-          'Payments are credited to your Shookoo wallet within 2-5 business days after successful delivery confirmation. You can then withdraw to your JazzCash, EasyPaisa, or bank account.',
+          'Payments are credited to your Shookoo wallet within 2-5 business days after successful delivery confirmation. You can then withdraw to your JazzCash, EasyPaisa.',
     },
     {
       'category': 'Payments',
@@ -93,7 +93,7 @@ class _FAQScreenState extends State<FAQScreen> {
       'category': 'Payments',
       'q': 'What withdrawal methods are available?',
       'a':
-          'You can withdraw to JazzCash, EasyPaisa, or a bank account. Make sure your payment details are correct before requesting a withdrawal.',
+          'You can withdraw to JazzCash, EasyPaisa. Make sure your payment details are correct before requesting a withdrawal.',
     },
     {
       'category': 'Payments',
@@ -105,7 +105,7 @@ class _FAQScreenState extends State<FAQScreen> {
       'category': 'Payments',
       'q': 'What commission does Shookoo charge?',
       'a':
-          'Commission rates are communicated at the time of onboarding and depend on the product category. The commission is automatically deducted before crediting earnings to your wallet.',
+          'Commission rates are communicated at the time of onboarding. The commission is automatically deducted before crediting earnings to your wallet.',
     },
 
     // Shipping
@@ -113,25 +113,24 @@ class _FAQScreenState extends State<FAQScreen> {
       'category': 'Shipping',
       'q': 'Which courier services does Shookoo use?',
       'a':
-          'Shookoo is integrated with PostEx, Leopards Courier, and TCS for nationwide delivery. COD (Cash on Delivery) is available through all courier partners.',
+          'Shookoo is integrated with Leopards Courier for nationwide delivery. COD (Cash on Delivery) is available through all courier partners.',
     },
     {
       'category': 'Shipping',
       'q': 'How are shipping charges calculated?',
-      'a':
-          'Shipping charges are based on package weight, dimensions, and delivery location. Charges are typically borne by the customer unless you offer free shipping.',
+      'a': 'Shipping charges are based on  delivery location. ',
     },
-    {
-      'category': 'Shipping',
-      'q': 'Can I choose which courier to use for each order?',
-      'a':
-          'Currently, Shookoo automatically assigns the courier based on availability and your pickup location. This feature will be customizable in future updates.',
-    },
+    // {
+    //   'category': 'Shipping',
+    //   'q': 'Can I choose which courier to use for each order?',
+    //   'a':
+    //       'Currently, Shookoo automatically assigns the courier based on availability and your pickup location. This feature will be customizable in future updates.',
+    // },
     {
       'category': 'Shipping',
       'q': 'How do I track my shipments?',
       'a':
-          'Once an order is dispatched, a tracking number is generated automatically. You and the customer can track the shipment in real-time through the app.',
+          'Once an order is drop off to leopard branch and assigned to dispatch, a tracking number is generated automatically. You and the customer can track the shipment in real-time through the app.',
     },
 
     // Returns
@@ -139,7 +138,7 @@ class _FAQScreenState extends State<FAQScreen> {
       'category': 'Returns',
       'q': 'What is Shookoo\'s return policy?',
       'a':
-          'Customers can request returns or exchanges within 7 days of delivery for valid reasons such as defective products, wrong items, or significant mismatch from description.',
+          'Customers can request returns or exchanges within 10 days of delivery for valid reasons such as defective products, wrong items, or significant mismatch from description.',
     },
     {
       'category': 'Returns',

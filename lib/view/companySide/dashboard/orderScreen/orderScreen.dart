@@ -6,6 +6,7 @@ import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/resources/socketServices.dart';
 import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/view/companySide/dashboard/orderScreen/leopards_tracking_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/orderDetailScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
@@ -804,6 +805,26 @@ class _OrderScreenState extends State<OrderScreen>
                             context,
                             MaterialPageRoute(
                               builder: (_) => OrderDetailScreen(order: order),
+                            ),
+                          ),
+                          outlined: false,
+                        ),
+                      ],
+
+                      // Track button for dispatched orders
+                      if (!isPendingTab &&
+                          order.trackNumber != null &&
+                          (order.trackNumber as String).isNotEmpty) ...[
+                        SizedBox(width: 8.w),
+                        _buildActionButton(
+                          label: "Track",
+                          icon: Icons.location_on_rounded,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => LeopardsTrackingScreen(
+                                trackNumber: order.trackNumber as String,
+                              ),
                             ),
                           ),
                           outlined: false,

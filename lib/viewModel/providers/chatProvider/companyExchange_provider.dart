@@ -9,21 +9,22 @@ class CompanyExchangeProvider extends ChangeNotifier {
 
   bool loading = false;
   bool processing = false;
+  bool hasFetched = false;
   String? errorMessage;
 
   ExchangeRequestListModel? listModel;
-  String? _currentFilter; // null = all
 
   List<ExchangeRequest> get requests => listModel?.requests ?? [];
 
-  // ── Fetch list ─────────────────────────────────────────────────
-  Future<void> fetchRequests({String? status}) async {
-    _currentFilter = status;
+  // ── Fetch ALL requests once — client-side filtering on tabs ─────
+  Future<void> fetchRequests({bool forceRefresh = false}) async {
+    if (hasFetched && !forceRefresh) return;
     loading = true;
     errorMessage = null;
     notifyListeners();
     try {
-      listModel = await _repo.listRequests(status: status);
+      listModel = await _repo.listRequests(status: null); // always fetch all
+      hasFetched = true;
     } catch (e) {
       errorMessage = "Failed: $e";
     }
@@ -31,7 +32,7 @@ class CompanyExchangeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> refresh() => fetchRequests(status: _currentFilter);
+  Future<void> refresh() => fetchRequests(forceRefresh: true);
 
   // ── Accept / Deny ──────────────────────────────────────────────
   Future<bool> decide({
@@ -48,7 +49,7 @@ class CompanyExchangeProvider extends ChangeNotifier {
       resolutionType: resolutionType,
       note: note,
     );
-    if (ok) await refresh();
+    if (ok) await fetchRequests(forceRefresh: true);
     processing = false;
     notifyListeners();
     return ok;
@@ -59,7 +60,7 @@ class CompanyExchangeProvider extends ChangeNotifier {
     processing = true;
     notifyListeners();
     final ok = await _repo.markReceived(exchangeId);
-    if (ok) await refresh();
+    if (ok) await fetchRequests(forceRefresh: true);
     processing = false;
     notifyListeners();
     return ok;
@@ -70,7 +71,7 @@ class CompanyExchangeProvider extends ChangeNotifier {
     processing = true;
     notifyListeners();
     final ok = await _repo.startInspection(exchangeId);
-    if (ok) await refresh();
+    if (ok) await fetchRequests(forceRefresh: true);
     processing = false;
     notifyListeners();
     return ok;
@@ -89,7 +90,7 @@ class CompanyExchangeProvider extends ChangeNotifier {
       result: result,
       note: note,
     );
-    if (ok) await refresh();
+    if (ok) await fetchRequests(forceRefresh: true);
     processing = false;
     notifyListeners();
     return ok;
@@ -109,7 +110,7 @@ Future<bool> shipReplacement({
     trackingNumber: trackingNumber,
     courierName: courierName,
   );
-  if (ok) await refresh();
+  if (ok) await fetchRequests(forceRefresh: true);
   processing = false;
   notifyListeners();
   return ok;
@@ -126,7 +127,7 @@ Future<bool> shipReplacement({
       exchangeId: exchangeId,
       refundAmount: amount,
     );
-    if (ok) await refresh();
+    if (ok) await fetchRequests(forceRefresh: true);
     processing = false;
     notifyListeners();
     return ok;
@@ -137,7 +138,7 @@ Future<bool> shipReplacement({
     processing = true;
     notifyListeners();
     final ok = await _repo.markCompleted(exchangeId);
-    if (ok) await refresh();
+    if (ok) await fetchRequests(forceRefresh: true);
     processing = false;
     notifyListeners();
     return ok;

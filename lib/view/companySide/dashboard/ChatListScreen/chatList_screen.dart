@@ -114,16 +114,18 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
       if (!mounted || data is! Map) return;
       final tId = data["threadId"]?.toString();
       final text = (data["text"] ?? "").toString();
+      final imageUrl = data["imageUrl"]?.toString();
+      final displayText = text.isNotEmpty ? text : (imageUrl != null ? "📷 Image" : "");
       final ts = (data["timestamp"] ?? data["createdAt"] ?? DateTime.now().toIso8601String()).toString();
       final fromType = data["fromType"]?.toString();
 
       if (tId != null) {
         context.read<CompanyChatThreadsProvider>().onNewMessage(
           threadId: tId,
-          lastMessage: text,
+          lastMessage: displayText,
           lastMessageTime: ts,
-          // Only increment unread if the message is FROM the buyer (not seller's own)
           incrementUnread: fromType != "seller",
+          isExchangeRequest: false,
         );
       }
     });

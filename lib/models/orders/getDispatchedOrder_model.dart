@@ -49,7 +49,7 @@ class GetDispatchedOrderModel {
 class Orders {
   String? sId;
   String? buyerId;
-   String? orderId;
+  String? orderId;
   String? profileId;
   List<Products>? products;
   int? shipmentCharges;
@@ -59,25 +59,30 @@ class Orders {
   String? createdAt;
   String? updatedAt;
   int? iV;
+  String? trackNumber;
+  String? slipLink;
 
-  Orders(
-      {this.sId,
-      this.buyerId,
-      this.profileId,
-      this.products,
-       this.orderId,
-      this.shipmentCharges,
-      this.grandTotal,
-      this.buyerDetails,
-      this.status,
-      this.createdAt,
-      this.updatedAt,
-      this.iV});
+  Orders({
+    this.sId,
+    this.buyerId,
+    this.profileId,
+    this.products,
+    this.orderId,
+    this.shipmentCharges,
+    this.grandTotal,
+    this.buyerDetails,
+    this.status,
+    this.createdAt,
+    this.updatedAt,
+    this.iV,
+    this.trackNumber,
+    this.slipLink,
+  });
 
   Orders.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     buyerId = json['buyerId'];
-     orderId = json['orderId'];
+    orderId = json['orderId'];
     profileId = json['profileId'];
     if (json['products'] != null) {
       products = <Products>[];
@@ -94,6 +99,8 @@ class Orders {
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     iV = json['__v'];
+    trackNumber = json['trackNumber'];
+    slipLink = json['slipLink'];
   }
 
   Map<String, dynamic> toJson() {
@@ -113,6 +120,8 @@ class Orders {
     data['createdAt'] = this.createdAt;
     data['updatedAt'] = this.updatedAt;
     data['__v'] = this.iV;
+    data['trackNumber'] = trackNumber;
+    data['slipLink'] = slipLink;
     return data;
   }
 }

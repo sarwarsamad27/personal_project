@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/chatThread_provider.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -32,6 +33,17 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     OrderScreen(),
     ProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fetch orders on startup so navbar badge shows immediately
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<GetMyOrdersProvider>(context, listen: false).fetchOrders();
+      Provider.of<GetDispatchedOrderProvider>(context, listen: false)
+          .fetchDispatchedOrders();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

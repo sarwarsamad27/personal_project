@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -58,8 +59,10 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
   // ===== Dedupe =====
   final Set<String> _processedMessageIds = {};
   final Set<String> _processedClientIds = {};
+  final Map<String, String> _pendingClientMap = {};
   final Map<String, DateTime> _recentKeys = {};
   bool _listenersBound = false;
+  bool isSendingImage = false;
 
   // =========================
   // Init / Dispose
@@ -247,13 +250,31 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
       final incomingTs = (data["timestamp"] ?? data["createdAt"])?.toString();
       final incomingText = data["text"]?.toString();
 
-      // ✅ dedupe
+      // ✅ dedupe by fingerprint
       final fp = _key(fromType: fromType, text: incomingText, ts: incomingTs);
       if (_isRecentDup(fp)) return;
 
       if (fromType == "seller") {
         final lk = _loose(fromType: fromType, text: incomingText);
         if (_isRecentDup(lk)) return;
+      }
+
+      // ✅ own echoed message: replace temp
+      if (fromType == "seller" && clientId != null && _pendingClientMap.containsKey(clientId)) {
+        final tempId = _pendingClientMap.remove(clientId);
+        final serverMsg = ChatMessage.fromJson(Map<String, dynamic>.from(data));
+        final idx = tempId == null ? -1 : messages.indexWhere((m) => m.id == tempId);
+        if (idx != -1) {
+          messages[idx] = serverMsg;
+          if (tempId != null) _processedMessageIds.remove(tempId);
+          if (serverMsg.id != null) _processedMessageIds.add(serverMsg.id!);
+        } else if (serverMsg.id != null && !_processedMessageIds.contains(serverMsg.id!)) {
+          messages.insert(0, serverMsg);
+          _processedMessageIds.add(serverMsg.id!);
+        }
+        _processedClientIds.add(clientId);
+        notifyListeners();
+        return;
       }
 
       if (clientId != null && _processedClientIds.contains(clientId)) return;
@@ -271,10 +292,12 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
 
       // Keep thread list last-message in sync for both directions
+      final displayText = (newMessage.text?.isNotEmpty == true)
+          ? newMessage.text!
+          : (newMessage.imageUrl != null ? "📷 Image" : "");
       onThreadUpdate?.call(
-        lastMessage: newMessage.text ?? '',
-        timestamp:
-            newMessage.timestamp ?? DateTime.now().toIso8601String(),
+        lastMessage: displayText,
+        timestamp: newMessage.timestamp ?? DateTime.now().toIso8601String(),
         isSellerMsg: newMessage.fromType == "seller",
       );
 
@@ -369,6 +392,11 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
             exchangeData: m.exchangeData,
             refundData: m.refundData,
             productCard: m.productCard,
+            replyToId: m.replyToId,
+            replyToText: m.replyToText,
+            replyToFromType: m.replyToFromType,
+            replyToImageUrl: m.replyToImageUrl,
+            imageUrl: m.imageUrl,
           );
           break;
         }
@@ -399,6 +427,11 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
             exchangeData: m.exchangeData,
             refundData: m.refundData,
             productCard: m.productCard,
+            replyToId: m.replyToId,
+            replyToText: m.replyToText,
+            replyToFromType: m.replyToFromType,
+            replyToImageUrl: m.replyToImageUrl,
+            imageUrl: m.imageUrl,
           );
         }
       }
@@ -539,25 +572,52 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
       AppToast.error("Socket not connected");
       return;
     }
-    final clientId = DateTime.now().millisecondsSinceEpoch.toString();
-    msgController.clear();
-    scrollToBottom();
-    onTyping("");
 
-    // Optimistic: update thread list immediately so chatList shows latest msg
-    onThreadUpdate?.call(
-      lastMessage: text,
-      timestamp: DateTime.now().toIso8601String(),
-      isSellerMsg: true,
-    );
-    final replyPayload = replyTo != null
+    final now = DateTime.now();
+    final clientId = now.millisecondsSinceEpoch.toString();
+    final tempId = "temp_$clientId";
+    final tempTs = now.toIso8601String();
+
+    // ✅ Capture reply BEFORE clearing
+    final currentReply = replyTo;
+    final replyPayload = currentReply != null
         ? {
-            "replyToId": replyTo!.id,
-            "replyToText": replyTo!.text,
-            "replyToFromType": replyTo!.fromType,
+            "replyToId": currentReply.id,
+            "replyToText": currentReply.text,
+            "replyToFromType": currentReply.fromType,
+            "replyToImageUrl": currentReply.imageUrl,
           }
         : <String, dynamic>{};
+
+    // ✅ Optimistic temp message with reply context
+    final tempMsg = ChatMessage(
+      id: tempId,
+      threadId: threadId,
+      fromType: "seller",
+      text: text,
+      timestamp: tempTs,
+      replyToId: currentReply?.id,
+      replyToText: currentReply?.text,
+      replyToFromType: currentReply?.fromType,
+      replyToImageUrl: currentReply?.imageUrl,
+    );
+
+    _pendingClientMap[clientId] = tempId;
+    _processedMessageIds.add(tempId);
+    _processedClientIds.add(clientId);
+    messages.insert(0, tempMsg);
+
+    msgController.clear();
+    onTyping("");
     clearReplyTo();
+
+    onThreadUpdate?.call(
+      lastMessage: text,
+      timestamp: tempTs,
+      isSellerMsg: true,
+    );
+
+    notifyListeners();
 
     socket.emitWithAck(
       "chat:send",
@@ -570,10 +630,105 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
         ...replyPayload,
       },
       ack: (resp) {
-        if (resp is Map && resp["ok"] != true)
-          AppToast.error(resp["message"]?.toString() ?? "Failed to send");
+        if (resp is! Map || resp["ok"] != true || resp["data"] == null) {
+          if (resp is Map && resp["ok"] != true) {
+            AppToast.error(resp["message"]?.toString() ?? "Failed to send");
+          }
+          return;
+        }
+        final serverMsg = ChatMessage.fromJson(Map<String, dynamic>.from(resp["data"]));
+        final tId = _pendingClientMap.remove(clientId);
+        if (tId == null) return;
+        final idx = messages.indexWhere((m) => m.id == tId);
+        if (idx != -1) {
+          messages[idx] = serverMsg;
+          _processedMessageIds.remove(tId);
+          if (serverMsg.id != null) _processedMessageIds.add(serverMsg.id!);
+        }
+        notifyListeners();
       },
     );
+  }
+
+  Future<void> sendImage(File image) async {
+    final socket = SocketService().socket;
+    if (socket == null || !socket.connected) return;
+
+    isSendingImage = true;
+    notifyListeners();
+
+    try {
+      final bytes = await image.readAsBytes();
+      final base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+
+      final token = await LocalStorage.getToken();
+      final response = await http.post(
+        Uri.parse(Global.ChatUploadImage),
+        headers: {'Content-Type': 'application/json', if (token != null) 'Authorization': 'Bearer $token'},
+        body: jsonEncode({'image': base64Image}),
+      );
+
+      if (response.statusCode != 200) return;
+      final data = jsonDecode(response.body);
+      if (data['success'] != true) return;
+
+      final imageUrl = data['url'] as String;
+
+      final now = DateTime.now();
+      final clientId = "img_${now.millisecondsSinceEpoch}";
+      final tempId = "temp_$clientId";
+      final tempTs = now.toIso8601String();
+
+      final tempMsg = ChatMessage(
+        id: tempId,
+        threadId: threadId,
+        fromType: "seller",
+        text: "",
+        timestamp: tempTs,
+        imageUrl: imageUrl,
+      );
+
+      _pendingClientMap[clientId] = tempId;
+      _processedMessageIds.add(tempId);
+      _processedClientIds.add(clientId);
+      messages.insert(0, tempMsg);
+      notifyListeners();
+
+      onThreadUpdate?.call(
+        lastMessage: "📷 Image",
+        timestamp: now.toIso8601String(),
+        isSellerMsg: true,
+      );
+
+      socket.emitWithAck(
+        "chat:send",
+        {
+          "threadId": threadId,
+          "toType": toType,
+          "toId": toId,
+          "text": "",
+          "imageUrl": imageUrl,
+          "clientId": clientId,
+        },
+        ack: (resp) {
+          if (resp is! Map || resp["ok"] != true || resp["data"] == null) return;
+          final serverMsg = ChatMessage.fromJson(Map<String, dynamic>.from(resp["data"]));
+          final tId = _pendingClientMap.remove(clientId);
+          if (tId == null) return;
+          final idx = messages.indexWhere((m) => m.id == tId);
+          if (idx != -1) {
+            messages[idx] = serverMsg;
+            _processedMessageIds.remove(tId);
+            if (serverMsg.id != null) _processedMessageIds.add(serverMsg.id!);
+          }
+          notifyListeners();
+        },
+      );
+    } catch (_) {
+    } finally {
+      isSendingImage = false;
+      notifyListeners();
+    }
   }
 
   // =========================
