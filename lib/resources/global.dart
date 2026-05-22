@@ -5,8 +5,8 @@ class Global {
     static var imageUrl = "https://seller-and-buyer-backend.onrender.com";
   // static var imageUrl = "http://192.168.30.124:5000";
   // static var BaseUrl = "http://192.168.30.124:5000/api/auth";
-  // static var BaseUrl = "http://10.0.2.2:5000/api/auth";
-  // static var imageUrl = "http://10.0.2.2:5000";
+//   static var BaseUrl = "http://10.0.2.2:5000/api/auth";
+//   static var imageUrl = "http://10.0.2.2:5000";
   static var SignUp = "${BaseUrl}/signup";
   static var Login = "${BaseUrl}/login";
   static var GoogleLogin = "${BaseUrl}/google/login";
@@ -51,6 +51,8 @@ class Global {
   static var companyChatThreads = "$BaseUrl/company/chat/threads";
   static var companyChatMessages = "$BaseUrl/company/chat/messages";
   static var ChatUploadImage = "${imageUrl}/api/chat/upload-image";
+  static String downloadSlip(String trackNumber) =>
+      "${imageUrl}/api/chat/download-slip/$trackNumber";
   static var generateInvoicePdf = "${BaseUrl}/generate/invoice/pdf";
   static var analyzeProductImage = "${BaseUrl}/analyze-product-image";
   static var AcceptOrder = "${BaseUrl}/accept/order";

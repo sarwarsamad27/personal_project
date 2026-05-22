@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:http/http.dart' as http;
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
@@ -7,10 +9,11 @@ import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customImageContainer.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/acceptOrder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../models/orders/getMyOrders_model.dart';
@@ -24,6 +27,53 @@ class OrderDetailScreen extends StatefulWidget {
 }
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
+  bool _downloadingSlip = false;
+
+  Future<void> _downloadSlip(String url) async {
+    if (_downloadingSlip) return;
+    setState(() => _downloadingSlip = true);
+    try {
+      final orderTrackNo = widget.order.trackNumber ?? '';
+      // Use backend endpoint — avoids Cloudinary auth issues
+      final downloadUrl = orderTrackNo.isNotEmpty
+          ? Global.downloadSlip(orderTrackNo)
+          : Global.getImageUrl(url.trim());
+
+      final response = await http.get(
+        Uri.parse(downloadUrl),
+        headers: {"Accept": "application/pdf"},
+      );
+      if (response.statusCode != 200) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Download failed (${response.statusCode})")),
+          );
+        }
+        return;
+      }
+      final dir = await getApplicationDocumentsDirectory();
+      final trackNo = orderTrackNo.isNotEmpty
+          ? orderTrackNo
+          : DateTime.now().millisecondsSinceEpoch.toString();
+      final file = File("${dir.path}/shipping_slip_$trackNo.pdf");
+      await file.writeAsBytes(response.bodyBytes, flush: true);
+      final result = await OpenFilex.open(file.path);
+      if (result.type != ResultType.done && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Saved to Documents folder")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Download error: $e")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _downloadingSlip = false);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -141,19 +191,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               SizedBox(height: 12.h),
                             ],
                             CustomButton(
-                              text: "📦 Download Shipping Slip",
-                              onTap: () async {
-                                // Resolve relative paths (/uploads/...) to full URL
-                                final resolved =
-                                    Global.getImageUrl(slip.trim());
-                                final uri = Uri.parse(resolved);
-                                if (await canLaunchUrl(uri)) {
-                                  await launchUrl(
-                                    uri,
-                                    mode: LaunchMode.externalApplication,
-                                  );
-                                }
-                              },
+                              text: _downloadingSlip
+                                  ? "Downloading..."
+                                  : "📦 Download Shipping Slip",
+                              onTap: _downloadingSlip
+                                  ? null
+                                  : () => _downloadSlip(slip),
                             ),
                           ],
                         );

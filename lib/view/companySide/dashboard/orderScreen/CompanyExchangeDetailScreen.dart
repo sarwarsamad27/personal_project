@@ -1,16 +1,19 @@
 // view/companySide/exchange/company_exchange_detail_screen.dart
 // ignore_for_file: deprecated_member_use
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:http/http.dart' as http;
 import 'package:new_brand/models/chatThread/exchangeRequestModel.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/companyExchange_provider.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/leopards_tracking_screen.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/toast.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class CompanyExchangeDetailScreen extends StatefulWidget {
   final String exchangeId;
@@ -31,6 +34,33 @@ class CompanyExchangeDetailScreen extends StatefulWidget {
 class _CompanyExchangeDetailScreenState
     extends State<CompanyExchangeDetailScreen> {
   ExchangeRequest? _exchange;
+  bool _downloadingSlip = false;
+
+  Future<void> _downloadReplacementSlip(String trackNumber) async {
+    if (_downloadingSlip) return;
+    setState(() => _downloadingSlip = true);
+    try {
+      final response = await http.get(
+        Uri.parse(Global.downloadSlip(trackNumber)),
+        headers: {"Accept": "application/pdf"},
+      );
+      if (response.statusCode != 200) {
+        if (mounted) AppToast.error("Download failed (${response.statusCode})");
+        return;
+      }
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File("${dir.path}/replacement_slip_$trackNumber.pdf");
+      await file.writeAsBytes(response.bodyBytes, flush: true);
+      final result = await OpenFilex.open(file.path);
+      if (result.type != ResultType.done && mounted) {
+        AppToast.error("Saved to Documents folder");
+      }
+    } catch (e) {
+      if (mounted) AppToast.error("Download error: $e");
+    } finally {
+      if (mounted) setState(() => _downloadingSlip = false);
+    }
+  }
 
   @override
   void initState() {
@@ -95,6 +125,11 @@ class _CompanyExchangeDetailScreenState
                         _buildInspectionResultSection(ex, provider),
                       if (ex.isApprovedInspection)
                         _buildResolutionSection(ex, provider),
+                      if (ex.isReplacementShipped &&
+                          ex.replacementTrackingNumber?.isNotEmpty == true) ...[
+                        SizedBox(height: 16.h),
+                        _buildReplacementSlipCard(ex),
+                      ],
                       if (ex.isReplacementShipped || ex.isRefunded)
                         _buildMarkCompletedSection(ex, provider),
 
@@ -312,31 +347,34 @@ class _CompanyExchangeDetailScreenState
           if (ex.replacementCourierName?.isNotEmpty == true)
             _row("Courier", ex.replacementCourierName!),
 
-          // ✅ Leopards slip download button
-          if (ex.replacementSlipLink?.isNotEmpty == true) ...[
-            SizedBox(height: 12.h),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  final uri = Uri.parse(ex.replacementSlipLink!);
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  }
-                },
-                icon: Icon(Icons.download_rounded, size: 18.sp),
-                label: const Text("Download Replacement Slip"),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.indigo,
-                  side: const BorderSide(color: Colors.indigo),
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
+          // ✅ Replacement slip download — always show when tracking number exists
+          SizedBox(height: 12.h),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _downloadingSlip
+                  ? null
+                  : () => _downloadReplacementSlip(ex.replacementTrackingNumber!),
+              icon: _downloadingSlip
+                  ? SizedBox(
+                      width: 16.sp,
+                      height: 16.sp,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(Icons.download_rounded, size: 18.sp),
+              label: Text(_downloadingSlip
+                  ? "Downloading..."
+                  : "Download Replacement Slip"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.indigo,
+                side: const BorderSide(color: Colors.indigo),
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.r),
                 ),
               ),
             ),
-          ],
+          ),
         ],
       );
     }
@@ -686,24 +724,128 @@ class _CompanyExchangeDetailScreenState
     );
   }
 
-  // 6. Mark completed
+  // ── Replacement Slip Download Card ───────────────────────────
+  Widget _buildReplacementSlipCard(ExchangeRequest ex) {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.indigo[50],
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: Colors.indigo[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.local_shipping_rounded, color: Colors.indigo[700], size: 20.sp),
+              SizedBox(width: 8.w),
+              Text(
+                "Replacement Shipped ✅",
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.indigo[800],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          Row(
+            children: [
+              Text("Tracking #: ", style: TextStyle(fontSize: 13.sp, color: Colors.grey[600])),
+              Text(
+                ex.replacementTrackingNumber!,
+                style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: Colors.indigo[700]),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _downloadingSlip
+                  ? null
+                  : () => _downloadReplacementSlip(ex.replacementTrackingNumber!),
+              icon: _downloadingSlip
+                  ? SizedBox(width: 16.sp, height: 16.sp, child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Icon(Icons.download_rounded, size: 18.sp),
+              label: Text(_downloadingSlip ? "Downloading..." : "Download Replacement Slip"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.indigo[700],
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 6. Waiting for delivery / Completed
   Widget _buildMarkCompletedSection(
     ExchangeRequest ex,
     CompanyExchangeProvider provider,
   ) {
-    return _actionCard(
-      title: "Mark Completed",
-      subtitle: ex.isReplacementShipped
-          ? "Confirm that the replacement has been delivered."
-          : "Confirm that the refund has been processed.",
-      icon: Icons.check_circle_outline,
-      color: Colors.green,
-      buttonText: "Mark Completed",
-      loading: provider.processing,
-      onPressed: () async {
-        final ok = await provider.markCompleted(ex.id ?? "");
-        _showResult(ok, "Exchange completed!");
-      },
+    // Refund case: still show Mark Completed button (no Leopards tracking)
+    if (ex.isRefunded) {
+      return _actionCard(
+        title: "Mark Completed",
+        subtitle: "Confirm that the refund has been processed.",
+        icon: Icons.check_circle_outline,
+        color: Colors.green,
+        buttonText: "Mark Completed",
+        loading: provider.processing,
+        onPressed: () async {
+          final ok = await provider.markCompleted(ex.id ?? "");
+          _showResult(ok, "Exchange completed!");
+        },
+      );
+    }
+
+    // Replacement case: auto-completes when Leopards delivers
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.green[50],
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: Colors.green[200]!),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 20.sp,
+            height: 20.sp,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: Colors.green[600],
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Waiting for delivery...",
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green[800],
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  "Exchange will auto-complete once Leopards marks the replacement as delivered.",
+                  style: TextStyle(fontSize: 12.sp, color: Colors.green[700]),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

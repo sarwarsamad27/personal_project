@@ -91,8 +91,10 @@ class _OrderScreenState extends State<OrderScreen>
       if (!mounted || data == null) return;
       try {
         final order = Orders.fromJson(Map<String, dynamic>.from(data as Map));
-        Provider.of<GetMyOrdersProvider>(context, listen: false)
-            .addNewOrder(order);
+        Provider.of<GetMyOrdersProvider>(
+          context,
+          listen: false,
+        ).addNewOrder(order);
         AppToast.success(
           "New Order: ${order.orderId ?? ''} — Rs ${order.grandTotal ?? 0}",
         );
@@ -146,12 +148,18 @@ class _OrderScreenState extends State<OrderScreen>
     setState(() => _bulkDispatching = true);
 
     // Capture providers before any await
-    final dispatchProvider =
-        Provider.of<PendingToDispatchedProvider>(context, listen: false);
-    final ordersProvider =
-        Provider.of<GetMyOrdersProvider>(context, listen: false);
-    final dispatchedProvider =
-        Provider.of<GetDispatchedOrderProvider>(context, listen: false);
+    final dispatchProvider = Provider.of<PendingToDispatchedProvider>(
+      context,
+      listen: false,
+    );
+    final ordersProvider = Provider.of<GetMyOrdersProvider>(
+      context,
+      listen: false,
+    );
+    final dispatchedProvider = Provider.of<GetDispatchedOrderProvider>(
+      context,
+      listen: false,
+    );
 
     int success = 0;
     int failed = 0;
@@ -252,8 +260,7 @@ class _OrderScreenState extends State<OrderScreen>
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.3)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -282,8 +289,11 @@ class _OrderScreenState extends State<OrderScreen>
                   SizedBox(width: 14.w),
                   GestureDetector(
                     onTap: _cancelSelection,
-                    child: Icon(Icons.close_rounded,
-                        color: Colors.white70, size: 18.sp),
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: Colors.white70,
+                      size: 18.sp,
+                    ),
                   ),
                 ],
               ),
@@ -302,8 +312,7 @@ class _OrderScreenState extends State<OrderScreen>
               decoration: BoxDecoration(
                 color: const Color(0xff2A1A0E),
                 borderRadius: BorderRadius.circular(18.r),
-                border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.12)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.35),
@@ -319,12 +328,15 @@ class _OrderScreenState extends State<OrderScreen>
                     onTap: _cancelSelection,
                     child: Container(
                       padding: EdgeInsets.symmetric(
-                          horizontal: 16.w, vertical: 12.h),
+                        horizontal: 16.w,
+                        vertical: 12.h,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12.r),
                         border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.2)),
+                          color: Colors.white.withValues(alpha: 0.2),
+                        ),
                       ),
                       child: Text(
                         "Cancel",
@@ -354,8 +366,9 @@ class _OrderScreenState extends State<OrderScreen>
                           boxShadow: _selectedIds.isNotEmpty
                               ? [
                                   BoxShadow(
-                                    color: AppColor.primaryColor
-                                        .withValues(alpha: 0.4),
+                                    color: AppColor.primaryColor.withValues(
+                                      alpha: 0.4,
+                                    ),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
@@ -369,13 +382,13 @@ class _OrderScreenState extends State<OrderScreen>
                                   size: 18.sp,
                                 )
                               : Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
-                                        Icons.local_shipping_rounded,
-                                        color: Colors.white,
-                                        size: 16.sp),
+                                      Icons.local_shipping_rounded,
+                                      color: Colors.white,
+                                      size: 16.sp,
+                                    ),
                                     SizedBox(width: 8.w),
                                     Text(
                                       _selectedIds.isEmpty
@@ -466,8 +479,9 @@ class _OrderScreenState extends State<OrderScreen>
                 }
                 final dynamic order = list[index];
                 final List<dynamic> products = (order.products ?? []);
-                final dynamic firstProduct =
-                    products.isNotEmpty ? products.first : null;
+                final dynamic firstProduct = products.isNotEmpty
+                    ? products.first
+                    : null;
                 final bool isStale =
                     isPendingTab && _isStaleOrder(order.createdAt as String?);
                 final String orderId = order.sId as String? ?? '';
@@ -511,8 +525,8 @@ class _OrderScreenState extends State<OrderScreen>
             color: isSelected
                 ? AppColor.primaryColor
                 : isStale
-                    ? Colors.red.withValues(alpha: 0.6)
-                    : Colors.white.withValues(alpha: 0.25),
+                ? Colors.red.withValues(alpha: 0.6)
+                : Colors.white.withValues(alpha: 0.25),
             width: isSelected ? 2 : 1.2,
           ),
           gradient: LinearGradient(
@@ -524,14 +538,14 @@ class _OrderScreenState extends State<OrderScreen>
                     AppColor.primaryColor.withValues(alpha: 0.08),
                   ]
                 : isStale
-                    ? [
-                        Colors.red.withValues(alpha: 0.18),
-                        Colors.red.withValues(alpha: 0.06),
-                      ]
-                    : [
-                        Colors.white.withValues(alpha: 0.18),
-                        Colors.white.withValues(alpha: 0.06),
-                      ],
+                ? [
+                    Colors.red.withValues(alpha: 0.18),
+                    Colors.red.withValues(alpha: 0.06),
+                  ]
+                : [
+                    Colors.white.withValues(alpha: 0.18),
+                    Colors.white.withValues(alpha: 0.06),
+                  ],
           ),
           boxShadow: [
             BoxShadow(
@@ -579,8 +593,11 @@ class _OrderScreenState extends State<OrderScreen>
                     ),
                   ),
                   child: isSelected
-                      ? Icon(Icons.check_rounded,
-                          color: Colors.white, size: 14.sp)
+                      ? Icon(
+                          Icons.check_rounded,
+                          color: Colors.white,
+                          size: 14.sp,
+                        )
                       : null,
                 ),
               ),
@@ -626,214 +643,214 @@ class _OrderScreenState extends State<OrderScreen>
     return [
       // ── Top Row: Image + Info ──
       Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Product Image
+          _buildProductImage(firstProduct),
+          SizedBox(width: 14.w),
+
+          // Info Column
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Order ID + Stale Badge
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        "#${order.orderId ?? ''}",
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.8,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isStale) ...[
+                      SizedBox(width: 6.w),
+                      _buildBadge(
+                        label: "48h+",
+                        bgColor: Colors.red,
+                        textColor: Colors.white,
+                      ),
+                    ],
+                  ],
+                ),
+                SizedBox(height: 4.h),
+
+                // Product Name + Status
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        firstProduct?.name ?? "Product",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    if (isPendingTab)
+                      _buildPendingStatusDropdown(orderId: order.sId)
+                    else
+                      _buildBadge(
+                        label: "Dispatched",
+                        bgColor: Colors.green,
+                        textColor: Colors.white,
+                        icon: Icons.local_shipping_outlined,
+                      ),
+                  ],
+                ),
+
+                SizedBox(height: 10.h),
+
+                // Customer Row
+                _buildInfoRow(
+                  icon: Icons.person_outline_rounded,
+                  label: order.buyerDetails?.name ?? "Customer",
+                ),
+                SizedBox(height: 5.h),
+
+                // Items Row
+                _buildInfoRow(
+                  icon: Icons.inventory_2_outlined,
+                  label:
+                      "${products.length} Item${products.length != 1 ? 's' : ''}",
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+
+      SizedBox(height: 14.h),
+
+      // ── Divider ──
+      Container(
+        height: 1,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.transparent,
+              Colors.white.withValues(alpha: 0.2),
+              Colors.transparent,
+            ],
+          ),
+        ),
+      ),
+
+      SizedBox(height: 12.h),
+
+      // ── Bottom Row: Price + Actions ──
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Price
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Total Amount",
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.45),
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  // Product Image
-                  _buildProductImage(firstProduct),
-                  SizedBox(width: 14.w),
-
-                  // Info Column
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Order ID + Stale Badge
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                "#${order.orderId ?? ''}",
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.5),
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.8,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (isStale) ...[
-                              SizedBox(width: 6.w),
-                              _buildBadge(
-                                label: "48h+",
-                                bgColor: Colors.red,
-                                textColor: Colors.white,
-                              ),
-                            ],
-                          ],
-                        ),
-                        SizedBox(height: 4.h),
-
-                        // Product Name + Status
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                firstProduct?.name ?? "Product",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w700,
-                                  height: 1.2,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            SizedBox(width: 8.w),
-                            if (isPendingTab)
-                              _buildPendingStatusDropdown(orderId: order.sId)
-                            else
-                              _buildBadge(
-                                label: "Dispatched",
-                                bgColor: Colors.green,
-                                textColor: Colors.white,
-                                icon: Icons.local_shipping_outlined,
-                              ),
-                          ],
-                        ),
-
-                        SizedBox(height: 10.h),
-
-                        // Customer Row
-                        _buildInfoRow(
-                          icon: Icons.person_outline_rounded,
-                          label: order.buyerDetails?.name ?? "Customer",
-                        ),
-                        SizedBox(height: 5.h),
-
-                        // Items Row
-                        _buildInfoRow(
-                          icon: Icons.inventory_2_outlined,
-                          label:
-                              "${products.length} Item${products.length != 1 ? 's' : ''}",
-                        ),
-                      ],
+                  Text(
+                    "Rs.",
+                    style: TextStyle(
+                      color: AppColor.primaryColor,
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(width: 3.w),
+                  Text(
+                    "${order.grandTotal ?? 0}",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20.sp,
+                      letterSpacing: -0.5,
                     ),
                   ),
                 ],
               ),
+            ],
+          ),
 
-              SizedBox(height: 14.h),
-
-              // ── Divider ──
-              Container(
-                height: 1,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      Colors.white.withValues(alpha: 0.2),
-                      Colors.transparent,
-                    ],
+          // Action Buttons
+          Row(
+            children: [
+              if (firstProduct != null)
+                _buildActionButton(
+                  label: "Product",
+                  icon: Icons.visibility_outlined,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProductDetailScreen(
+                        productId: firstProduct.productId,
+                        categoryId: firstProduct.categoryId,
+                      ),
+                    ),
                   ),
+                  outlined: true,
                 ),
-              ),
-
-              SizedBox(height: 12.h),
-
-              // ── Bottom Row: Price + Actions ──
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Price
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Total Amount",
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.45),
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      SizedBox(height: 2.h),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            "Rs.",
-                            style: TextStyle(
-                              color: AppColor.primaryColor,
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(width: 3.w),
-                          Text(
-                            "${order.grandTotal ?? 0}",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 20.sp,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+              if (isPendingTab) ...[
+                SizedBox(width: 8.w),
+                _buildActionButton(
+                  label: "Details",
+                  icon: Icons.arrow_forward_ios_rounded,
+                  iconSize: 12,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => OrderDetailScreen(order: order),
+                    ),
                   ),
+                  outlined: false,
+                ),
+              ],
 
-                  // Action Buttons
-                  Row(
-                    children: [
-                      if (firstProduct != null)
-                        _buildActionButton(
-                          label: "Product",
-                          icon: Icons.visibility_outlined,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ProductDetailScreen(
-                                productId: firstProduct.productId,
-                                categoryId: firstProduct.categoryId,
-                              ),
-                            ),
-                          ),
-                          outlined: true,
-                        ),
-                      if (isPendingTab) ...[
-                        SizedBox(width: 8.w),
-                        _buildActionButton(
-                          label: "Details",
-                          icon: Icons.arrow_forward_ios_rounded,
-                          iconSize: 12,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => OrderDetailScreen(order: order),
-                            ),
-                          ),
-                          outlined: false,
-                        ),
-                      ],
-
-                      // Track button for dispatched orders
-                      if (!isPendingTab &&
-                          order.trackNumber != null &&
-                          (order.trackNumber as String).isNotEmpty) ...[
-                        SizedBox(width: 8.w),
-                        _buildActionButton(
-                          label: "Track",
-                          icon: Icons.location_on_rounded,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => LeopardsTrackingScreen(
-                                trackNumber: order.trackNumber as String,
-                              ),
-                            ),
-                          ),
-                          outlined: false,
-                        ),
-                      ],
-                    ],
+              // Track button for dispatched orders
+              if (!isPendingTab &&
+                  order.trackNumber != null &&
+                  (order.trackNumber as String).isNotEmpty) ...[
+                SizedBox(width: 8.w),
+                _buildActionButton(
+                  label: "Track",
+                  icon: Icons.location_on_rounded,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => LeopardsTrackingScreen(
+                        trackNumber: order.trackNumber as String,
+                      ),
+                    ),
                   ),
-                ],
-              ),
+                  outlined: false,
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
     ];
   }
 
@@ -1238,17 +1255,18 @@ class _OrderScreenState extends State<OrderScreen>
                     controller: reasonController,
                     maxLines: 3,
                     maxLength: 200,
-                    style: TextStyle(color: Colors.white, fontSize: 14.sp),
+
+                    style: TextStyle(color: Colors.black, fontSize: 14.sp),
                     decoration: InputDecoration(
                       hintText: "e.g. Out of stock, customer requested...",
                       hintStyle: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: Colors.black.withValues(alpha: 0.3),
                         fontSize: 13.sp,
                       ),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.all(14.w),
                       counterStyle: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: Colors.black,
                         fontSize: 11.sp,
                       ),
                     ),

@@ -72,16 +72,24 @@ class _CompanyRefundDetailScreenState extends State<CompanyRefundDetailScreen> {
                       _buildInfoCard(rf),
                       SizedBox(height: 16.h),
 
+                      // ── Timeline ─────────────────────────────
+                      _buildTimeline(rf),
+                      SizedBox(height: 16.h),
+
                       // ── Actions ──────────────────────────────
                       if (rf.isPending) _buildDecisionSection(rf, provider),
-                      if (rf.isReturnShipped)
-                        _buildMarkReceivedSection(rf, provider),
-                      if (rf.isReturnReceived)
-                        _buildStartInspectionSection(rf, provider),
-                      if (rf.isInspecting)
-                        _buildInspectionResultSection(rf, provider),
-                      if (rf.isApprovedInspection)
-                        _buildFinalizeRefundSection(rf, provider),
+
+                      // ReturnReceived: auto via Leopards webhook
+                      if (rf.isReturnReceived) ...[
+                        _buildAutoReceivedCard(),
+                        SizedBox(height: 16.h),
+                      ],
+
+                      // Refunded: auto wallet credited via Leopards webhook
+                      if (rf.isRefunded || rf.isCompleted) ...[
+                        _buildRefundedCard(rf),
+                        SizedBox(height: 16.h),
+                      ],
 
                       // ── Images ───────────────────────────────
                       if (rf.returnProofImages.isNotEmpty) ...[
@@ -353,207 +361,139 @@ class _CompanyRefundDetailScreenState extends State<CompanyRefundDetailScreen> {
     );
   }
 
-  // ── 2. Mark Received ─────────────────────────────────────────
-  Widget _buildMarkReceivedSection(
-    ExchangeRequest rf,
-    CompanyRefundProvider provider,
-  ) {
-    return _actionCard(
-      title: "Mark Return Received",
-      subtitle: "Confirm you have received the returned parcel.",
-      icon: Icons.inventory,
-      color: Colors.teal,
-      buttonText: "Mark as Received",
-      loading: provider.processing,
-      onPressed: () async {
-        final ok = await provider.markReceived(rf.id ?? "");
-        _showResult(ok, "Marked as received");
-      },
-    );
-  }
+  // ── Timeline ─────────────────────────────────────────────────
+  Widget _buildTimeline(ExchangeRequest rf) {
+    final steps = [
+      _TStep("Pending", "Pending", Icons.send_rounded),
+      _TStep("Accepted", "Accepted", Icons.check_circle_outline),
+      _TStep("Shipped", "ReturnShipped", Icons.local_shipping_rounded),
+      _TStep("Received", "ReturnReceived", Icons.inventory_2_rounded),
+    ];
+    const statusOrder = [
+      "Pending", "Accepted", "ReturnShipped", "ReturnReceived",
+      "Refunded", "Completed",
+    ];
+    final currentIndex = statusOrder.indexOf(rf.status ?? "");
+    final isDenied = rf.status == "Rejected";
 
-  // ── 3. Start Inspection ───────────────────────────────────────
-  Widget _buildStartInspectionSection(
-    ExchangeRequest rf,
-    CompanyRefundProvider provider,
-  ) {
-    return _actionCard(
-      title: "Start Inspection",
-      subtitle: "Begin inspecting the returned product.",
-      icon: Icons.search,
-      color: Colors.purple,
-      buttonText: "Start Inspection",
-      loading: provider.processing,
-      onPressed: () async {
-        final ok = await provider.startInspection(rf.id ?? "");
-        _showResult(ok, "Inspection started");
-      },
-    );
-  }
-
-  // ── 4. Inspection Result ──────────────────────────────────────
-  Widget _buildInspectionResultSection(
-    ExchangeRequest rf,
-    CompanyRefundProvider provider,
-  ) {
-    final noteCtrl = TextEditingController();
-    return _card(
-      title: "Inspection Result",
-      icon: Icons.verified,
-      children: [
-        TextField(
-          controller: noteCtrl,
-          maxLines: 3,
-          decoration: InputDecoration(
-            labelText: "Inspection Note",
-            hintText: "Describe condition of returned product...",
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10.r),
-            ),
-          ),
-        ),
-        SizedBox(height: 16.h),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: provider.processing
-                    ? null
-                    : () async {
-                        if (noteCtrl.text.trim().isEmpty) {
-                          AppToast.error("Please enter inspection note");
-                          return;
-                        }
-                        final ok = await provider.submitInspectionResult(
-                          refundId: rf.id ?? "",
-                          result: "disputed",
-                          note: noteCtrl.text.trim(),
-                        );
-                        _showResult(ok, "Dispute raised");
-                      },
-                icon: Icon(Icons.warning_amber, size: 18.sp),
-                label: const Text("Dispute"),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                  side: const BorderSide(color: Colors.red),
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                ),
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Return Progress", style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold, color: Colors.black87)),
+          SizedBox(height: 14.h),
+          if (isDenied)
+            Container(
+              padding: EdgeInsets.all(10.w),
+              decoration: BoxDecoration(color: Colors.red[50], borderRadius: BorderRadius.circular(10.r), border: Border.all(color: Colors.red[200]!)),
+              child: Row(children: [
+                Icon(Icons.cancel, color: Colors.red, size: 18.sp),
+                SizedBox(width: 8.w),
+                Text("Request Rejected", style: TextStyle(fontSize: 13.sp, color: Colors.red[700], fontWeight: FontWeight.bold)),
+              ]),
+            )
+          else
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: List.generate(steps.length, (i) {
+                  final step = steps[i];
+                  final stepIdx = statusOrder.indexOf(step.statusKey);
+                  final isDone = currentIndex >= stepIdx && stepIdx != -1;
+                  final isCurrent = rf.status == step.statusKey;
+                  final isLast = i == steps.length - 1;
+                  return Row(children: [
+                    Column(mainAxisSize: MainAxisSize.min, children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: isCurrent ? 34.w : 28.w,
+                        height: isCurrent ? 34.w : 28.w,
+                        decoration: BoxDecoration(
+                          color: isDone ? AppColor.primaryColor : Colors.grey[200],
+                          shape: BoxShape.circle,
+                          boxShadow: isCurrent ? [BoxShadow(color: AppColor.primaryColor.withOpacity(0.4), blurRadius: 8)] : null,
+                        ),
+                        child: Icon(step.icon, size: isCurrent ? 17.sp : 14.sp, color: isDone ? Colors.white : Colors.grey[400]),
+                      ),
+                      SizedBox(height: 5.h),
+                      SizedBox(
+                        width: 52.w,
+                        child: Text(step.label, style: TextStyle(fontSize: 9.sp, color: isDone ? AppColor.primaryColor : Colors.grey[400], fontWeight: isCurrent ? FontWeight.w700 : FontWeight.normal), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+                      ),
+                    ]),
+                    if (!isLast)
+                      Container(width: 18.w, height: 2, margin: EdgeInsets.only(bottom: 22.h), color: i < currentIndex ? AppColor.primaryColor : Colors.grey[200]),
+                  ]);
+                }),
               ),
             ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: provider.processing
-                    ? null
-                    : () async {
-                        final ok = await provider.submitInspectionResult(
-                          refundId: rf.id ?? "",
-                          result: "approved",
-                          note: noteCtrl.text.trim(),
-                        );
-                        _showResult(ok, "Inspection approved");
-                      },
-                icon: Icon(Icons.check_circle, size: 18.sp),
-                label: const Text("Approve"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  // ── 5. Finalize Refund ────────────────────────────────────────
-  Widget _buildFinalizeRefundSection(
-    ExchangeRequest rf,
-    CompanyRefundProvider provider,
-  ) {
-    return _card(
-      title: "Process Refund 💰",
-      icon: Icons.account_balance_wallet_outlined,
-      children: [
-        // ✅ Show refund amount
-        if (rf.refundAmount != null && rf.refundAmount! > 0)
-          Container(
-            padding: EdgeInsets.all(14.w),
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: Colors.green.withOpacity(0.3)),
-            ),
-            child: Row(
+  // ── Auto Received Card ────────────────────────────────────────
+  Widget _buildAutoReceivedCard() {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.teal[50],
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: Colors.teal[300]!),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.inventory_2_rounded, color: Colors.teal[700], size: 30.sp),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.currency_rupee_rounded,
-                  color: Colors.green,
-                  size: 24.sp,
-                ),
-                SizedBox(width: 10.w),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Refund Amount",
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    Text(
-                      "Rs ${rf.refundAmount!.toStringAsFixed(0)}",
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                  ],
-                ),
+                Text("Return Received", style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold, color: Colors.teal[800])),
+                SizedBox(height: 4.h),
+                Text("Return parcel delivered via Leopards. Refund being processed automatically.", style: TextStyle(fontSize: 12.sp, color: Colors.teal[700])),
               ],
             ),
           ),
-        SizedBox(height: 16.h),
-        Text(
-          "This amount will be credited to the customer's wallet.",
-          style: TextStyle(fontSize: 13.sp, color: Colors.grey[600]),
-        ),
-        SizedBox(height: 16.h),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: provider.processing
-                ? null
-                : () async {
-                    final ok = await provider.finalizeRefund(rf.id ?? "");
-                    _showResult(ok, "Refund credited to customer wallet!");
-                  },
-            icon: Icon(Icons.account_balance_wallet_rounded, size: 20.sp),
-            label: Text(
-              "Credit Rs ${rf.refundAmount?.toStringAsFixed(0) ?? "0"} to Wallet",
-              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(vertical: 14.h),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
-              ),
+        ],
+      ),
+    );
+  }
+
+  // ── Refunded Card ─────────────────────────────────────────────
+  Widget _buildRefundedCard(ExchangeRequest rf) {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.green[50],
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: Colors.green[300]!),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle, color: Colors.green, size: 30.sp),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Refund Auto-Processed", style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold, color: Colors.green[800])),
+                SizedBox(height: 4.h),
+                if (rf.refundAmount != null && rf.refundAmount! > 0)
+                  Text("Rs ${rf.refundAmount!.toStringAsFixed(0)} credited to customer wallet.", style: TextStyle(fontSize: 12.sp, color: Colors.green[700])),
+              ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -797,86 +737,6 @@ class _CompanyRefundDetailScreenState extends State<CompanyRefundDetailScreen> {
     );
   }
 
-  Widget _actionCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-    required String buttonText,
-    required bool loading,
-    required VoidCallback onPressed,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 20.sp, color: color),
-              SizedBox(width: 8.w),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            subtitle,
-            style: TextStyle(fontSize: 13.sp, color: Colors.grey[600]),
-          ),
-          SizedBox(height: 16.h),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: loading ? null : onPressed,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: color,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 14.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
-              child: loading
-                  ? SizedBox(
-                      height: 20.w,
-                      width: 20.w,
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(
-                      buttonText,
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _row(
     String label,
     String value, {
@@ -973,6 +833,13 @@ _RefundStatusStyle _refundStatusStyle(String? status) {
     default:
       return _RefundStatusStyle(Colors.grey, Icons.help_outline);
   }
+}
+
+class _TStep {
+  final String label;
+  final String statusKey;
+  final IconData icon;
+  const _TStep(this.label, this.statusKey, this.icon);
 }
 
 class _RefundStatusStyle {
