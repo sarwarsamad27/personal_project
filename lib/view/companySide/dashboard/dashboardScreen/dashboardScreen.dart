@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:lottie/lottie.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/view/companySide/dashboard/dashboardScreen/widget/statesScreen.dart';
+import 'package:new_brand/view/companySide/dashboard/notificationScreen/company_notification_screen.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/companySaleChart_provider.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
+import 'package:new_brand/viewModel/providers/notificationProvider/company_notification_provider.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
@@ -55,6 +58,7 @@ class _HomeDashboardState extends State<HomeDashboard>
     Future.microtask(() {
       context.read<DashboardProvider>().getDashboardDataOnce();
       context.read<CompanySalesChartProvider>().getChartData(type: "weekly");
+      context.read<CompanyNotificationProvider>().fetchNotifications();
     });
 
     // run premium entry animation
@@ -152,12 +156,18 @@ class _HomeDashboardState extends State<HomeDashboard>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              "📊 Sales Overview",
-                              style: TextStyle(
-                                fontSize: 20.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            Row(
+                              children: [
+                                Text(
+                                  "📊 Sales Overview",
+                                  style: TextStyle(
+                                    fontSize: 20.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(width: 10.w),
+                                _NotificationBell(),
+                              ],
                             ),
 
                             // ✅ Dropdown driven by Provider (no setState)
@@ -514,8 +524,58 @@ class _HomeDashboardState extends State<HomeDashboard>
                 ),
               ),
             ),
+
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _NotificationBell extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final unread = context.select<CompanyNotificationProvider, int>((p) => p.unreadCount);
+
+    return GestureDetector(
+      onTap: () {
+        // Mark all read instantly on tap (fire & forget)
+        context.read<CompanyNotificationProvider>().markAllRead();
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CompanyNotificationScreen()),
+        );
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          SizedBox(
+            width: 36.w,
+            height: 36.w,
+            child: Lottie.asset(
+              'assets/gif/notification_icon.json',
+              repeat: true,
+              fit: BoxFit.contain,
+            ),
+          ),
+          if (unread > 0)
+            Positioned(
+              right: -4.w,
+              top: -4.h,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+                child: Text(
+                  unread > 99 ? '99+' : '$unread',
+                  style: TextStyle(color: Colors.white, fontSize: 9.sp, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -35,6 +35,7 @@ class _CompanyExchangeDetailScreenState
     extends State<CompanyExchangeDetailScreen> {
   ExchangeRequest? _exchange;
   bool _downloadingSlip = false;
+  bool _loadingFromApi = false;
 
   Future<void> _downloadReplacementSlip(String trackNumber) async {
     if (_downloadingSlip) return;
@@ -68,12 +69,28 @@ class _CompanyExchangeDetailScreenState
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
-  void _load() {
+  Future<void> _load() async {
     final provider = context.read<CompanyExchangeProvider>();
-    final found = provider.requests
-        .where((r) => r.id == widget.exchangeId)
-        .firstOrNull;
-    setState(() => _exchange = found);
+
+    // Check local cache first
+    final cached = provider.requests.where((r) => r.id == widget.exchangeId).firstOrNull;
+    if (cached != null) {
+      setState(() => _exchange = cached);
+      return;
+    }
+
+    // Not in cache — fetch from backend
+    setState(() => _loadingFromApi = true);
+    await provider.fetchRequests(forceRefresh: !provider.hasFetched);
+    if (!mounted) return;
+
+    final found = provider.requests.where((r) => r.id == widget.exchangeId).firstOrNull;
+    if (found == null) {
+      Navigator.pop(context);
+      AppToast.error("Exchange request not found");
+      return;
+    }
+    setState(() { _exchange = found; _loadingFromApi = false; });
   }
 
   @override
@@ -101,8 +118,8 @@ class _CompanyExchangeDetailScreenState
               ),
             ),
           ),
-          body: ex == null
-              ? const Center(child: Text("Not found"))
+          body: (ex == null || _loadingFromApi)
+              ? const Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
                   padding: EdgeInsets.all(16.w),
                   child: Column(
