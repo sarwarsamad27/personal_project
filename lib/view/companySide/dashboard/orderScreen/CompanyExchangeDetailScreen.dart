@@ -14,6 +14,7 @@ import 'package:new_brand/view/companySide/dashboard/orderScreen/leopards_tracki
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/toast.dart';
+import 'package:new_brand/viewModel/repository/courierRepository/leopards_tracking_repository.dart';
 
 class CompanyExchangeDetailScreen extends StatefulWidget {
   final String exchangeId;
@@ -73,9 +74,12 @@ class _CompanyExchangeDetailScreenState
     final provider = context.read<CompanyExchangeProvider>();
 
     // Check local cache first
-    final cached = provider.requests.where((r) => r.id == widget.exchangeId).firstOrNull;
+    final cached = provider.requests
+        .where((r) => r.id == widget.exchangeId)
+        .firstOrNull;
     if (cached != null) {
       setState(() => _exchange = cached);
+      _checkAutoCompletion(cached); // ✅ Check cache too
       return;
     }
 
@@ -84,13 +88,44 @@ class _CompanyExchangeDetailScreenState
     await provider.fetchRequests(forceRefresh: !provider.hasFetched);
     if (!mounted) return;
 
-    final found = provider.requests.where((r) => r.id == widget.exchangeId).firstOrNull;
+    final found = provider.requests
+        .where((r) => r.id == widget.exchangeId)
+        .firstOrNull;
     if (found == null) {
       Navigator.pop(context);
       AppToast.error("Exchange request not found");
       return;
     }
-    setState(() { _exchange = found; _loadingFromApi = false; });
+    setState(() {
+      _exchange = found;
+      _loadingFromApi = false;
+    });
+
+    // ✅ AUTO-CHECK DELIVERY STATUS
+    _checkAutoCompletion(found);
+  }
+
+  Future<void> _checkAutoCompletion(ExchangeRequest ex) async {
+    if (!ex.isReplacementShipped || ex.replacementTrackingNumber == null)
+      return;
+
+    try {
+      final repo = LeopardsTrackingRepository();
+      final history = await repo.trackParcel(ex.replacementTrackingNumber!);
+
+      if (history.isNotEmpty) {
+        // Check if ANY item in history marks it as delivered
+        final isDelivered = history.any(
+          (item) => item.status?.toLowerCase().contains("delivered") ?? false,
+        );
+
+        if (isDelivered && mounted) {
+          context.read<CompanyExchangeProvider>().markCompleted(ex.id ?? "");
+        }
+      }
+    } catch (e) {
+      debugPrint("Auto-completion check failed: $e");
+    }
   }
 
   @override
@@ -371,7 +406,8 @@ class _CompanyExchangeDetailScreenState
             child: OutlinedButton.icon(
               onPressed: _downloadingSlip
                   ? null
-                  : () => _downloadReplacementSlip(ex.replacementTrackingNumber!),
+                  : () =>
+                        _downloadReplacementSlip(ex.replacementTrackingNumber!),
               icon: _downloadingSlip
                   ? SizedBox(
                       width: 16.sp,
@@ -379,9 +415,11 @@ class _CompanyExchangeDetailScreenState
                       child: const CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Icon(Icons.download_rounded, size: 18.sp),
-              label: Text(_downloadingSlip
-                  ? "Downloading..."
-                  : "Download Replacement Slip"),
+              label: Text(
+                _downloadingSlip
+                    ? "Downloading..."
+                    : "Download Replacement Slip",
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.indigo,
                 side: const BorderSide(color: Colors.indigo),
@@ -755,7 +793,11 @@ class _CompanyExchangeDetailScreenState
         children: [
           Row(
             children: [
-              Icon(Icons.local_shipping_rounded, color: Colors.indigo[700], size: 20.sp),
+              Icon(
+                Icons.local_shipping_rounded,
+                color: Colors.indigo[700],
+                size: 20.sp,
+              ),
               SizedBox(width: 8.w),
               Text(
                 "Replacement Shipped ✅",
@@ -770,10 +812,17 @@ class _CompanyExchangeDetailScreenState
           SizedBox(height: 8.h),
           Row(
             children: [
-              Text("Tracking #: ", style: TextStyle(fontSize: 13.sp, color: Colors.grey[600])),
+              Text(
+                "Tracking #: ",
+                style: TextStyle(fontSize: 13.sp, color: Colors.grey[600]),
+              ),
               Text(
                 ex.replacementTrackingNumber!,
-                style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: Colors.indigo[700]),
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.indigo[700],
+                ),
               ),
             ],
           ),
@@ -783,16 +832,30 @@ class _CompanyExchangeDetailScreenState
             child: ElevatedButton.icon(
               onPressed: _downloadingSlip
                   ? null
-                  : () => _downloadReplacementSlip(ex.replacementTrackingNumber!),
+                  : () =>
+                        _downloadReplacementSlip(ex.replacementTrackingNumber!),
               icon: _downloadingSlip
-                  ? SizedBox(width: 16.sp, height: 16.sp, child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  ? SizedBox(
+                      width: 16.sp,
+                      height: 16.sp,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                   : Icon(Icons.download_rounded, size: 18.sp),
-              label: Text(_downloadingSlip ? "Downloading..." : "Download Replacement Slip"),
+              label: Text(
+                _downloadingSlip
+                    ? "Downloading..."
+                    : "Download Replacement Slip",
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.indigo[700],
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(vertical: 12.h),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
               ),
             ),
           ),
@@ -868,12 +931,16 @@ class _CompanyExchangeDetailScreenState
 
   // ── Full-screen image viewer ──────────────────────────────────
   void _openFullScreen(BuildContext ctx, List<String> images, int initial) {
-    final urls = images.map((img) => img.startsWith("http")
-        ? img
-        : "${Global.imageUrl}/$img").toList();
+    final urls = images
+        .map((img) => img.startsWith("http") ? img : "${Global.imageUrl}/$img")
+        .toList();
 
-    Navigator.push(ctx, MaterialPageRoute(builder: (_) =>
-        _FullScreenImages(urls: urls, initialIndex: initial)));
+    Navigator.push(
+      ctx,
+      MaterialPageRoute(
+        builder: (_) => _FullScreenImages(urls: urls, initialIndex: initial),
+      ),
+    );
   }
 
   // ── Images Card ───────────────────────────────────────────────
@@ -1378,7 +1445,8 @@ class _FullScreenImagesState extends State<_FullScreenImages> {
               loadingBuilder: (_, child, progress) => progress == null
                   ? child
                   : const Center(
-                      child: CircularProgressIndicator(color: Colors.white54)),
+                      child: CircularProgressIndicator(color: Colors.white54),
+                    ),
               errorBuilder: (_, __, ___) => const Icon(
                 Icons.broken_image,
                 color: Colors.white38,

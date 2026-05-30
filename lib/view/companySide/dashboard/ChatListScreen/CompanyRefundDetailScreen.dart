@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/toast.dart';
+import 'package:new_brand/viewModel/repository/courierRepository/leopards_tracking_repository.dart';
 
 class CompanyRefundDetailScreen extends StatefulWidget {
   final String refundId;
@@ -33,6 +34,31 @@ class _CompanyRefundDetailScreenState extends State<CompanyRefundDetailScreen> {
         .where((r) => r.id == widget.refundId)
         .firstOrNull;
     setState(() => _refund = found);
+
+    if (found != null) {
+      _checkAutoReceived(found);
+    }
+  }
+
+  Future<void> _checkAutoReceived(ExchangeRequest rf) async {
+    if (rf.status != "ReturnShipped" || rf.returnTrackingNumber == null) return;
+
+    try {
+      final repo = LeopardsTrackingRepository();
+      final history = await repo.trackParcel(rf.returnTrackingNumber!);
+
+      if (history.isNotEmpty) {
+        final isDelivered = history.any(
+          (item) => item.status?.toLowerCase().contains("delivered") ?? false,
+        );
+
+        if (isDelivered && mounted) {
+          context.read<CompanyRefundProvider>().markReceived(rf.id ?? "");
+        }
+      }
+    } catch (e) {
+      debugPrint("Auto-received check failed: $e");
+    }
   }
 
   @override
@@ -370,8 +396,12 @@ class _CompanyRefundDetailScreenState extends State<CompanyRefundDetailScreen> {
       _TStep("Received", "ReturnReceived", Icons.inventory_2_rounded),
     ];
     const statusOrder = [
-      "Pending", "Accepted", "ReturnShipped", "ReturnReceived",
-      "Refunded", "Completed",
+      "Pending",
+      "Accepted",
+      "ReturnShipped",
+      "ReturnReceived",
+      "Refunded",
+      "Completed",
     ];
     final currentIndex = statusOrder.indexOf(rf.status ?? "");
     final isDenied = rf.status == "Rejected";
@@ -382,23 +412,47 @@ class _CompanyRefundDetailScreenState extends State<CompanyRefundDetailScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Return Progress", style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold, color: Colors.black87)),
+          Text(
+            "Return Progress",
+            style: TextStyle(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
           SizedBox(height: 14.h),
           if (isDenied)
             Container(
               padding: EdgeInsets.all(10.w),
-              decoration: BoxDecoration(color: Colors.red[50], borderRadius: BorderRadius.circular(10.r), border: Border.all(color: Colors.red[200]!)),
-              child: Row(children: [
-                Icon(Icons.cancel, color: Colors.red, size: 18.sp),
-                SizedBox(width: 8.w),
-                Text("Request Rejected", style: TextStyle(fontSize: 13.sp, color: Colors.red[700], fontWeight: FontWeight.bold)),
-              ]),
+              decoration: BoxDecoration(
+                color: Colors.red[50],
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(color: Colors.red[200]!),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.cancel, color: Colors.red, size: 18.sp),
+                  SizedBox(width: 8.w),
+                  Text(
+                    "Request Rejected",
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: Colors.red[700],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             )
           else
             SingleChildScrollView(
@@ -410,28 +464,68 @@ class _CompanyRefundDetailScreenState extends State<CompanyRefundDetailScreen> {
                   final isDone = currentIndex >= stepIdx && stepIdx != -1;
                   final isCurrent = rf.status == step.statusKey;
                   final isLast = i == steps.length - 1;
-                  return Row(children: [
-                    Column(mainAxisSize: MainAxisSize.min, children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        width: isCurrent ? 34.w : 28.w,
-                        height: isCurrent ? 34.w : 28.w,
-                        decoration: BoxDecoration(
-                          color: isDone ? AppColor.primaryColor : Colors.grey[200],
-                          shape: BoxShape.circle,
-                          boxShadow: isCurrent ? [BoxShadow(color: AppColor.primaryColor.withOpacity(0.4), blurRadius: 8)] : null,
+                  return Row(
+                    children: [
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            width: isCurrent ? 34.w : 28.w,
+                            height: isCurrent ? 34.w : 28.w,
+                            decoration: BoxDecoration(
+                              color: isDone
+                                  ? AppColor.primaryColor
+                                  : Colors.grey[200],
+                              shape: BoxShape.circle,
+                              boxShadow: isCurrent
+                                  ? [
+                                      BoxShadow(
+                                        color: AppColor.primaryColor
+                                            .withOpacity(0.4),
+                                        blurRadius: 8,
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: Icon(
+                              step.icon,
+                              size: isCurrent ? 17.sp : 14.sp,
+                              color: isDone ? Colors.white : Colors.grey[400],
+                            ),
+                          ),
+                          SizedBox(height: 5.h),
+                          SizedBox(
+                            width: 52.w,
+                            child: Text(
+                              step.label,
+                              style: TextStyle(
+                                fontSize: 9.sp,
+                                color: isDone
+                                    ? AppColor.primaryColor
+                                    : Colors.grey[400],
+                                fontWeight: isCurrent
+                                    ? FontWeight.w700
+                                    : FontWeight.normal,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (!isLast)
+                        Container(
+                          width: 18.w,
+                          height: 2,
+                          margin: EdgeInsets.only(bottom: 22.h),
+                          color: i < currentIndex
+                              ? AppColor.primaryColor
+                              : Colors.grey[200],
                         ),
-                        child: Icon(step.icon, size: isCurrent ? 17.sp : 14.sp, color: isDone ? Colors.white : Colors.grey[400]),
-                      ),
-                      SizedBox(height: 5.h),
-                      SizedBox(
-                        width: 52.w,
-                        child: Text(step.label, style: TextStyle(fontSize: 9.sp, color: isDone ? AppColor.primaryColor : Colors.grey[400], fontWeight: isCurrent ? FontWeight.w700 : FontWeight.normal), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
-                      ),
-                    ]),
-                    if (!isLast)
-                      Container(width: 18.w, height: 2, margin: EdgeInsets.only(bottom: 22.h), color: i < currentIndex ? AppColor.primaryColor : Colors.grey[200]),
-                  ]);
+                    ],
+                  );
                 }),
               ),
             ),
@@ -457,9 +551,19 @@ class _CompanyRefundDetailScreenState extends State<CompanyRefundDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Return Received", style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold, color: Colors.teal[800])),
+                Text(
+                  "Return Received",
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal[800],
+                  ),
+                ),
                 SizedBox(height: 4.h),
-                Text("Return parcel delivered via Leopards. Refund being processed automatically.", style: TextStyle(fontSize: 12.sp, color: Colors.teal[700])),
+                Text(
+                  "Return parcel delivered via Leopards. Refund being processed automatically.",
+                  style: TextStyle(fontSize: 12.sp, color: Colors.teal[700]),
+                ),
               ],
             ),
           ),
@@ -485,10 +589,20 @@ class _CompanyRefundDetailScreenState extends State<CompanyRefundDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Refund Auto-Processed", style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold, color: Colors.green[800])),
+                Text(
+                  "Refund Auto-Processed",
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green[800],
+                  ),
+                ),
                 SizedBox(height: 4.h),
                 if (rf.refundAmount != null && rf.refundAmount! > 0)
-                  Text("Rs ${rf.refundAmount!.toStringAsFixed(0)} credited to customer wallet.", style: TextStyle(fontSize: 12.sp, color: Colors.green[700])),
+                  Text(
+                    "Rs ${rf.refundAmount!.toStringAsFixed(0)} credited to customer wallet.",
+                    style: TextStyle(fontSize: 12.sp, color: Colors.green[700]),
+                  ),
               ],
             ),
           ),
@@ -499,12 +613,15 @@ class _CompanyRefundDetailScreenState extends State<CompanyRefundDetailScreen> {
 
   // ── Full-screen image viewer ──────────────────────────────────
   void _openFullScreen(BuildContext ctx, List<String> images, int initial) {
-    final urls = images.map((img) => img.startsWith("http")
-        ? img
-        : "${Global.imageUrl}/$img").toList();
-    Navigator.push(ctx, MaterialPageRoute(
-      builder: (_) => _FullScreenImages(urls: urls, initialIndex: initial),
-    ));
+    final urls = images
+        .map((img) => img.startsWith("http") ? img : "${Global.imageUrl}/$img")
+        .toList();
+    Navigator.push(
+      ctx,
+      MaterialPageRoute(
+        builder: (_) => _FullScreenImages(urls: urls, initialIndex: initial),
+      ),
+    );
   }
 
   // ── Images Card ───────────────────────────────────────────────
@@ -910,7 +1027,8 @@ class _FullScreenImagesState extends State<_FullScreenImages> {
               loadingBuilder: (_, child, progress) => progress == null
                   ? child
                   : const Center(
-                      child: CircularProgressIndicator(color: Colors.white54)),
+                      child: CircularProgressIndicator(color: Colors.white54),
+                    ),
               errorBuilder: (_, __, ___) => const Icon(
                 Icons.broken_image,
                 color: Colors.white38,
