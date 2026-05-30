@@ -451,10 +451,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           // Review video
           if (review.video?.isNotEmpty ?? false) ...[
             SizedBox(height: 10.h),
-            GestureDetector(
-              onTap: () => _openFullscreenVideo(context, review.video!),
-              child: _PdVideoThumb(url: review.video!),
-            ),
+            _InlineVideoPlayer(url: review.video!),
           ],
 
           SizedBox(height: 12.h),
@@ -512,11 +509,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   // Reply video
                   if (review.reply!.video?.isNotEmpty ?? false) ...[
                     SizedBox(height: 8.h),
-                    GestureDetector(
-                      onTap: () =>
-                          _openFullscreenVideo(context, review.reply!.video!),
-                      child: _PdVideoThumb(url: review.reply!.video!),
-                    ),
+                    _InlineVideoPlayer(url: review.reply!.video!),
                   ],
                 ],
               ),
@@ -561,13 +554,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       MaterialPageRoute(
         builder: (_) => _PdFullscreenImages(urls: urls, initial: idx),
       ),
-    );
-  }
-
-  void _openFullscreenVideo(BuildContext ctx, String url) {
-    Navigator.push(
-      ctx,
-      MaterialPageRoute(builder: (_) => _PdFullscreenVideo(url: url)),
     );
   }
 
@@ -802,61 +788,155 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 }
 
-// ── Video thumbnail widget ────────────────────────────────────────────────────
-class _PdVideoThumb extends StatefulWidget {
+// ── Inline video player (Facebook-style) ─────────────────────────────────────
+class _InlineVideoPlayer extends StatefulWidget {
   final String url;
-  const _PdVideoThumb({required this.url});
+  const _InlineVideoPlayer({required this.url});
   @override
-  State<_PdVideoThumb> createState() => _PdVideoThumbState();
+  State<_InlineVideoPlayer> createState() => _InlineVideoPlayerState();
 }
 
-class _PdVideoThumbState extends State<_PdVideoThumb> {
-  late VideoPlayerController _ctrl;
-  bool _ready = false;
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = VideoPlayerController.networkUrl(Uri.parse(widget.url))
-      ..initialize().then((_) {
-        if (mounted) setState(() => _ready = true);
-      });
+class _InlineVideoPlayerState extends State<_InlineVideoPlayer> {
+  VideoPlayerController? _ctrl;
+  bool _initialized = false;
+  bool _loading = false;
+
+  Future<void> _initAndPlay() async {
+    if (_loading || _initialized) return;
+    setState(() => _loading = true);
+
+    final url = Global.getImageUrl(widget.url);
+    final ctrl = VideoPlayerController.networkUrl(Uri.parse(url));
+    await ctrl.initialize();
+
+    if (!mounted) {
+      ctrl.dispose();
+      return;
+    }
+
+    ctrl.addListener(() {
+      if (mounted) setState(() {});
+    });
+
+    setState(() {
+      _ctrl = ctrl;
+      _initialized = true;
+      _loading = false;
+    });
+
+    ctrl.play();
+  }
+
+  void _togglePlay() {
+    if (_ctrl == null) return;
+    _ctrl!.value.isPlaying ? _ctrl!.pause() : _ctrl!.play();
+  }
+
+  void _openFullscreen() {
+    _ctrl?.pause();
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => _PdFullscreenVideo(url: widget.url)),
+    );
   }
 
   @override
   void dispose() {
-    _ctrl.dispose();
+    _ctrl?.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => Container(
-    height: 110.h,
-    width: double.infinity,
-    decoration: BoxDecoration(
-      color: Colors.black,
+  Widget build(BuildContext context) {
+    final double aspect = _initialized ? _ctrl!.value.aspectRatio : 16 / 9;
+
+    return ClipRRect(
       borderRadius: BorderRadius.circular(10.r),
-    ),
-    child: Stack(
-      alignment: Alignment.center,
-      children: [
-        if (_ready)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10.r),
-            child: AspectRatio(
-              aspectRatio: _ctrl.value.aspectRatio,
-              child: VideoPlayer(_ctrl),
-            ),
-          ),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.black38,
-            borderRadius: BorderRadius.circular(10.r),
+      child: AspectRatio(
+        aspectRatio: aspect,
+        child: Container(
+          color: Colors.black,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // ── Video frame ──────────────────────────────────────
+              if (_initialized) VideoPlayer(_ctrl!),
+
+              // ── Dark overlay when paused / not started ───────────
+              if (!_initialized || !(_ctrl?.value.isPlaying ?? false))
+                Container(color: Colors.black45),
+
+              // ── Center button ────────────────────────────────────
+              if (_loading)
+                const CircularProgressIndicator(color: Colors.white)
+              else if (!_initialized)
+                GestureDetector(
+                  onTap: _initAndPlay,
+                  child: const Icon(
+                    Icons.play_circle_fill,
+                    color: Colors.white,
+                    size: 52,
+                  ),
+                )
+              else
+                GestureDetector(
+                  onTap: _togglePlay,
+                  child: AnimatedOpacity(
+                    opacity: _ctrl!.value.isPlaying ? 0.0 : 1.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(
+                      Icons.play_circle_fill,
+                      color: Colors.white70,
+                      size: 52,
+                    ),
+                  ),
+                ),
+
+              // ── Fullscreen icon (bottom-right) ───────────────────
+              if (_initialized)
+                Positioned(
+                  right: 8.w,
+                  bottom: 28.h,
+                  child: GestureDetector(
+                    onTap: _openFullscreen,
+                    child: Container(
+                      padding: EdgeInsets.all(4.w),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                      child: Icon(
+                        Icons.fullscreen,
+                        color: Colors.white,
+                        size: 20.sp,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // ── Progress bar (bottom) ────────────────────────────
+              if (_initialized)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: VideoProgressIndicator(
+                    _ctrl!,
+                    allowScrubbing: true,
+                    padding: EdgeInsets.zero,
+                    colors: VideoProgressColors(
+                      playedColor: AppColor.primaryColor,
+                      bufferedColor: Colors.white30,
+                      backgroundColor: Colors.white12,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
-        const Icon(Icons.play_circle_fill, color: Colors.white, size: 44),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
 // ── Fullscreen image viewer ──────────────────────────────────────────────────
@@ -926,14 +1006,19 @@ class _PdFullscreenVideo extends StatefulWidget {
 class _PdFullscreenVideoState extends State<_PdFullscreenVideo> {
   late VideoPlayerController _ctrl;
   bool _ready = false;
+
   @override
   void initState() {
     super.initState();
-    _ctrl = VideoPlayerController.networkUrl(Uri.parse(widget.url))
+    final url = Global.getImageUrl(widget.url);
+    _ctrl = VideoPlayerController.networkUrl(Uri.parse(url))
       ..initialize().then((_) {
         if (mounted) {
           setState(() => _ready = true);
           _ctrl.play();
+          _ctrl.addListener(() {
+            if (mounted) setState(() {});
+          });
         }
       });
   }
@@ -954,10 +1039,8 @@ class _PdFullscreenVideoState extends State<_PdFullscreenVideo> {
     body: Center(
       child: _ready
           ? GestureDetector(
-              onTap: () {
-                _ctrl.value.isPlaying ? _ctrl.pause() : _ctrl.play();
-                setState(() {});
-              },
+              onTap: () =>
+                  _ctrl.value.isPlaying ? _ctrl.pause() : _ctrl.play(),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -971,6 +1054,21 @@ class _PdFullscreenVideoState extends State<_PdFullscreenVideo> {
                       color: Colors.white70,
                       size: 64,
                     ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: VideoProgressIndicator(
+                      _ctrl,
+                      allowScrubbing: true,
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      colors: VideoProgressColors(
+                        playedColor: AppColor.primaryColor,
+                        bufferedColor: Colors.white30,
+                        backgroundColor: Colors.white12,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             )

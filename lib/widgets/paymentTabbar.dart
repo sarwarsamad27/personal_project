@@ -77,7 +77,8 @@ class _PaymentTabBarState extends State<PaymentTabBar> {
                         onTap: () => changeTab(i),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 250),
-                          padding: EdgeInsets.symmetric(vertical: 10.h),
+                          padding: EdgeInsets.symmetric(
+                              vertical: 10.h, horizontal: 4.w),
                           decoration: BoxDecoration(
                             gradient: selected
                                 ? const LinearGradient(
@@ -90,13 +91,20 @@ class _PaymentTabBarState extends State<PaymentTabBar> {
                             borderRadius: BorderRadius.circular(25.r),
                           ),
                           child: Center(
-                            child: Text(
-                              tabs[i],
-                              style: TextStyle(
-                                color: selected ? Colors.white : Colors.black87,
-                                fontWeight: selected
-                                    ? FontWeight.bold
-                                    : FontWeight.w500,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                tabs[i],
+                                maxLines: 1,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color:
+                                      selected ? Colors.white : Colors.black87,
+                                  fontWeight: selected
+                                      ? FontWeight.bold
+                                      : FontWeight.w500,
+                                  fontSize: 13.sp,
+                                ),
                               ),
                             ),
                           ),

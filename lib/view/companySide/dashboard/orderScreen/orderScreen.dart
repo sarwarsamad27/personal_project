@@ -9,6 +9,7 @@ import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/leopards_tracking_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/orderDetailScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/getCancelledOrders_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/pendingToCancel_provider.dart';
@@ -82,6 +83,20 @@ class _OrderScreenState extends State<OrderScreen>
             context,
             listen: false,
           ).fetchDispatchedOrders(isRefresh: true);
+        } else if (status == 'Cancelled') {
+          // Prepend to cancelled tab from socket data
+          try {
+            final rawOrder = data['order'];
+            if (rawOrder != null) {
+              final order = Orders.fromJson(
+                Map<String, dynamic>.from(rawOrder as Map),
+              );
+              Provider.of<GetCancelledOrdersProvider>(
+                context,
+                listen: false,
+              ).prependFromSocket(order);
+            }
+          } catch (_) {}
         }
       }
     });
@@ -199,28 +214,46 @@ class _OrderScreenState extends State<OrderScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Consumer2<GetMyOrdersProvider, GetDispatchedOrderProvider>(
-                builder: (context, pendingProvider, dispatchedProvider, _) {
-                  return PaymentTabBar(
-                    onTabChanged: (index) {
-                      if (index == 0) {
-                        Provider.of<GetMyOrdersProvider>(
-                          context,
-                          listen: false,
-                        ).fetchOrders(isRefresh: true);
-                      } else {
-                        Provider.of<GetDispatchedOrderProvider>(
-                          context,
-                          listen: false,
-                        ).fetchDispatchedOrders(isRefresh: true);
-                      }
+              Consumer3<
+                GetMyOrdersProvider,
+                GetDispatchedOrderProvider,
+                GetCancelledOrdersProvider
+              >(
+                builder:
+                    (
+                      context,
+                      pendingProvider,
+                      dispatchedProvider,
+                      cancelledProvider,
+                      _,
+                    ) {
+                      return PaymentTabBar(
+                        onTabChanged: (index) {
+                          if (index == 0) {
+                            Provider.of<GetMyOrdersProvider>(
+                              context,
+                              listen: false,
+                            ).fetchOrders(isRefresh: true);
+                          } else if (index == 1) {
+                            Provider.of<GetDispatchedOrderProvider>(
+                              context,
+                              listen: false,
+                            ).fetchDispatchedOrders(isRefresh: true);
+                          } else {
+                            Provider.of<GetCancelledOrdersProvider>(
+                              context,
+                              listen: false,
+                            ).fetchCancelledOrders(isRefresh: true);
+                          }
+                        },
+                        firstTab: pendingTab(pendingProvider),
+                        secondTab: dispatchedTab(dispatchedProvider),
+                        thirdTab: cancelledTab(cancelledProvider),
+                        firstTabbarName: "Pending",
+                        secondTabbarName: "Dispatched",
+                        thirdTabbarName: "Cancelled",
+                      );
                     },
-                    firstTab: pendingTab(pendingProvider),
-                    secondTab: dispatchedTab(dispatchedProvider),
-                    firstTabbarName: "Pending Orders",
-                    secondTabbarName: "Dispatched Orders",
-                  );
-                },
               ),
             ],
           ),
@@ -424,6 +457,318 @@ class _OrderScreenState extends State<OrderScreen>
       pendingProvider: null,
       isApiLoading: provider.loading,
       scrollController: null,
+    );
+  }
+
+  Widget cancelledTab(GetCancelledOrdersProvider provider) {
+    if (provider.loading && provider.orders.isEmpty) {
+      return const Center(
+        child: SpinKitThreeBounce(color: AppColor.whiteColor, size: 30),
+      );
+    }
+
+    final list = provider.orders;
+
+    if (list.isEmpty) {
+      return ListView(
+        children: [
+          SizedBox(height: 80.h),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(24.w),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.08),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.cancel_outlined,
+                    color: Colors.white.withValues(alpha: 0.4),
+                    size: 44.sp,
+                  ),
+                ),
+                SizedBox(height: 20.h),
+                Text(
+                  "No Cancelled Orders",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  "Cancelled orders will appear here",
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.45),
+                    fontSize: 13.sp,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return RefreshIndicator(
+      color: Colors.white,
+      backgroundColor: AppColor.primaryColor,
+      onRefresh: () => provider.fetchCancelledOrders(isRefresh: true),
+      child: ListView.separated(
+        padding: EdgeInsets.only(top: 4.h, bottom: 60.h),
+        itemCount: list.length,
+        separatorBuilder: (_, __) => SizedBox(height: 14.h),
+        itemBuilder: (context, index) {
+          final order = list[index];
+          final products = (order.products ?? []);
+          final firstProduct = products.isNotEmpty ? products.first : null;
+          final isByBuyer = order.cancelledBy == 'buyer';
+
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20.r),
+              border: Border.all(
+                color: Colors.red.withValues(alpha: 0.35),
+                width: 1.2,
+              ),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.red.withValues(alpha: 0.12),
+                  Colors.red.withValues(alpha: 0.04),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Order ID + Cancelled by badge
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          "#${order.orderId ?? ''}",
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.8,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 3.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(20.r),
+                          border: Border.all(
+                            color: Colors.red.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isByBuyer
+                                  ? Icons.person_outline_rounded
+                                  : Icons.store_outlined,
+                              color: Colors.redAccent,
+                              size: 10.sp,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              isByBuyer
+                                  ? "Cancelled by Customer"
+                                  : "Cancelled by Seller",
+                              style: TextStyle(
+                                color: Colors.redAccent,
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 12.h),
+
+                  // Product row
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildProductImage(firstProduct),
+                      SizedBox(width: 14.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              firstProduct?.name ?? "Product",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: 6.h),
+                            _buildInfoRow(
+                              icon: Icons.person_outline_rounded,
+                              label: order.buyerDetails?.name ?? "Customer",
+                            ),
+                            SizedBox(height: 4.h),
+                            _buildInfoRow(
+                              icon: Icons.inventory_2_outlined,
+                              label:
+                                  "${products.length} Item${products.length != 1 ? 's' : ''}",
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Cancel reason
+                  if (order.cancelReason != null &&
+                      order.cancelReason!.isNotEmpty) ...[
+                    SizedBox(height: 12.h),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 8.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(10.r),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            color: Colors.white.withValues(alpha: 0.4),
+                            size: 13.sp,
+                          ),
+                          SizedBox(width: 6.w),
+                          Expanded(
+                            child: Text(
+                              "Reason: ${order.cancelReason}",
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.6),
+                                fontSize: 11.sp,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  SizedBox(height: 12.h),
+                  Container(
+                    height: 1,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          Colors.white.withValues(alpha: 0.15),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+
+                  // Total
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Total Amount",
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.45),
+                              fontSize: 10.sp,
+                            ),
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                "Rs.",
+                                style: TextStyle(
+                                  color: AppColor.primaryColor,
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(width: 3.w),
+                              Text(
+                                "${order.grandTotal ?? 0}",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 18.sp,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      if (firstProduct != null)
+                        _buildActionButton(
+                          label: "Product",
+                          icon: Icons.visibility_outlined,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ProductDetailScreen(
+                                productId: firstProduct.productId,
+                                categoryId: firstProduct.categoryId,
+                              ),
+                            ),
+                          ),
+                          outlined: true,
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 

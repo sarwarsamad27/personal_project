@@ -18,7 +18,7 @@ class CompanyGoogleLoginProvider with ChangeNotifier {
 
   // ✅ WEB Client ID (Google Console → Credentials → OAuth Web)
   static const String _webClientId =
-      '1029779159303-q7l67jmdltqqhen5ahll09bjv0i2kv3k.apps.googleusercontent.com';
+      '900853727644-a6m3k2sf0bdumpfkvm7h2hhlal4ct76i.apps.googleusercontent.com';
 
   late final GoogleSignIn _googleSignIn;
 

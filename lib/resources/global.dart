@@ -31,6 +31,7 @@ class Global {
   static var PendingToCancelled = "${BaseUrl}/pending/to/cancelled/orders";
   static var GetDispatchedOrder = "${BaseUrl}/get/dispatched/orders";
   static var GetReturnedOrder = "${BaseUrl}/get/returned/orders";
+  static var GetCancelledOrders = "${BaseUrl}/get/cancelled/orders";
   static var GetDeliveredOrder = "${BaseUrl}/get/delivered/orders";
   static var GetCompanyAmount = "${BaseUrl}/get/company/wallet";
   static var PaymentRequest = "${BaseUrl}/withdraw/send/code";
