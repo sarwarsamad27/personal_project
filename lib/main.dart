@@ -74,7 +74,6 @@ Future<void> _setupFirebaseForegroundHandler() async {
           priority: Priority.high,
           icon: 'ic_notification',
           color: const Color(0xFFDB9F3A),
-          largeIcon: const DrawableResourceAndroidBitmap('ic_launcher'),
         ),
       ),
     );
@@ -84,7 +83,9 @@ Future<void> _setupFirebaseForegroundHandler() async {
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
     if (!e.toString().contains('duplicate-app')) rethrow;
   }
@@ -93,7 +94,9 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
     if (!e.toString().contains('duplicate-app')) rethrow;
   }

@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appColor.dart';
@@ -6,6 +7,7 @@ import 'package:new_brand/view/companySide/dashboard/productScreen/productCatego
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/widget/edit_product_dialog.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:video_player/video_player.dart';
+import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/widget/MediaFullscreenViewer.dart';
 
 class ProductImage extends StatefulWidget {
   final List<String> imageUrls;
@@ -129,18 +131,81 @@ class _ProductImageState extends State<ProductImage> {
                     itemBuilder: (context, index) {
                       if (index < validImages.length) {
                         final url = Global.getImageUrl(validImages[index]);
-                        return Image.network(
-                          url,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          errorBuilder: (_, __, ___) =>
-                              const _NoImagePlaceholder(),
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => MediaFullscreenViewer(
+                                  imageUrls: validImages
+                                      .map((e) => Global.getImageUrl(e))
+                                      .toList(),
+                                  videoUrl: widget.videoUrl,
+                                  initialIndex: index,
+                                  existingVideoController: _videoCtrl,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Hero(
+                            tag: url,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                // Background shade
+                                Image.network(
+                                  url,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      const SizedBox(),
+                                ),
+                                // Blur effect
+                                ClipRect(
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                      sigmaX: 10,
+                                      sigmaY: 10,
+                                    ),
+                                    child: Container(
+                                      color: Colors.black.withOpacity(0.2),
+                                    ),
+                                  ),
+                                ),
+                                // Foreground image
+                                Image.network(
+                                  url,
+                                  fit: BoxFit.contain,
+                                  width: double.infinity,
+                                  errorBuilder: (_, __, ___) =>
+                                      const _NoImagePlaceholder(),
+                                ),
+                              ],
+                            ),
+                          ),
                         );
                       } else {
                         // Pass pre-initialised controller — no re-fetch on swipe
                         return _ProductVideoPlayer(
                           controller: _videoCtrl,
                           isReady: _videoReady,
+                          backgroundUrl: validImages.isNotEmpty
+                              ? Global.getImageUrl(validImages.first)
+                              : null,
+                          onFullScreen: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => MediaFullscreenViewer(
+                                  imageUrls: validImages
+                                      .map((e) => Global.getImageUrl(e))
+                                      .toList(),
+                                  videoUrl: widget.videoUrl,
+                                  initialIndex: index,
+                                  existingVideoController: _videoCtrl,
+                                ),
+                              ),
+                            );
+                          },
                         );
                       }
                     },
@@ -231,10 +296,14 @@ class _ProductImageState extends State<ProductImage> {
 class _ProductVideoPlayer extends StatefulWidget {
   final VideoPlayerController? controller;
   final bool isReady;
+  final VoidCallback onFullScreen;
+  final String? backgroundUrl;
 
   const _ProductVideoPlayer({
     required this.controller,
     required this.isReady,
+    required this.onFullScreen,
+    this.backgroundUrl,
   });
 
   @override
@@ -280,6 +349,25 @@ class _ProductVideoPlayerState extends State<_ProductVideoPlayer> {
     return Stack(
       alignment: Alignment.center,
       children: [
+        if (widget.backgroundUrl != null)
+          Positioned.fill(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.network(
+                  widget.backgroundUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox(),
+                ),
+                ClipRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(color: Colors.black.withOpacity(0.2)),
+                  ),
+                ),
+              ],
+            ),
+          ),
         AspectRatio(
           aspectRatio: ctrl.value.aspectRatio,
           child: VideoPlayer(ctrl),
@@ -291,6 +379,26 @@ class _ProductVideoPlayerState extends State<_ProductVideoPlayer> {
             child: Icon(
               isPlaying ? Icons.pause : Icons.play_arrow,
               color: Colors.white,
+            ),
+          ),
+        ),
+        // Full screen button
+        Positioned(
+          bottom: 10,
+          right: 10,
+          child: GestureDetector(
+            onTap: widget.onFullScreen,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.black45,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Icon(
+                Icons.fullscreen,
+                color: Colors.white,
+                size: 24,
+              ),
             ),
           ),
         ),

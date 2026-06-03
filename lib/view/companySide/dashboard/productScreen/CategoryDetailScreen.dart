@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/models/categoryModel/getCategory_model.dart';
+import 'package:new_brand/models/productModel/getProductCategoryWise_model.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
@@ -10,6 +11,7 @@ import 'package:new_brand/view/companySide/dashboard/productScreen/productCatego
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getProductCategoryWise_provider.dart';
 import 'package:new_brand/widgets/productCard.dart';
+import 'package:new_brand/resources/socketServices.dart';
 import 'package:provider/provider.dart';
 
 class CategoryProductsScreen extends StatefulWidget {
@@ -46,6 +48,63 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
         categoryId: widget.category.sId!,
       );
     });
+    _setupSocket();
+  }
+
+  void _setupSocket() async {
+    final token = await LocalStorage.getToken() ?? "";
+    if (token.isEmpty) return;
+
+    final socket = await SocketService().ensureConnected(
+      baseUrl: Global.imageUrl,
+      token: token,
+    );
+
+    socket?.on("product:update", (data) {
+      if (!mounted || data == null) return;
+      try {
+        final product = Products.fromJson(
+          Map<String, dynamic>.from(data as Map),
+        );
+        // Only update if it belongs to this category
+        if (product.categoryId == widget.category.sId) {
+          Provider.of<GetProductCategoryWiseProvider>(
+            context,
+            listen: false,
+          ).updateProductInList(product);
+        }
+      } catch (e) {
+        debugPrint("Socket product:update Error: $e");
+      }
+    });
+
+    socket?.on("product:delete", (data) {
+      if (!mounted || data == null) return;
+      try {
+        final String? productId = data['productId'];
+        final String? categoryId = data['categoryId'];
+        if (productId != null && categoryId == widget.category.sId) {
+          Provider.of<GetProductCategoryWiseProvider>(
+            context,
+            listen: false,
+          ).deleteProductFromList(productId);
+        }
+      } catch (e) {
+        debugPrint("Socket product:delete Error: $e");
+      }
+    });
+
+    socket?.on("category:delete", (data) {
+      if (!mounted || data == null) return;
+      try {
+        final String? categoryId = data['categoryId'];
+        if (categoryId == widget.category.sId) {
+          Navigator.pop(context); // Pop if current category is deleted
+        }
+      } catch (e) {
+        debugPrint("Socket category:delete Error: $e");
+      }
+    });
   }
 
   @override
@@ -69,8 +128,12 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context).size;
     final imageHeight = media.height * 0.48.h;
-    // Parallax: image moves up slower than scroll
-    final parallaxOffset = _scrollOffset * 0.45;
+
+    final double overScroll = _scrollOffset < 0 ? -_scrollOffset : 0;
+    double imageParallax = 0;
+    if (_scrollOffset > 0) {
+      imageParallax = (_scrollOffset * 0.45).clamp(0, 110.h);
+    }
 
     return GestureDetector(
       onTap: () {
@@ -89,117 +152,123 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                   child: SizedBox(
                     height: imageHeight,
                     width: double.infinity,
-                    child: ClipRect(
-                      child: OverflowBox(
-                        maxHeight: imageHeight + 120.h,
-                        alignment: Alignment.topCenter,
-                        child: Transform.translate(
-                          offset: Offset(0, -parallaxOffset),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              // ── Image ──
-                              Image.network(
-                                Global.getImageUrl(widget.category.image!),
-                                fit: BoxFit.cover,
-                                height: imageHeight + 120.h,
-                                width: double.infinity,
-                                loadingBuilder: (context, child, progress) {
-                                  if (progress == null) return child;
-                                  return const Center(
-                                    child: SpinKitThreeBounce(
-                                      color: AppColor.primaryColor,
-                                      size: 30.0,
-                                    ),
-                                  );
-                                },
-                                errorBuilder: (_, __, ___) => Container(
-                                  color: Colors.grey[900],
-                                  alignment: Alignment.center,
-                                  child: Icon(
-                                    Icons.image_not_supported,
-                                    size: 48.sp,
-                                    color: Colors.white30,
-                                  ),
-                                ),
-                              ),
-
-                              // ── Premium gradient overlay (bottom heavy) ──
-                              Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    stops: const [0.0, 0.45, 0.75, 1.0],
-                                    colors: [
-                                      Colors.black.withOpacity(0.15),
-                                      Colors.transparent,
-                                      Colors.black.withOpacity(0.55),
-                                      Colors.black.withOpacity(0.88),
-                                    ],
-                                  ),
-                                ),
-                              ),
-
-                              // ── Back button ──
-                              Positioned(
-                                top: MediaQuery.of(context).padding.top + 8.h,
-                                left: 12.w,
-                                child: GestureDetector(
-                                  onTap: () => Navigator.pop(context),
-                                  child: Container(
-                                    padding: EdgeInsets.all(8.w),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.35),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.white24,
-                                        width: 1,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Positioned(
+                          top: -overScroll,
+                          left: 0,
+                          right: 0,
+                          height: imageHeight + overScroll,
+                          child: ClipRect(
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                // ── Image with parallax ──
+                                OverflowBox(
+                                  maxHeight: imageHeight + 200.h,
+                                  alignment: Alignment.topCenter,
+                                  child: Transform.translate(
+                                    offset: Offset(0, -imageParallax),
+                                    child: Image.network(
+                                      Global.getImageUrl(
+                                        widget.category.image!,
+                                      ),
+                                      fit: BoxFit.cover,
+                                      height: imageHeight + 200.h,
+                                      width: double.infinity,
+                                      loadingBuilder:
+                                          (context, child, progress) {
+                                            if (progress == null) return child;
+                                            return const Center(
+                                              child: SpinKitThreeBounce(
+                                                color: AppColor.primaryColor,
+                                                size: 30.0,
+                                              ),
+                                            );
+                                          },
+                                      errorBuilder: (_, __, ___) => Container(
+                                        color: Colors.grey[900],
+                                        alignment: Alignment.center,
+                                        child: Icon(
+                                          Icons.image_not_supported,
+                                          size: 48.sp,
+                                          color: Colors.white30,
+                                        ),
                                       ),
                                     ),
-                                    child: Icon(
-                                      Icons.arrow_back_ios_new_rounded,
-                                      color: Colors.white,
-                                      size: 18.sp,
+                                  ),
+                                ),
+
+                                // ── Premium gradient overlay ──
+                                Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      stops: const [0.0, 0.45, 0.75, 1.0],
+                                      colors: [
+                                        Colors.black.withOpacity(0.15),
+                                        Colors.transparent,
+                                        Colors.black.withOpacity(0.55),
+                                        Colors.black.withOpacity(0.88),
+                                      ],
                                     ),
                                   ),
                                 ),
-                              ),
 
-                              // ── Category name + tag ──
-                              Positioned(
-                                left: 20.w,
-                                right: 20.w,
-                                bottom: 22.h,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      widget.category.name!,
-                                      style: TextStyle(
+                                // ── Back button ──
+                                Positioned(
+                                  top: MediaQuery.of(context).padding.top + 8.h,
+                                  left: 12.w,
+                                  child: GestureDetector(
+                                    onTap: () => Navigator.pop(context),
+                                    child: Container(
+                                      padding: EdgeInsets.all(8.w),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.35),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white24,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.arrow_back_ios_new_rounded,
                                         color: Colors.white,
-                                        fontSize: 32.sp,
-                                        fontWeight: FontWeight.bold,
-                                        height: 1.1,
-                                        shadows: [
-                                          Shadow(
-                                            color: Colors.black.withOpacity(
-                                              0.6,
-                                            ),
-                                            blurRadius: 12,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
+                                        size: 18.sp,
                                       ),
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),
-                            ],
+
+                                // ── Category name ──
+                                Positioned(
+                                  left: 20.w,
+                                  right: 20.w,
+                                  bottom: 22.h,
+                                  child: Text(
+                                    widget.category.name!,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 32.sp,
+                                      fontWeight: FontWeight.bold,
+                                      height: 1.1,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black.withOpacity(0.6),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),

@@ -26,4 +26,23 @@ class GetCategoryProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // ── Socket Update Methods ──
+
+  void updateCategoryInList(Categories updatedCategory) {
+    if (categoryData?.categories == null) return;
+    final index = categoryData!.categories!.indexWhere(
+      (c) => c.sId == updatedCategory.sId,
+    );
+    if (index != -1) {
+      categoryData!.categories![index] = updatedCategory;
+      notifyListeners();
+    }
+  }
+
+  void deleteCategoryFromList(String categoryId) {
+    if (categoryData?.categories == null) return;
+    categoryData!.categories!.removeWhere((c) => c.sId == categoryId);
+    notifyListeners();
+  }
 }

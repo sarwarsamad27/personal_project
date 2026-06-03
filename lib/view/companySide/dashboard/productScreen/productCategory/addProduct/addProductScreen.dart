@@ -34,11 +34,15 @@ class AddProductScreen extends StatelessWidget {
   final ValueNotifier<List<File>> selectedImagesNotifier = ValueNotifier([]);
   final ValueNotifier<File?> selectedVideoNotifier = ValueNotifier(null);
   final ValueNotifier<List<String>> selectedSizesNotifier = ValueNotifier([]);
-  final ValueNotifier<List<Map<String, dynamic>>> selectedColorsNotifier = ValueNotifier([]);
+  final ValueNotifier<List<Map<String, dynamic>>> selectedColorsNotifier =
+      ValueNotifier([]);
 
   Future<void> _analyzeImage(BuildContext context, File image) async {
     final token = await LocalStorage.getToken();
-    final analyzeProvider = Provider.of<AnalyzeProductProvider>(context, listen: false);
+    final analyzeProvider = Provider.of<AnalyzeProductProvider>(
+      context,
+      listen: false,
+    );
     _nameController.text = "Analyzing...";
     _descriptionController.text = "Please wait...";
     analyzeProvider.analyzeImage(
@@ -59,9 +63,14 @@ class AddProductScreen extends StatelessWidget {
   void _calculateDiscount(BuildContext context) {
     final before = double.tryParse(_beforePriceController.text.trim());
     final after = double.tryParse(_afterPriceController.text.trim());
-    if (before == null || after == null) { _discountController.text = ""; return; }
+    if (before == null || after == null) {
+      _discountController.text = "";
+      return;
+    }
     if (after > before) {
-      AppToast.show("After discount price must be less than before discount price");
+      AppToast.show(
+        "After discount price must be less than before discount price",
+      );
       _afterPriceController.clear();
       _discountController.text = "";
       return;
@@ -105,18 +114,31 @@ class AddProductScreen extends StatelessWidget {
         _afterPriceController.text.isEmpty ||
         _weightController.text.isEmpty ||
         _quantityController.text.isEmpty) {
-      AppToast.show("Please fill all required fields and add at least one image");
+      AppToast.show(
+        "Please fill all required fields and add at least one image",
+      );
       return;
     }
 
     final weight = int.tryParse(_weightController.text.trim());
-    if (weight == null || weight <= 0) { AppToast.show("Please enter valid weight in grams"); return; }
+    if (weight == null || weight <= 0) {
+      AppToast.show("Please enter valid weight in grams");
+      return;
+    }
 
     final quantity = int.tryParse(_quantityController.text.trim());
-    if (quantity == null || quantity < 0) { AppToast.show("Please enter valid quantity"); return; }
+    if (quantity == null || quantity < 0) {
+      AppToast.show("Please enter valid quantity");
+      return;
+    }
 
-    final validImages = selectedImagesNotifier.value.where((f) => f.existsSync()).toList();
-    if (validImages.isEmpty) { AppToast.show("Selected images not found. Please re-select."); return; }
+    final validImages = selectedImagesNotifier.value
+        .where((f) => f.existsSync())
+        .toList();
+    if (validImages.isEmpty) {
+      AppToast.show("Selected images not found. Please re-select.");
+      return;
+    }
 
     provider.addProduct(
       token: token,
@@ -128,7 +150,9 @@ class AddProductScreen extends StatelessWidget {
       beforePrice: int.tryParse(_beforePriceController.text),
       afterPrice: int.tryParse(_afterPriceController.text),
       size: selectedSizesNotifier.value,
-      color: selectedColorsNotifier.value.map((e) => e["name"].toString()).toList(),
+      color: selectedColorsNotifier.value
+          .map((e) => e["name"].toString())
+          .toList(),
       quantity: quantity,
       weightInGrams: weight,
       onSuccess: () {
@@ -150,7 +174,9 @@ class AddProductScreen extends StatelessWidget {
             final hasVideo = selectedVideoNotifier.value != null;
             String btnText = "Add Product";
             if (provider.isLoading) {
-              btnText = hasVideo ? "Uploading… (video may take 1-2 min)" : "Adding...";
+              btnText = hasVideo
+                  ? "Uploading… (video may take 1-2 min)"
+                  : "Adding...";
             }
             return CustomButton(
               text: btnText,
@@ -174,24 +200,32 @@ class AddProductScreen extends StatelessWidget {
                         // ── IMAGES (mandatory) ──
                         UploadImages(
                           selectedImages: selectedImagesNotifier,
-                          onImageSelected: (File firstImage) => _analyzeImage(context, firstImage),
+                          onImageSelected: (File firstImage) =>
+                              _analyzeImage(context, firstImage),
                         ),
                         SizedBox(height: 12.h),
 
                         // ── AI analyzing indicator ──
                         Consumer<AnalyzeProductProvider>(
                           builder: (context, analyzeProvider, _) {
-                            if (!analyzeProvider.isAnalyzing) return const SizedBox.shrink();
+                            if (!analyzeProvider.isAnalyzing)
+                              return const SizedBox.shrink();
                             return Padding(
                               padding: EdgeInsets.only(bottom: 12.h),
                               child: Row(
                                 children: [
                                   SizedBox(
-                                    width: 16.w, height: 16.h,
-                                    child: const CircularProgressIndicator(strokeWidth: 2),
+                                    width: 16.w,
+                                    height: 16.h,
+                                    child: const CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   ),
                                   SizedBox(width: 8.w),
-                                  Text("AI analyzing image...", style: TextStyle(fontSize: 12.sp)),
+                                  Text(
+                                    "AI analyzing image...",
+                                    style: TextStyle(fontSize: 12.sp),
+                                  ),
                                 ],
                               ),
                             );
@@ -218,6 +252,8 @@ class AddProductScreen extends StatelessWidget {
                           hintText: "Enter product description",
                           headerText: 'Description',
                           validator: Validators.required,
+                          maxLines: 3,
+                          minLines: 1,
                         ),
                         SizedBox(height: 20.h),
 
@@ -250,7 +286,7 @@ class AddProductScreen extends StatelessWidget {
                         CustomTextField(
                           controller: _weightController,
                           hintText: "Enter weight in grams (e.g. 500)",
-                          headerText: 'Weight (grams) *',
+                          headerText: 'Weight (in grams) *',
                           keyboardType: TextInputType.number,
                         ),
                         SizedBox(height: 20.h),
@@ -284,7 +320,10 @@ class _VideoUploadSection extends StatelessWidget {
   final ValueNotifier<File?> videoNotifier;
   final VoidCallback onPick;
 
-  const _VideoUploadSection({required this.videoNotifier, required this.onPick});
+  const _VideoUploadSection({
+    required this.videoNotifier,
+    required this.onPick,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -313,9 +352,19 @@ class _VideoUploadSection extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.videocam_outlined, color: Colors.white54, size: 26.sp),
+                      Icon(
+                        Icons.videocam_outlined,
+                        color: Colors.white54,
+                        size: 26.sp,
+                      ),
                       SizedBox(width: 8.w),
-                      Text("Add Video", style: TextStyle(color: Colors.white54, fontSize: 13.sp)),
+                      Text(
+                        "Add Video",
+                        style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 13.sp,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -324,7 +373,9 @@ class _VideoUploadSection extends StatelessWidget {
               FutureBuilder<int>(
                 future: video.length(),
                 builder: (_, snap) {
-                  final mb = snap.hasData ? (snap.data! / (1024 * 1024)).toStringAsFixed(1) : "…";
+                  final mb = snap.hasData
+                      ? (snap.data! / (1024 * 1024)).toStringAsFixed(1)
+                      : "…";
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -332,13 +383,21 @@ class _VideoUploadSection extends StatelessWidget {
                         children: [
                           _LocalVideoPreview(file: video),
                           Positioned(
-                            top: 6, right: 6,
+                            top: 6,
+                            right: 6,
                             child: GestureDetector(
                               onTap: () => videoNotifier.value = null,
                               child: Container(
                                 padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                                child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
                               ),
                             ),
                           ),
@@ -347,7 +406,10 @@ class _VideoUploadSection extends StatelessWidget {
                       SizedBox(height: 4.h),
                       Text(
                         "Video size: $mb MB",
-                        style: TextStyle(color: Colors.white54, fontSize: 11.sp),
+                        style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 11.sp,
+                        ),
                       ),
                     ],
                   );
@@ -392,7 +454,9 @@ class _LocalVideoPreviewState extends State<_LocalVideoPreview> {
     return GestureDetector(
       onTap: () {
         if (_initialized) {
-          _controller.value.isPlaying ? _controller.pause() : _controller.play();
+          _controller.value.isPlaying
+              ? _controller.pause()
+              : _controller.play();
           setState(() {});
         }
       },
@@ -417,7 +481,11 @@ class _LocalVideoPreviewState extends State<_LocalVideoPreview> {
             else
               const CircularProgressIndicator(color: Colors.white),
             if (_initialized && !_controller.value.isPlaying)
-              const Icon(Icons.play_circle_fill, color: Colors.white70, size: 48),
+              const Icon(
+                Icons.play_circle_fill,
+                color: Colors.white70,
+                size: 48,
+              ),
           ],
         ),
       ),

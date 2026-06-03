@@ -8,6 +8,8 @@ import 'package:new_brand/models/categoryModel/getCategory_model.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/toast.dart';
+import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/resources/socketServices.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/CategoryDetailScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProuctCategoryForm.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/getcategory_provider.dart';
@@ -35,6 +37,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       final provider = Provider.of<GetCategoryProvider>(context, listen: false);
       await provider.getCategories();
     });
+    _setupSocket();
   }
 
   Future<File?> _pickImage() async {
@@ -64,14 +67,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
               Navigator.pop(context); // close dialog first
 
               final success = await provider.deleteCategory(categoryId: id);
-              if (!mounted) return;
 
               if (success) {
                 AppToast.success("Category deleted successfully!");
-                Provider.of<GetCategoryProvider>(
-                  context,
-                  listen: false,
-                ).getCategories(forceRefresh: true);
+                // No need to manually refresh; socket handles it
               } else {
                 AppToast.error("Failed to delete category");
               }
@@ -268,6 +267,46 @@ class _CategoryScreenState extends State<CategoryScreen> {
         );
       },
     );
+  }
+
+  void _setupSocket() async {
+    final token = await LocalStorage.getToken() ?? "";
+    if (token.isEmpty) return;
+
+    final socket = await SocketService().ensureConnected(
+      baseUrl: Global.imageUrl,
+      token: token,
+    );
+
+    socket?.on("category:update", (data) {
+      if (!mounted || data == null) return;
+      try {
+        final category = Categories.fromJson(
+          Map<String, dynamic>.from(data as Map),
+        );
+        Provider.of<GetCategoryProvider>(
+          context,
+          listen: false,
+        ).updateCategoryInList(category);
+      } catch (e) {
+        debugPrint("Socket category:update Error: $e");
+      }
+    });
+
+    socket?.on("category:delete", (data) {
+      if (!mounted || data == null) return;
+      try {
+        final String? categoryId = data['categoryId'];
+        if (categoryId != null) {
+          Provider.of<GetCategoryProvider>(
+            context,
+            listen: false,
+          ).deleteCategoryFromList(categoryId);
+        }
+      } catch (e) {
+        debugPrint("Socket category:delete Error: $e");
+      }
+    });
   }
 
   @override

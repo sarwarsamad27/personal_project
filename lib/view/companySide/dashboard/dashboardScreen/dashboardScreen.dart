@@ -292,207 +292,192 @@ class _HomeDashboardState extends State<HomeDashboard>
                                       : rawMax * 1.2;
                                   final count = values.length;
 
-                                  return ClipRRect(
-                                    borderRadius: BorderRadius.circular(14.r),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(
-                                          14.r,
+                                  return Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(14.r),
+                                      border: Border.all(
+                                        color: Colors.black.withOpacity(0.05),
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.04),
+                                          blurRadius: 14,
+                                          offset: const Offset(0, 8),
                                         ),
-                                        border: Border.all(
-                                          color: Colors.black.withOpacity(0.05),
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(
-                                              0.04,
-                                            ),
-                                            blurRadius: 14,
-                                            offset: const Offset(0, 8),
+                                      ],
+                                    ),
+                                    padding: EdgeInsets.only(
+                                      top: 8.h,
+                                      left: 3.w,
+                                      right: 3.w,
+                                      bottom: 1.h,
+                                    ),
+                                    child: BarChart(
+                                      BarChartData(
+                                        maxY: maxValue.toDouble(),
+                                        alignment:
+                                            BarChartAlignment.spaceAround,
+                                        groupsSpace: 10.w,
+                                        barTouchData: BarTouchData(
+                                          enabled: true,
+                                          touchTooltipData: BarTouchTooltipData(
+                                            getTooltipColor: (_) =>
+                                                Colors.black87,
+                                            tooltipRoundedRadius: 10.r,
+                                            fitInsideHorizontally: true,
+                                            fitInsideVertically: true,
+                                            getTooltipItem: (group, _, rod, __) {
+                                              final idx = group.x.toInt();
+                                              final fullLabel =
+                                                  (idx >= 0 &&
+                                                      idx < labels.length)
+                                                  ? labels[idx]
+                                                  : "";
+
+                                              return BarTooltipItem(
+                                                "${fullLabel.isNotEmpty ? "$fullLabel\n" : ""}PKR ${rod.toY.toInt()}",
+                                                TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 12.sp,
+                                                  height: 1.25,
+                                                ),
+                                              );
+                                            },
                                           ),
-                                        ],
-                                      ),
-                                      padding: EdgeInsets.only(
-                                        top: 8.h,
-                                        left: 3.w,
-                                        right: 3.w,
-                                        bottom: 1.h,
-                                      ),
-                                      child: BarChart(
-                                        BarChartData(
-                                          maxY: maxValue.toDouble(),
-                                          alignment:
-                                              BarChartAlignment.spaceAround,
-                                          groupsSpace: 10.w,
-                                          barTouchData: BarTouchData(
-                                            enabled: true,
-                                            touchTooltipData: BarTouchTooltipData(
-                                              getTooltipColor: (_) =>
-                                                  Colors.black87,
-                                              tooltipRoundedRadius: 10.r,
-                                              getTooltipItem: (group, _, rod, __) {
-                                                final idx = group.x.toInt();
-                                                final fullLabel =
-                                                    (idx >= 0 &&
-                                                        idx < labels.length)
-                                                    ? labels[idx]
+                                        ),
+                                        gridData: FlGridData(
+                                          show: true,
+                                          drawVerticalLine: false,
+                                          horizontalInterval: maxValue == 0
+                                              ? 1
+                                              : maxValue / 4,
+                                          getDrawingHorizontalLine: (value) {
+                                            return FlLine(
+                                              color: Colors.grey.withOpacity(
+                                                0.15,
+                                              ),
+                                              strokeWidth: 1,
+                                            );
+                                          },
+                                        ),
+                                        borderData: FlBorderData(show: false),
+                                        titlesData: FlTitlesData(
+                                          leftTitles: const AxisTitles(
+                                            sideTitles: SideTitles(
+                                              showTitles: false,
+                                            ),
+                                          ),
+                                          rightTitles: const AxisTitles(
+                                            sideTitles: SideTitles(
+                                              showTitles: false,
+                                            ),
+                                          ),
+                                          topTitles: const AxisTitles(
+                                            sideTitles: SideTitles(
+                                              showTitles: false,
+                                            ),
+                                          ),
+                                          bottomTitles: AxisTitles(
+                                            sideTitles: SideTitles(
+                                              showTitles: true,
+                                              interval: 1,
+                                              reservedSize: 58.h,
+                                              getTitlesWidget: (value, meta) {
+                                                final i = value.toInt();
+                                                if (i < 0 || i >= count) {
+                                                  return const SizedBox.shrink();
+                                                }
+
+                                                final full = (i < labels.length)
+                                                    ? labels[i]
                                                     : "";
 
-                                                return BarTooltipItem(
-                                                  "${fullLabel.isNotEmpty ? "$fullLabel\n" : ""}PKR ${rod.toY.toInt()}",
-                                                  TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.w700,
-                                                    fontSize: 12.sp,
-                                                    height: 1.25,
+                                                final lines = _twoLineWeekLabel(
+                                                  full,
+                                                );
+
+                                                return SideTitleWidget(
+                                                  axisSide: meta.axisSide,
+                                                  space: 12.h,
+                                                  child: SizedBox(
+                                                    width: 52.w,
+                                                    child: Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Text(
+                                                          lines[0],
+                                                          maxLines: 1,
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          style: TextStyle(
+                                                            fontSize: 10.sp,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                            color:
+                                                                Colors.black87,
+                                                            height: 1.1,
+                                                          ),
+                                                        ),
+                                                        SizedBox(height: 2.h),
+                                                        Text(
+                                                          lines[1],
+                                                          maxLines: 1,
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          style: TextStyle(
+                                                            fontSize: 10.sp,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color:
+                                                                Colors.black87,
+                                                            height: 1.1,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
                                                 );
                                               },
                                             ),
                                           ),
-                                          gridData: FlGridData(
-                                            show: true,
-                                            drawVerticalLine: false,
-                                            horizontalInterval: maxValue == 0
-                                                ? 1
-                                                : maxValue / 4,
-                                            getDrawingHorizontalLine: (value) {
-                                              return FlLine(
-                                                color: Colors.grey.withOpacity(
-                                                  0.15,
+                                        ),
+                                        barGroups: List.generate(
+                                          count,
+                                          (i) => BarChartGroupData(
+                                            x: i,
+                                            barRods: [
+                                              BarChartRodData(
+                                                toY: values[i].toDouble(),
+                                                width: 14.w,
+                                                borderRadius:
+                                                    BorderRadius.circular(10.r),
+                                                gradient: const LinearGradient(
+                                                  colors: [
+                                                    Color(0xFFFF6A00),
+                                                    Color(0xFFFFD300),
+                                                  ],
+                                                  begin: Alignment.bottomCenter,
+                                                  end: Alignment.topCenter,
                                                 ),
-                                                strokeWidth: 1,
-                                              );
-                                            },
-                                          ),
-                                          borderData: FlBorderData(show: false),
-                                          titlesData: FlTitlesData(
-                                            leftTitles: const AxisTitles(
-                                              sideTitles: SideTitles(
-                                                showTitles: false,
-                                              ),
-                                            ),
-                                            rightTitles: const AxisTitles(
-                                              sideTitles: SideTitles(
-                                                showTitles: false,
-                                              ),
-                                            ),
-                                            topTitles: const AxisTitles(
-                                              sideTitles: SideTitles(
-                                                showTitles: false,
-                                              ),
-                                            ),
-                                            bottomTitles: AxisTitles(
-                                              sideTitles: SideTitles(
-                                                showTitles: true,
-                                                interval: 1,
-                                                reservedSize: 58
-                                                    .h, // ✅ enough for 2 lines
-                                                getTitlesWidget: (value, meta) {
-                                                  final i = value.toInt();
-                                                  if (i < 0 || i >= count) {
-                                                    return const SizedBox.shrink();
-                                                  }
-
-                                                  final full =
-                                                      (i < labels.length)
-                                                      ? labels[i]
-                                                      : "";
-
-                                                  final lines =
-                                                      _twoLineWeekLabel(full);
-
-                                                  return SideTitleWidget(
-                                                    axisSide: meta.axisSide,
-                                                    space: 12.h,
-                                                    child: SizedBox(
-                                                      width:
-                                                          52.w, // per-bar width
-                                                      child: Column(
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        children: [
-                                                          Text(
-                                                            lines[0],
-                                                            maxLines: 1,
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                            style: TextStyle(
-                                                              fontSize: 10.sp,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w700,
-                                                              color: Colors
-                                                                  .black87,
-                                                              height: 1.1,
-                                                            ),
-                                                          ),
-                                                          SizedBox(height: 2.h),
-                                                          Text(
-                                                            lines[1],
-                                                            maxLines: 1,
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                            style: TextStyle(
-                                                              fontSize: 10.sp,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                              color: Colors
-                                                                  .black87,
-                                                              height: 1.1,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
+                                                backDrawRodData:
+                                                    BackgroundBarChartRodData(
+                                                      show: true,
+                                                      toY: maxValue.toDouble(),
+                                                      color: Colors.grey
+                                                          .withOpacity(0.08),
                                                     ),
-                                                  );
-                                                },
                                               ),
-                                            ),
-                                          ),
-                                          barGroups: List.generate(
-                                            count,
-                                            (i) => BarChartGroupData(
-                                              x: i,
-                                              barRods: [
-                                                BarChartRodData(
-                                                  toY: values[i].toDouble(),
-                                                  width: 14.w,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        10.r,
-                                                      ),
-                                                  gradient:
-                                                      const LinearGradient(
-                                                        colors: [
-                                                          Color(0xFFFF6A00),
-                                                          Color(0xFFFFD300),
-                                                        ],
-                                                        begin: Alignment
-                                                            .bottomCenter,
-                                                        end:
-                                                            Alignment.topCenter,
-                                                      ),
-                                                  backDrawRodData:
-                                                      BackgroundBarChartRodData(
-                                                        show: true,
-                                                        toY: maxValue
-                                                            .toDouble(),
-                                                        color: Colors.grey
-                                                            .withOpacity(0.08),
-                                                      ),
-                                                ),
-                                              ],
-                                            ),
+                                            ],
                                           ),
                                         ),
-                                        swapAnimationDuration: const Duration(
-                                          milliseconds: 600,
-                                        ),
-                                        swapAnimationCurve: Curves.easeOutCubic,
                                       ),
+                                      swapAnimationDuration: const Duration(
+                                        milliseconds: 600,
+                                      ),
+                                      swapAnimationCurve: Curves.easeOutCubic,
                                     ),
                                   );
                                 },
@@ -524,7 +509,6 @@ class _HomeDashboardState extends State<HomeDashboard>
                 ),
               ),
             ),
-
           ],
         ),
       ),
@@ -535,7 +519,9 @@ class _HomeDashboardState extends State<HomeDashboard>
 class _NotificationBell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final unread = context.select<CompanyNotificationProvider, int>((p) => p.unreadCount);
+    final unread = context.select<CompanyNotificationProvider, int>(
+      (p) => p.unreadCount,
+    );
 
     return GestureDetector(
       onTap: () {
@@ -571,7 +557,11 @@ class _NotificationBell extends StatelessWidget {
                 ),
                 child: Text(
                   unread > 99 ? '99+' : '$unread',
-                  style: TextStyle(color: Colors.white, fontSize: 9.sp, fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),

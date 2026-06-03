@@ -274,8 +274,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     // Pop immediately — don't await refresh (it was blocking navigation)
     if (mounted) Navigator.pop(context);
-    Provider.of<ProfileFetchProvider>(context, listen: false)
-        .getProfileOnce(refresh: true);
+    Provider.of<ProfileFetchProvider>(
+      context,
+      listen: false,
+    ).getProfileOnce(refresh: true);
   }
 }
 

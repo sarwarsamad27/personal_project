@@ -14,11 +14,11 @@ import 'package:new_brand/view/companySide/dashboard/productScreen/productCatego
 import 'package:new_brand/viewModel/providers/productProvider/getRelatedProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getSingleProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/reviewProvider/replyReview_provider.dart';
+import 'package:new_brand/widgets/blinking_badge.dart';
 import 'package:new_brand/widgets/productCard.dart';
 import 'package:provider/provider.dart';
+import 'package:new_brand/resources/socketServices.dart';
 import 'package:video_player/video_player.dart';
-import 'package:new_brand/widgets/blinking_badge.dart';
-
 import '../../../../../../../models/productModel/getSingleProduct_model.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -63,6 +63,46 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         categoryId: widget.categoryId,
         productId: widget.productId,
       );
+    });
+    _setupSocket();
+  }
+
+  void _setupSocket() async {
+    final token = await LocalStorage.getToken() ?? "";
+    if (token.isEmpty) return;
+
+    final socket = await SocketService().ensureConnected(
+      baseUrl: Global.imageUrl,
+      token: token,
+    );
+
+    socket?.on("product:update", (data) {
+      if (!mounted || data == null) return;
+      try {
+        final product = Product.fromJson(
+          Map<String, dynamic>.from(data as Map),
+        );
+        if (product.sId == widget.productId) {
+          Provider.of<GetSingleProductProvider>(
+            context,
+            listen: false,
+          ).updateProduct(product);
+        }
+      } catch (e) {
+        debugPrint("Socket product:update Error: $e");
+      }
+    });
+
+    socket?.on("product:delete", (data) {
+      if (!mounted || data == null) return;
+      try {
+        final String? productId = data['productId'];
+        if (productId == widget.productId) {
+          Navigator.pop(context); // Pop if current product is deleted
+        }
+      } catch (e) {
+        debugPrint("Socket product:delete Error: $e");
+      }
     });
   }
 
@@ -227,10 +267,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         ],
                       ),
                     ),
-
                     SizedBox(height: 16.h),
+                  ],
 
-                    /// RELATED PRODUCTS
+                  /// RELATED PRODUCTS
+                  if (relatedProducts.isNotEmpty) ...[
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16.w),
                       child: _SectionTitle(title: "Related Products"),
@@ -282,7 +323,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         },
                       ),
                     ),
-
                     SizedBox(height: 24.h),
                   ],
                 ],
@@ -1039,8 +1079,7 @@ class _PdFullscreenVideoState extends State<_PdFullscreenVideo> {
     body: Center(
       child: _ready
           ? GestureDetector(
-              onTap: () =>
-                  _ctrl.value.isPlaying ? _ctrl.pause() : _ctrl.play(),
+              onTap: () => _ctrl.value.isPlaying ? _ctrl.pause() : _ctrl.play(),
               child: Stack(
                 alignment: Alignment.center,
                 children: [

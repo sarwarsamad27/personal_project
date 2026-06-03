@@ -40,6 +40,7 @@ class AllField extends StatelessWidget {
             controller: TextEditingController(text: profile.address ?? ""),
             headerText: "Address",
             readOnly: true,
+            maxLines: null,
           ),
           SizedBox(height: 15.h),
 

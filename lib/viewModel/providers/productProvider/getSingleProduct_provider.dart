@@ -61,4 +61,18 @@ class GetSingleProductProvider with ChangeNotifier {
     isLoading = false;
     notifyListeners();
   }
+
+  // ── Socket Update Methods ──
+
+  void updateProduct(Product updatedProduct) {
+    if (productData?.product?.sId == updatedProduct.sId) {
+      productData!.product = updatedProduct;
+      notifyListeners();
+    }
+  }
+
+  void deleteProduct() {
+    productData = null;
+    notifyListeners();
+  }
 }

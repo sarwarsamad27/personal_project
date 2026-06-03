@@ -7,10 +7,7 @@ import 'package:provider/provider.dart';
 class DeleteProductDialog extends StatelessWidget {
   final String productId;
 
-  const DeleteProductDialog({
-    super.key,
-    required this.productId,
-  });
+  const DeleteProductDialog({super.key, required this.productId});
 
   @override
   Widget build(BuildContext context) {
@@ -26,19 +23,19 @@ class DeleteProductDialog extends StatelessWidget {
         ),
         TextButton(
           onPressed: () async {
-            Navigator.pop(context); // Close dialog
-
             final token = await LocalStorage.getToken() ?? "";
             final provider = Provider.of<DeleteProductProvider>(
               context,
               listen: false,
             );
 
+            Navigator.pop(context); // Close dialog
+
             await provider.deleteProduct(productId: productId, token: token);
 
             if (provider.deleteProductModel?.message != null) {
               AppToast.show(provider.deleteProductModel!.message!);
-              Navigator.pop(context); // Close product detail screen
+              // Navigator.pop(context); // Removed: Redundant due to socket listener in ProductDetailScreen
             } else {
               AppToast.show("Failed to delete product");
             }

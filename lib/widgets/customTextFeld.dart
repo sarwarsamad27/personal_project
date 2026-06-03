@@ -14,6 +14,7 @@ class CustomTextField extends StatefulWidget {
   final double? height;
   final bool? readOnly;
   final int? maxLines;
+  final int? minLines;
   final String? Function(String?)? validator;
   final Function(String)? onChanged;
 
@@ -26,6 +27,7 @@ class CustomTextField extends StatefulWidget {
     this.keyboardType,
     this.prefixIcon,
     this.maxLines = 1,
+    this.minLines = 1,
     this.suffixIcon,
     this.readOnly,
     this.height,
@@ -65,6 +67,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             return TextFormField(
               controller: widget.controller,
               maxLines: widget.maxLines,
+              minLines: widget.minLines,
               obscureText: widget.isPassword ? isObscure : false,
               keyboardType: widget.keyboardType ?? TextInputType.text,
               readOnly: widget.readOnly ?? false,
