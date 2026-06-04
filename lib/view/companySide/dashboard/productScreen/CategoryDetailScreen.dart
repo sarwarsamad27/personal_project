@@ -124,6 +124,111 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     );
   }
 
+  void _showProductConditionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              LucideIcons.alertCircle,
+              color: AppColor.primaryColor,
+              size: 24.sp,
+            ),
+            SizedBox(width: 10.w),
+            Text(
+              "Product Condition",
+              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "As a seller, you must ensure:",
+              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+            ),
+            SizedBox(height: 12.h),
+            _dialogPoint("Accurate product descriptions"),
+            _dialogPoint("High-quality product images"),
+            _dialogPoint("Fair prices (exclude courier fees)"),
+            _dialogPoint("Prohibited items are not listed"),
+            SizedBox(height: 16.h),
+            Text(
+              "Do you agree to these terms?",
+              style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              "Cancel",
+              style: TextStyle(color: Colors.grey, fontSize: 14.sp),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await LocalStorage.saveProductConditionSeen();
+              if (mounted) {
+                Navigator.pop(context);
+                _navigateToAddTask();
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColor.primaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+            ),
+            child: Text(
+              "I Agree",
+              style: TextStyle(color: Colors.white, fontSize: 14.sp),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dialogPoint(String text) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 6.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "• ",
+            style: TextStyle(
+              color: AppColor.primaryColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Expanded(
+            child: Text(text, style: TextStyle(fontSize: 13.sp)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToAddTask() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddProductScreen(category: widget.category),
+      ),
+    );
+    await _refreshProducts();
+  }
+
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context).size;
@@ -439,14 +544,12 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                   backgroundColor: Colors.transparent,
                   elevation: 0,
                   onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            AddProductScreen(category: widget.category),
-                      ),
-                    );
-                    await _refreshProducts();
+                    bool seen = await LocalStorage.isProductConditionSeen();
+                    if (seen) {
+                      _navigateToAddTask();
+                    } else {
+                      _showProductConditionDialog();
+                    }
                   },
                   child: const Icon(
                     LucideIcons.plus,

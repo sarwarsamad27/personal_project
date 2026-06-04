@@ -28,6 +28,28 @@ class LocalStorage {
     await prefs.remove("token");
   }
 
+  // ------------------ TERMS & CONDITIONS AGREEMENT ------------------
+  static Future<void> saveTermsAgreed() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool("terms_agreed", true);
+  }
+
+  static Future<bool> isTermsAgreed() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool("terms_agreed") ?? false;
+  }
+
+  // ------------------ POPUP REMINDER STORAGE ------------------
+  static Future<void> saveProductConditionSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool("product_condition_seen", true);
+  }
+
+  static Future<bool> isProductConditionSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool("product_condition_seen") ?? false;
+  }
+
   // ------------------ FCM INIT + SAVE ------------------
   /// Call this after login OR on splash if token valid.
   /// Sends FCM token to backend with Authorization Bearer.

@@ -8,6 +8,7 @@ import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/auth/forgotScreen.dart';
 import 'package:new_brand/view/companySide/auth/signUpScreen.dart';
 import 'package:new_brand/view/companySide/auth/suspendedScreen.dart';
+import 'package:new_brand/view/companySide/auth/termsAgreementScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/profileForm.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/appleLogin_provider.dart';
@@ -209,9 +210,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                     AppToast.success(
                                       "Welcome back! Login successful.",
                                     );
+                                    final termsAgreed =
+                                        await LocalStorage.isTermsAgreed();
                                     nav.pushReplacement(
                                       MaterialPageRoute(
-                                        builder: (_) => CompanyHomeScreen(),
+                                        builder: (_) => termsAgreed
+                                            ? CompanyHomeScreen()
+                                            : const TermsAgreementScreen(),
                                       ),
                                     );
                                   } else {
@@ -313,10 +318,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 } catch (e) {
                                   debugPrint("⚠️ FCM save skipped: $e");
                                 }
-
+                                final termsAgreed =
+                                    await LocalStorage.isTermsAgreed();
                                 nav.pushReplacement(
                                   MaterialPageRoute(
-                                    builder: (_) => CompanyHomeScreen(),
+                                    builder: (_) => termsAgreed
+                                        ? CompanyHomeScreen()
+                                        : const TermsAgreementScreen(),
                                   ),
                                 );
                               } else {
@@ -372,10 +380,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 } catch (e) {
                                   debugPrint("⚠️ FCM save skipped: $e");
                                 }
-
+                                final termsAgreed =
+                                    await LocalStorage.isTermsAgreed();
                                 nav.pushReplacement(
                                   MaterialPageRoute(
-                                    builder: (_) => CompanyHomeScreen(),
+                                    builder: (_) => termsAgreed
+                                        ? CompanyHomeScreen()
+                                        : const TermsAgreementScreen(),
                                   ),
                                 );
                               } else {

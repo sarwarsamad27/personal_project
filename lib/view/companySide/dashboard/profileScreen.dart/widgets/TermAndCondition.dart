@@ -21,7 +21,11 @@ class TermAndConditionScreen extends StatelessWidget {
         ),
         title: Text(
           'Terms & Conditions',
-          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700,color: Colors.white),
+          style: TextStyle(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -89,7 +93,7 @@ class TermAndConditionScreen extends StatelessWidget {
               number: '3',
               title: 'Product Listings',
               content:
-                  'As a seller, you are responsible for:\n\n• Ensuring all product descriptions are accurate and not misleading\n• Providing clear and high-quality product images\n• Setting fair and reasonable prices\n• Maintaining accurate stock/inventory levels\n• Not listing prohibited, illegal, or counterfeit products\n\nShookoo reserves the right to remove any listing that violates our policies without prior notice.',
+                  'As a seller, you are responsible for:\n\n• Ensuring all product descriptions are accurate and not misleading\n• Providing clear and high-quality product images\n• Setting fair and reasonable prices (Only include product price, do not include courier fees)\n• Maintaining accurate stock/inventory levels\n• Not listing prohibited, illegal, or counterfeit products\n\nShookoo reserves the right to remove any listing that violates our policies without prior notice.',
             ),
 
             _Section(
