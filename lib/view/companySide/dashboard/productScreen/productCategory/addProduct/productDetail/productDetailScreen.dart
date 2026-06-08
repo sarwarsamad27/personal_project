@@ -279,7 +279,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     SizedBox(height: 10.h),
 
                     SizedBox(
-                      height: 250.h,
+                      height: 265.h,
                       child: ListView.separated(
                         padding: EdgeInsets.symmetric(horizontal: 16.w),
                         scrollDirection: Axis.horizontal,
