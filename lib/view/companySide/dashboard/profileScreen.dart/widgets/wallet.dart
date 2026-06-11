@@ -505,6 +505,45 @@ class _WalletState extends State<Wallet> {
 
                 SizedBox(height: 15.h),
 
+                if (walletProvider.isOrderBlocked) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 10.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEE2E2),
+                      borderRadius: BorderRadius.circular(10.r),
+                      border: Border.all(
+                        color: const Color(0xFFFCA5A5),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          color: Color(0xFFB91C1C),
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            "Pending amount: Rs. ${walletProvider.pendingDueAmount.toStringAsFixed(0)}. "
+                            "Add Rs. 500 to your wallet to continue taking orders.",
+                            style: TextStyle(
+                              color: const Color(0xFFB91C1C),
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 15.h),
+                ],
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

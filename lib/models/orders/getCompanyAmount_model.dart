@@ -5,6 +5,8 @@ class GetCompanyAmountModel {
   double? totalDeposited;
   double? pendingBalance;
   double? currentBalance;
+  double? pendingDueAmount;
+  bool? isOrderBlocked;
 
   GetCompanyAmountModel({
     this.message,
@@ -13,6 +15,8 @@ class GetCompanyAmountModel {
     this.totalDeposited,
     this.pendingBalance,
     this.currentBalance,
+    this.pendingDueAmount,
+    this.isOrderBlocked,
   });
 
   factory GetCompanyAmountModel.fromJson(Map<String, dynamic> json) {
@@ -23,6 +27,8 @@ class GetCompanyAmountModel {
       totalDeposited: (json['totalDeposited'] as num?)?.toDouble() ?? 0.0,
       pendingBalance: (json['pendingBalance'] as num?)?.toDouble() ?? 0.0,
       currentBalance: (json['currentBalance'] as num?)?.toDouble() ?? 0.0,
+      pendingDueAmount: (json['pendingDueAmount'] as num?)?.toDouble() ?? 0.0,
+      isOrderBlocked: json['isOrderBlocked'] as bool? ?? false,
     );
   }
 }

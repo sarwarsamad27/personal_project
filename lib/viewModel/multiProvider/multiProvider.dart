@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/appleLogin_provider.dart';
+import 'package:new_brand/viewModel/providers/aiAssistantProvider/AiAssistant_provider.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/forgotPassword_provider.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/googleLogin_provider.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/login_provider.dart';
@@ -31,6 +32,7 @@ import 'package:new_brand/viewModel/providers/productProvider/getProductCategory
 import 'package:new_brand/viewModel/providers/productProvider/getRelatedProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getSingleProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/updateProduct_provider.dart';
+import 'package:new_brand/viewModel/providers/profileProvider/AnalyzeStoreProvider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/profile_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/updateProfile_provider.dart';
@@ -82,6 +84,7 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CompanyChatThreadsProvider()),
         ChangeNotifierProvider(create: (_) => CompanyAppleLoginProvider()),
         ChangeNotifierProvider(create: (_) => AnalyzeProductProvider()),
+        ChangeNotifierProvider(create: (_) => AnalyzeStoreProvider()),
         ChangeNotifierProvider(create: (_) => CancelOrderProvider()),
         ChangeNotifierProvider(create: (_) => CompanyExchangeProvider()),
         ChangeNotifierProvider(create: (_) => AcceptOrderProvider()),
@@ -91,6 +94,7 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (_) => CompanyNotificationProvider()),
         ChangeNotifierProvider(create: (_) => GetCancelledOrdersProvider()),
+        ChangeNotifierProvider(create: (_) => AiAssistantProvider()),
       ],
 
       child: child,

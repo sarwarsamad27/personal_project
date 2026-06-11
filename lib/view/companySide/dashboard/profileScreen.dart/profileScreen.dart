@@ -354,7 +354,8 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
 
-                    SizedBox(height: 30.h),
+                    SizedBox(height: 15.h),
+
                     GestureDetector(
                       onTap: () {
                         Navigator.push(

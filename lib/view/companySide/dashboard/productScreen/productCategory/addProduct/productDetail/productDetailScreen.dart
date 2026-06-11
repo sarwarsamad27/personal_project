@@ -24,11 +24,13 @@ import '../../../../../../../models/productModel/getSingleProduct_model.dart';
 class ProductDetailScreen extends StatefulWidget {
   final productId;
   final categoryId;
+  final bool isOrderBlocked;
 
   const ProductDetailScreen({
     super.key,
     required this.productId,
     required this.categoryId,
+    this.isOrderBlocked = false,
   });
 
   @override
@@ -165,6 +167,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     price: prods.afterDiscountPrice?.toString() ?? '0',
                     quantity: prods.quantity ?? 0,
                     weightInGrams: prods.weightInGrams ?? 500,
+                    isOrderBlocked: widget.isOrderBlocked,
                   ),
                   SizedBox(height: 12.h),
 

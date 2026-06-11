@@ -21,6 +21,7 @@ class ProductImage extends StatefulWidget {
   final String productId;
   final int quantity;
   final int weightInGrams;
+  final bool isOrderBlocked;
 
   const ProductImage({
     super.key,
@@ -35,6 +36,7 @@ class ProductImage extends StatefulWidget {
     required this.categoryId,
     required this.quantity,
     required this.weightInGrams,
+    this.isOrderBlocked = false,
   });
 
   @override
@@ -79,6 +81,16 @@ class _ProductImageState extends State<ProductImage> {
   }
 
   void _editProduct(BuildContext context) {
+    if (widget.isOrderBlocked) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Add Rs. 500 to your wallet to edit products."),
+          backgroundColor: Color(0xFFB91C1C),
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -262,7 +274,9 @@ class _ProductImageState extends State<ProductImage> {
                     ),
                     child: Icon(
                       Icons.edit,
-                      color: AppColor.primaryColor,
+                      color: widget.isOrderBlocked
+                          ? Colors.grey
+                          : AppColor.primaryColor,
                       size: 22,
                     ),
                   ),

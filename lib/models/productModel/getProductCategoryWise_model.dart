@@ -1,13 +1,20 @@
 class GetProductCategoryWiseModel {
   String? message;
   int? total;
+  bool? isOrderBlocked;
   List<Products>? products;
 
-  GetProductCategoryWiseModel({this.message, this.total, this.products});
+  GetProductCategoryWiseModel({
+    this.message,
+    this.total,
+    this.isOrderBlocked,
+    this.products,
+  });
 
   GetProductCategoryWiseModel.fromJson(Map<String, dynamic> json) {
     message = json['message'];
     total = json['total'];
+    isOrderBlocked = json['isOrderBlocked'] ?? false;
     if (json['products'] != null) {
       products = <Products>[];
       json['products'].forEach((v) {
@@ -20,6 +27,7 @@ class GetProductCategoryWiseModel {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['message'] = this.message;
     data['total'] = this.total;
+    data['isOrderBlocked'] = this.isOrderBlocked;
     if (this.products != null) {
       data['products'] = this.products!.map((v) => v.toJson()).toList();
     }

@@ -326,8 +326,10 @@ class _SellerAdminMessagesScreenState extends State<SellerAdminMessagesScreen> {
           children: [
             Expanded(
               child: TextField(
+                minLines: 1,
+                // maxLength: 4,
                 controller: _ctrl,
-                maxLines: null,
+                maxLines: 4,
                 decoration: InputDecoration(
                   hintText: "Message SHOOKOO Admin...",
                   hintStyle: TextStyle(

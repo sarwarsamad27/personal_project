@@ -10,9 +10,11 @@ import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/socketServices.dart';
 import 'package:new_brand/view/companySide/dashboard/ChatListScreen/chat_screen.dart';
+import 'package:new_brand/view/companySide/dashboard/aiAssistant/aiAssistantScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/admin_messages_screen.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/chatThread_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 class CompanyChatListScreen extends StatefulWidget {
@@ -221,16 +223,50 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
               onRefresh: () => provider.fetchThreads(),
               child: ListView.separated(
                 padding: EdgeInsets.zero,
-                itemCount: threads.length + 1, // +1 for pinned admin tile
+                itemCount: threads.length + 2, // +2 for pinned AI + admin tiles
                 separatorBuilder: (_, __) =>
                     Divider(height: 1.h, indent: 80.w, color: Colors.black12),
                 itemBuilder: (context, i) {
-                  if (i == 0) return _buildAdminTile(context);
-                  final thread = threads[i - 1];
+                  if (i == 0) return _buildAiAssistantTile(context);
+                  if (i == 1) return _buildAdminTile(context);
+                  final thread = threads[i - 2];
                   return _buildChatTile(thread, provider);
                 },
               ),
             ),
+    );
+  }
+
+  Widget _buildAiAssistantTile(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AiAssistantScreen()),
+        );
+      },
+      child: ListTile(
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+        leading: CircleAvatar(
+          radius: 28.r,
+          backgroundColor: AppColor.primaryColor.withValues(alpha: 0.15),
+          child: Icon(LucideIcons.bot, color: AppColor.primaryColor, size: 26.sp),
+        ),
+        title: Text(
+          'AI Assistant',
+          style: TextStyle(
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        subtitle: Text(
+          'Ask me anything about your store',
+          style: TextStyle(fontSize: 13.sp, color: Colors.black54),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
     );
   }
 

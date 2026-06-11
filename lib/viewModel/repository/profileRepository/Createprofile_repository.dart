@@ -48,4 +48,16 @@ class ProfileRepository {
       return CreateProfileModel(message: "Error: $e");
     }
   }
+
+  // ✅ Check if a store name is already taken by another seller
+  Future<bool> checkStoreNameExists(String name) async {
+    try {
+      final response = await apiServices.getApi(
+        "${Global.CheckStoreName}?name=${Uri.encodeQueryComponent(name)}",
+      );
+      return response['exists'] == true;
+    } catch (e) {
+      return false;
+    }
+  }
 }

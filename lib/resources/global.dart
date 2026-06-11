@@ -14,6 +14,7 @@ class Global {
   static var CreateProfile = "${BaseUrl}/create/profile";
   static var GetProfile = "${BaseUrl}/profile";
   static var UpdateProfile = "${BaseUrl}/update/profile";
+  static var CheckStoreName = "${BaseUrl}/check/store-name";
   static var ForgotPassword = "${BaseUrl}/forgot-password";
   static var VerifyCode = "${BaseUrl}/verifycode";
   static var UpdatePassword = "${BaseUrl}/reset/password";
@@ -56,6 +57,8 @@ class Global {
       "${imageUrl}/api/chat/download-slip/$trackNumber";
   static var generateInvoicePdf = "${BaseUrl}/generate/invoice/pdf";
   static var analyzeProductImage = "${BaseUrl}/analyze-product-image";
+  static var analyzeStoreProfile = "${BaseUrl}/analyze-store-profile";
+  static var sellerAiAssistant = "${BaseUrl}/seller/ai-assistant";
   static var AcceptOrder = "${BaseUrl}/accept/order";
   static var RetryLeopardsBooking = "${BaseUrl}/leopards/retry-booking";
   // static var createExchangeRequest =

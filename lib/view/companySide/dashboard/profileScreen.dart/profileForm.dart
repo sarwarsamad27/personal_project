@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -9,8 +10,10 @@ import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/aiStoreDescriptionChat.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/profile_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
+import 'package:new_brand/viewModel/repository/profileRepository/Createprofile_repository.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
@@ -37,6 +40,13 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
 
   final ValueNotifier<File?> _selectedImage = ValueNotifier<File?>(null);
 
+  // ✅ Store name availability check
+  final ProfileRepository _profileRepository = ProfileRepository();
+  Timer? _nameCheckDebounce;
+  bool _checkingName = false;
+  String? _nameTakenMessage;
+  String? _originalName;
+
   // ✅ City state
   String? _selectedCityId;
   String? _selectedCityName;
@@ -56,6 +66,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
       debugPrint("🛠️ ProfileForm Init: Profile found? ${profile != null}");
       if (profile != null) {
         debugPrint("🛠️ Pre-filling: ${profile.name}, ${profile.phone}");
+        _originalName = profile.name;
         setState(() {
           _nameController.text = profile.name ?? '';
           _phoneController.text = profile.phone ?? '';
@@ -74,6 +85,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
 
   @override
   void dispose() {
+    _nameCheckDebounce?.cancel();
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
@@ -283,11 +295,81 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
     );
   }
 
+  // ✅ Debounced "store name already exists" check
+  void _onNameChanged(String value) {
+    _nameCheckDebounce?.cancel();
+
+    final trimmed = value.trim();
+    if (trimmed.isEmpty || trimmed.toLowerCase() == _originalName?.trim().toLowerCase()) {
+      setState(() {
+        _checkingName = false;
+        _nameTakenMessage = null;
+      });
+      return;
+    }
+
+    setState(() => _checkingName = true);
+    _nameCheckDebounce = Timer(const Duration(milliseconds: 600), () {
+      _checkStoreName(trimmed);
+    });
+  }
+
+  Future<void> _checkStoreName(String name) async {
+    final exists = await _profileRepository.checkStoreNameExists(name);
+    if (!mounted) return;
+
+    // Ignore stale results if the user kept typing meanwhile
+    if (_nameController.text.trim() != name) return;
+
+    setState(() {
+      _checkingName = false;
+      _nameTakenMessage = exists ? "This name already exists" : null;
+    });
+  }
+
   Future<void> _pickImage() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (picked != null) {
       _selectedImage.value = File(picked.path);
     }
+  }
+
+  // ✅ AI chat: generates a 4-5 line store description from name, image & address
+  void _openAiDescriptionChat() {
+    final name = _nameController.text.trim();
+    final address = _addressController.text.trim();
+
+    if (name.isEmpty) {
+      AppToast.error("Please enter your store name first");
+      return;
+    }
+    if (address.isEmpty) {
+      AppToast.error("Please enter your address first");
+      return;
+    }
+
+    final existingImage = context
+        .read<ProfileFetchProvider>()
+        .profileData
+        ?.profile
+        ?.image;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AiStoreDescriptionChat(
+        name: name,
+        address: address,
+        image: _selectedImage.value,
+        imageUrl: _selectedImage.value == null
+            ? Global.getImageUrl(existingImage)
+            : null,
+        onUseDescription: (description) {
+          setState(() => _descriptionController.text = description);
+        },
+      ),
+    );
   }
 
   @override
@@ -377,7 +459,53 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                             hintText: "Enter your name",
                             headerText: "Full Name",
                             validator: Validators.name,
+                            onChanged: _onNameChanged,
                           ),
+                          if (_checkingName)
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 8.h),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 12.w,
+                                    height: 12.w,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    "Checking availability...",
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12.sp,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (_nameTakenMessage != null)
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 8.h),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    color: AppColor.errorColor,
+                                    size: 14.sp,
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    _nameTakenMessage!,
+                                    style: TextStyle(
+                                      color: AppColor.errorColor,
+                                      fontSize: 12.sp,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           SizedBox(height: 20.h),
 
                           CustomTextField(
@@ -500,10 +628,62 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                           ),
                           SizedBox(height: 20.h),
 
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Description",
+                                style: TextStyle(
+                                  color: AppColor.textPrimaryColor,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15.sp,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: _openAiDescriptionChat,
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 10.w,
+                                    vertical: 6.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        AppColor.primaryColor,
+                                        AppColor.primaryColor.withOpacity(0.75),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(20.r),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.auto_awesome,
+                                        color: Colors.white,
+                                        size: 13.sp,
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      Text(
+                                        "Ask AI",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 6.h),
+
                           CustomTextField(
                             controller: _descriptionController,
                             hintText: "Write something about yourself",
-                            headerText: "Description",
                             validator: Validators.required,
                             maxLines: 5,
                             height: 120.h,
@@ -531,6 +711,14 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                   ? null
                   : () async {
                       provider.clearError();
+
+                      // ✅ Store name availability check
+                      if (_nameTakenMessage != null) {
+                        AppToast.error(
+                          "This store name already exists. Please choose a different name.",
+                        );
+                        return;
+                      }
 
                       // ✅ City required check
                       if (_selectedCityId == null) {
@@ -562,6 +750,17 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
 
                       if (provider.profileData?.profile != null) {
                         AppToast.success("Profile created successfully");
+
+                        // ✅ Force-refresh cached profile so the dashboard
+                        // shows the newly created profile immediately
+                        // (without this it kept showing "no profile" until restart)
+                        await Provider.of<ProfileFetchProvider>(
+                          context,
+                          listen: false,
+                        ).getProfileOnce(refresh: true);
+
+                        if (!mounted) return;
+
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(

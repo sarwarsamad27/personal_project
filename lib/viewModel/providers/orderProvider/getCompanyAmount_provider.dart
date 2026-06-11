@@ -39,6 +39,8 @@ double get totalDelivered  => walletData?.totalDelivered  ?? 0.0;
 double get totalWithdrawn  => walletData?.totalWithdrawn  ?? 0.0;
 double get totalDeposited  => walletData?.totalDeposited  ?? 0.0;
 double get pendingBalance  => walletData?.pendingBalance  ?? 0.0;
+double get pendingDueAmount => walletData?.pendingDueAmount ?? 0.0;
+bool get isOrderBlocked    => walletData?.isOrderBlocked   ?? false;
 
   // ================= SEND OTP =================
   Future<bool> sendWithdrawCode({

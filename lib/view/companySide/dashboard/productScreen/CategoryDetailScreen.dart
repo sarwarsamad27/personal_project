@@ -447,6 +447,8 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                     }
 
                     final allProds = provider.productData!.products!;
+                    final bool isOrderBlocked =
+                        provider.productData!.isOrderBlocked ?? false;
                     final prods = allProds.where((p) {
                       final query = _searchQuery.toLowerCase();
                       final nameMatch = (p.name ?? "").toLowerCase().contains(
@@ -502,6 +504,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                                   builder: (_) => ProductDetailScreen(
                                     productId: p.sId ?? '',
                                     categoryId: p.categoryId ?? '',
+                                    isOrderBlocked: isOrderBlocked,
                                   ),
                                 ),
                               );
