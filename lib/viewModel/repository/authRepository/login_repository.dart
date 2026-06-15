@@ -1,12 +1,11 @@
 import 'package:new_brand/models/auth/appleLogin_model.dart';
 import 'package:new_brand/models/auth/googleLogin_model.dart';
 import 'package:new_brand/models/auth/login_model.dart';
-import 'package:new_brand/network/base_api_services.dart';
 import 'package:new_brand/network/network_api_services.dart';
 import 'package:new_brand/resources/global.dart';
 
 class LoginRepository {
-  final BaseApiServices apiService = NetworkApiServices();
+  final NetworkApiServices apiService = NetworkApiServices();
   final String apiUrl = Global.Login;
   final String googleLoginAPI = Global.GoogleLogin;
   final String appleLoginAPI = Global.AppleLogin;
@@ -14,7 +13,7 @@ class LoginRepository {
 
   Future<LoginModel> login(String email, String password) async {
     try {
-      final response = await apiService.postApi(apiUrl, {
+      final response = await apiService.postApiNoAuth(apiUrl, {
         "email": email,
         "password": password,
       });
@@ -29,7 +28,7 @@ class LoginRepository {
 
   Future<GoogleLoginModel> googleLogin(String idToken) async {
     try {
-      final response = await apiService.postApi(googleLoginAPI, {
+      final response = await apiService.postApiNoAuth(googleLoginAPI, {
         "idToken": idToken,
       });
       return GoogleLoginModel.fromJson(response);
@@ -44,7 +43,7 @@ class LoginRepository {
     String? fullName,
   }) async {
     try {
-      final response = await apiService.postApi(appleLoginAPI, {
+      final response = await apiService.postApiNoAuth(appleLoginAPI, {
         "identityToken": identityToken,
         "email": email,       // may be null after first login
         "fullName": fullName, // optional
