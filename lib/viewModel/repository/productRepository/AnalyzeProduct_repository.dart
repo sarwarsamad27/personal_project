@@ -10,7 +10,7 @@ class AnalyzeProductRepository {
 
   Future<AnalyzeProductModel> analyzeImage({
     required String token,
-    required File image,
+    required List<File> images,
   }) async {
     try {
       final request = http.MultipartRequest(
@@ -19,7 +19,9 @@ class AnalyzeProductRepository {
       );
 
       request.headers['Authorization'] = 'Bearer $token';
-      request.files.add(await http.MultipartFile.fromPath('image', image.path));
+      for (final image in images) {
+        request.files.add(await http.MultipartFile.fromPath('images', image.path));
+      }
 
       final streamed = await request.send();
       final response = await http.Response.fromStream(streamed);

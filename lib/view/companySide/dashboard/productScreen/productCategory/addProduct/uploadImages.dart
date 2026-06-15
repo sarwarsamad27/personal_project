@@ -7,7 +7,7 @@ import 'package:new_brand/widgets/customImageContainer.dart';
 
 class UploadImages extends StatelessWidget {
   final ValueNotifier<List<File>> selectedImages;
-  final Function(File firstImage)? onImageSelected; // ✅ NEW callback
+  final Function(List<File> images)? onImageSelected; // ✅ all selected images
 
   const UploadImages({
     super.key,
@@ -31,9 +31,9 @@ class UploadImages extends StatelessWidget {
 
       selectedImages.value = updated;
 
-      // ✅ Pehli image se analyze trigger karo
+      // ✅ Saari selected images ek sath analyze karo
       if (onImageSelected != null && updated.isNotEmpty) {
-        onImageSelected!(updated.first);
+        onImageSelected!(updated);
       }
     }
   }
@@ -41,6 +41,11 @@ class UploadImages extends StatelessWidget {
   void _removeImage(int index) {
     final updated = List<File>.from(selectedImages.value)..removeAt(index);
     selectedImages.value = updated;
+
+    // ✅ Remaining images ke sath re-analyze karo
+    if (onImageSelected != null && updated.isNotEmpty) {
+      onImageSelected!(updated);
+    }
   }
 
   @override

@@ -37,7 +37,7 @@ class AddProductScreen extends StatelessWidget {
   final ValueNotifier<List<Map<String, dynamic>>> selectedColorsNotifier =
       ValueNotifier([]);
 
-  Future<void> _analyzeImage(BuildContext context, File image) async {
+  Future<void> _analyzeImages(BuildContext context, List<File> images) async {
     final token = await LocalStorage.getToken();
     final analyzeProvider = Provider.of<AnalyzeProductProvider>(
       context,
@@ -47,7 +47,7 @@ class AddProductScreen extends StatelessWidget {
     _descriptionController.text = "Please wait...";
     analyzeProvider.analyzeImage(
       token: token ?? '',
-      image: image,
+      images: images,
       onSuccess: (name, description) {
         _nameController.text = name;
         _descriptionController.text = description;
@@ -200,8 +200,8 @@ class AddProductScreen extends StatelessWidget {
                         // ── IMAGES (mandatory) ──
                         UploadImages(
                           selectedImages: selectedImagesNotifier,
-                          onImageSelected: (File firstImage) =>
-                              _analyzeImage(context, firstImage),
+                          onImageSelected: (List<File> images) =>
+                              _analyzeImages(context, images),
                         ),
                         SizedBox(height: 12.h),
 

@@ -11,7 +11,7 @@ class AnalyzeProductProvider with ChangeNotifier {
 
   Future<void> analyzeImage({
     required String token,
-    required File image,
+    required List<File> images,
     required Function(String name, String description) onSuccess,
     required Function(String error) onError,
   }) async {
@@ -21,7 +21,7 @@ class AnalyzeProductProvider with ChangeNotifier {
     try {
       final result = await _repository.analyzeImage(
         token: token,
-        image: image,
+        images: images, 
       );
 
       isAnalyzing = false;
