@@ -12,9 +12,11 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:new_brand/exception/exceptions.dart';
 import 'package:new_brand/network/base_api_services.dart';
 import 'package:new_brand/resources/appNav.dart';
+import 'package:new_brand/resources/cache_service.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/auth/loginScreen.dart';
+import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
 
 class NetworkApiServices extends BaseApiServices {
   static bool _isRedirecting = false;
@@ -64,30 +66,36 @@ class NetworkApiServices extends BaseApiServices {
       print("Token: $token");
     }
 
-    // ✅ no token => logout + return no-auth headers
+    // No token: if online force-logout; if offline let the request fail and
+    // cachedGetApi will serve from cache.
     if (token == null || token.isEmpty) {
-      AppToast.error("No active session found. Please login.");
-      unawaited(_forceLogoutToLogin());
+      if (ConnectivityProvider.online) {
+        AppToast.error("No active session found. Please login.");
+        unawaited(_forceLogoutToLogin());
+      }
       return {
         "Accept": "application/json",
         if (!isMultipart) "Content-Type": "application/json",
       };
     }
 
-    // ✅ local expiry check
+    // Local expiry check: same offline guard — let 401 handle logout online.
     try {
       if (JwtDecoder.isExpired(token)) {
-        AppToast.error("Session expired. Please login again.");
-        unawaited(_forceLogoutToLogin());
+        if (ConnectivityProvider.online) {
+          AppToast.error("Session expired. Please login again.");
+          unawaited(_forceLogoutToLogin());
+        }
         return {
           "Accept": "application/json",
           if (!isMultipart) "Content-Type": "application/json",
         };
       }
     } catch (_) {
-      // invalid token => logout
-      AppToast.error("Invalid session. Please login again.");
-      unawaited(_forceLogoutToLogin());
+      if (ConnectivityProvider.online) {
+        AppToast.error("Invalid session. Please login again.");
+        unawaited(_forceLogoutToLogin());
+      }
       return {
         "Accept": "application/json",
         if (!isMultipart) "Content-Type": "application/json",
@@ -141,6 +149,26 @@ class NetworkApiServices extends BaseApiServices {
     } catch (e) {
       return _handleError(e);
     }
+  }
+
+  /// Cache-first GET. When offline, returns cached data immediately (avoids
+  /// the JWT force-logout that would otherwise fire on an expired token).
+  /// When online, hits the network, updates cache on success, falls back to
+  /// cache on failure. Returns the original error only if no cache exists.
+  Future<Map<String, dynamic>> cachedGetApi(String cacheKey, String url) async {
+    if (!ConnectivityProvider.online) {
+      final cached = await CacheService.getData(cacheKey);
+      if (cached != null) return Map<String, dynamic>.from(cached as Map);
+      return {'code_status': false, 'message': 'No internet connection'};
+    }
+    final response = await getApi(url);
+    if (response['code_status'] != false) {
+      await CacheService.save(cacheKey, response);
+      return response;
+    }
+    final cached = await CacheService.getData(cacheKey);
+    if (cached != null) return Map<String, dynamic>.from(cached as Map);
+    return response;
   }
 
   @override

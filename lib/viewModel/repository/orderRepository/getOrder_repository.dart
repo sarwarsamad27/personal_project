@@ -9,7 +9,8 @@ class GetOrderRepository {
   final String apiUrl = Global.GetOrders;
 
   Future<GetMyPendingOrders> getOrders({int page = 1, int limit = 10}) async {
-    final response = await apiServices.getApi(
+    final response = await apiServices.cachedGetApi(
+      'seller_orders_p${page}_l$limit',
       "$apiUrl?page=$page&limit=$limit",
     );
     log("Get Orders Response: $response");
