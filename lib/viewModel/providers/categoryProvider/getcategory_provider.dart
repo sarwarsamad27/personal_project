@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:new_brand/models/categoryModel/getCategory_model.dart';
+import 'package:new_brand/resources/offline_queue.dart';
 import 'package:new_brand/viewModel/repository/categoryRepository/getCategory_repository.dart';
 
 class GetCategoryProvider with ChangeNotifier {
@@ -9,8 +10,20 @@ class GetCategoryProvider with ChangeNotifier {
   bool isFetched = false;
   GetCategoryModel? categoryData;
 
+  /// Categories queued offline, not yet synced to the server
+  List<Categories> pendingCategories = [];
+
+  /// Server categories + still-pending offline ones, ready for the UI
+  List<Categories> get displayCategories => [
+        ...pendingCategories,
+        ...?categoryData?.categories,
+      ];
+
   Future<void> getCategories({bool forceRefresh = false}) async {
-    if (isFetched && !forceRefresh) return;
+    if (isFetched && !forceRefresh) {
+      await refreshPendingCategories();
+      return;
+    }
 
     try {
       isLoading = true;
@@ -22,10 +35,33 @@ class GetCategoryProvider with ChangeNotifier {
     } catch (e) {
       print("Category Error: $e");
     } finally {
+      await refreshPendingCategories();
       isLoading = false;
       notifyListeners();
     }
   }
+
+  /// Rebuilds [pendingCategories] from the offline queue. Safe to call
+  /// anytime (e.g. right after queuing a category, or on reconnect).
+  Future<void> refreshPendingCategories() async {
+    final items = await OfflineQueue.getAll();
+    pendingCategories = items
+        .where((e) => e['type'] == 'add_category')
+        .map((e) {
+          final data = e['data'] as Map<String, dynamic>;
+          return Categories(
+            sId: e['id'] as String,
+            name: data['name'] as String?,
+            image: data['imagePath'] as String?,
+            hasLowStock: false,
+            hasOutOfStock: false,
+          );
+        })
+        .toList();
+    notifyListeners();
+  }
+
+  bool isPending(String? sId) => pendingCategories.any((c) => c.sId == sId);
 
   // ── Socket Update Methods ──
 

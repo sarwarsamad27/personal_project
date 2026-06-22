@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:new_brand/models/productModel/getProductCategoryWise_model.dart';
+import 'package:new_brand/resources/offline_queue.dart';
 import 'package:new_brand/viewModel/repository/productRepository/getProductCategoryWise_repository.dart';
 
 class GetProductCategoryWiseProvider with ChangeNotifier {
@@ -8,6 +9,15 @@ class GetProductCategoryWiseProvider with ChangeNotifier {
 
   bool isLoading = false;
   GetProductCategoryWiseModel? productData;
+
+  /// Products queued offline (for the currently loaded category), not yet synced
+  List<Products> pendingProducts = [];
+
+  /// Server products + still-pending offline ones for this category, ready for the UI
+  List<Products> get displayProducts => [
+        ...pendingProducts,
+        ...?productData?.products,
+      ];
 
   Future<void> fetchProducts({
     required String token,
@@ -27,9 +37,39 @@ class GetProductCategoryWiseProvider with ChangeNotifier {
       productData = GetProductCategoryWiseModel(message: e.toString());
     }
 
+    await refreshPendingProducts(categoryId);
+
     isLoading = false;
     notifyListeners();
   }
+
+  /// Rebuilds [pendingProducts] for [categoryId] from the offline queue. Safe
+  /// to call anytime (e.g. right after queuing a product, or on reconnect).
+  Future<void> refreshPendingProducts(String categoryId) async {
+    final items = await OfflineQueue.getAll();
+    pendingProducts = items
+        .where((e) =>
+            e['type'] == 'add_product' &&
+            (e['data'] as Map<String, dynamic>)['categoryId'] == categoryId)
+        .map((e) {
+          final data = e['data'] as Map<String, dynamic>;
+          final imagePaths = List<String>.from(data['imagePaths'] ?? []);
+          return Products(
+            sId: e['id'] as String,
+            categoryId: categoryId,
+            name: data['name'] as String?,
+            description: data['description'] as String?,
+            images: imagePaths,
+            beforeDiscountPrice: (data['beforePrice'] as num?)?.toInt(),
+            afterDiscountPrice: (data['afterPrice'] as num?)?.toInt(),
+            quantity: (data['quantity'] as num?)?.toInt(),
+          );
+        })
+        .toList();
+    notifyListeners();
+  }
+
+  bool isPending(String? sId) => pendingProducts.any((p) => p.sId == sId);
 
   // ── Socket Update Methods ──
 

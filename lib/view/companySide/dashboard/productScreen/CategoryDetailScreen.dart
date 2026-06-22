@@ -9,9 +9,11 @@ import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/addProductScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
+import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getProductCategoryWise_provider.dart';
 import 'package:new_brand/widgets/productCard.dart';
 import 'package:new_brand/resources/socketServices.dart';
+import 'package:new_brand/resources/toast.dart';
 import 'package:provider/provider.dart';
 
 class CategoryProductsScreen extends StatefulWidget {
@@ -27,6 +29,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
   String _searchQuery = "";
+  VoidCallback? _onReconnect;
 
   @override
   void initState() {
@@ -49,6 +52,11 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       );
     });
     _setupSocket();
+
+    _onReconnect = () {
+      if (mounted) _refreshProducts();
+    };
+    context.read<ConnectivityProvider>().addReconnectCallback(_onReconnect!);
   }
 
   void _setupSocket() async {
@@ -109,6 +117,9 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
 
   @override
   void dispose() {
+    if (_onReconnect != null) {
+      context.read<ConnectivityProvider>().removeReconnectCallback(_onReconnect!);
+    }
     _scrollController.dispose();
     super.dispose();
   }
@@ -433,9 +444,9 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                       );
                     }
 
-                    if (provider.productData == null ||
-                        provider.productData!.products == null ||
-                        provider.productData!.products!.isEmpty) {
+                    final displayProds = provider.displayProducts;
+
+                    if (displayProds.isEmpty) {
                       return const SliverFillRemaining(
                         child: Center(
                           child: Text(
@@ -446,9 +457,9 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                       );
                     }
 
-                    final allProds = provider.productData!.products!;
+                    final allProds = displayProds;
                     final bool isOrderBlocked =
-                        provider.productData!.isOrderBlocked ?? false;
+                        provider.productData?.isOrderBlocked ?? false;
                     final prods = allProds.where((p) {
                       final query = _searchQuery.toLowerCase();
                       final nameMatch = (p.name ?? "").toLowerCase().contains(
@@ -483,6 +494,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                             ),
                         delegate: SliverChildBuilderDelegate((context, index) {
                           final p = prods[index];
+                          final isPending = provider.isPending(p.sId);
                           return ProductCard(
                             name: p.name ?? "",
                             description: p.description ?? "",
@@ -497,7 +509,14 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                                 ? "Save Rs.${(p.beforeDiscountPrice! - p.afterDiscountPrice!).abs()}"
                                 : null,
                             stockQuantity: p.quantity,
+                            isPendingSync: isPending,
                             onTap: () {
+                              if (isPending) {
+                                AppToast.show(
+                                  "Product is syncing — please wait for internet",
+                                );
+                                return;
+                              }
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(

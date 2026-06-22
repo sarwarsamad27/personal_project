@@ -1,8 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:new_brand/resources/appColor.dart';
-import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/widgets/blinking_badge.dart'; // Add this import
 
 class ProductCard extends StatelessWidget {
@@ -23,6 +23,9 @@ class ProductCard extends StatelessWidget {
   /// Stock quantity to determine if it should blink
   final int? stockQuantity;
 
+  /// Queued offline, not yet synced to the server
+  final bool isPendingSync;
+
   const ProductCard({
     Key? key,
     required this.name,
@@ -35,6 +38,7 @@ class ProductCard extends StatelessWidget {
     this.originalPrice,
     required this.description,
     this.stockQuantity,
+    this.isPendingSync = false,
   }) : super(key: key);
 
   @override
@@ -75,28 +79,31 @@ class ProductCard extends StatelessWidget {
                   ),
                   child: AspectRatio(
                     aspectRatio: 1.2,
-                    child: Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, progress) {
-                        if (progress == null) return child;
-                        return Center(
-                          child: SpinKitThreeBounce(
-                            color: AppColor.primaryColor,
-                            size: 22.0,
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: Colors.grey[100],
-                        alignment: Alignment.center,
-                        child: Icon(
-                          Icons.broken_image_outlined,
-                          color: Colors.grey[500],
-                          size: 26.sp,
-                        ),
-                      ),
-                    ),
+                    child: imageUrl.startsWith('http')
+                        ? Image.network(
+                            imageUrl,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, progress) {
+                              if (progress == null) return child;
+                              return Center(
+                                child: SpinKitThreeBounce(
+                                  color: AppColor.primaryColor,
+                                  size: 22.0,
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                              color: Colors.grey[100],
+                              alignment: Alignment.center,
+                              child: Icon(
+                                Icons.broken_image_outlined,
+                                color: Colors.grey[500],
+                                size: 26.sp,
+                              ),
+                            ),
+                          )
+                        : Image.file(File(imageUrl), fit: BoxFit.cover),
                   ),
                 ),
                 Positioned.fill(
@@ -120,7 +127,16 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
 
-                if (discountText != null)
+                if (isPendingSync)
+                  Positioned(
+                    top: 10.h,
+                    left: 10.w,
+                    child: _BadgeChip(
+                      text: "Syncing…",
+                      background: Colors.orange.shade800,
+                    ),
+                  )
+                else if (discountText != null)
                   Positioned(
                     top: 10.h,
                     left: 10.w,

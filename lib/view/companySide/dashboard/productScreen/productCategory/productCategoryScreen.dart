@@ -14,6 +14,7 @@ import 'package:new_brand/view/companySide/dashboard/productScreen/CategoryDetai
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProuctCategoryForm.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/getcategory_provider.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/updateAndDeleteCategory_provider.dart';
+import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
@@ -29,6 +30,7 @@ class CategoryScreen extends StatefulWidget {
 
 class _CategoryScreenState extends State<CategoryScreen> {
   String _searchQuery = "";
+  VoidCallback? _onReconnect;
 
   @override
   void initState() {
@@ -38,6 +40,21 @@ class _CategoryScreenState extends State<CategoryScreen> {
       await provider.getCategories();
     });
     _setupSocket();
+
+    _onReconnect = () {
+      if (!mounted) return;
+      Provider.of<GetCategoryProvider>(context, listen: false)
+          .getCategories(forceRefresh: true);
+    };
+    context.read<ConnectivityProvider>().addReconnectCallback(_onReconnect!);
+  }
+
+  @override
+  void dispose() {
+    if (_onReconnect != null) {
+      context.read<ConnectivityProvider>().removeReconnectCallback(_onReconnect!);
+    }
+    super.dispose();
   }
 
   Future<File?> _pickImage() async {
@@ -314,7 +331,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final provider = Provider.of<GetCategoryProvider>(context);
 
     // Filter categories based on search query
-    final allCategories = provider.categoryData?.categories ?? [];
+    final allCategories = provider.displayCategories;
     final filteredCategories = allCategories.where((c) {
       final query = _searchQuery.toLowerCase();
       final name = (c.name ?? "").toLowerCase();
@@ -419,6 +436,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                   ),
                               itemBuilder: (context, index) {
                                 final item = filteredCategories[index];
+                                final isPending =
+                                    provider.isPending(item.sId);
 
                                 return Stack(
                                   children: [
@@ -427,7 +446,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                       image: Global.getImageUrl(item.image),
                                       hasLowStock: item.hasLowStock,
                                       hasOutOfStock: item.hasOutOfStock,
+                                      isPendingSync: isPending,
                                       onTap: () {
+                                        if (isPending) {
+                                          AppToast.show(
+                                            "Category is syncing — please wait for internet",
+                                          );
+                                          return;
+                                        }
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -439,69 +465,70 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                         );
                                       },
                                     ),
-                                    Positioned(
-                                      right: 10,
-                                      top: 10,
-                                      child: Column(
-                                        children: [
-                                          GestureDetector(
-                                            onTap: () =>
-                                                _editCategory(context, item),
-                                            child: Container(
-                                              padding: EdgeInsets.all(6.w),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white.withOpacity(
-                                                  0.9,
+                                    if (!isPending)
+                                      Positioned(
+                                        right: 10,
+                                        top: 10,
+                                        child: Column(
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () =>
+                                                  _editCategory(context, item),
+                                              child: Container(
+                                                padding: EdgeInsets.all(6.w),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white
+                                                      .withOpacity(0.9),
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black
+                                                          .withOpacity(0.1),
+                                                      blurRadius: 5,
+                                                      offset:
+                                                          const Offset(0, 2),
+                                                    ),
+                                                  ],
                                                 ),
-                                                shape: BoxShape.circle,
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black
-                                                        .withOpacity(0.1),
-                                                    blurRadius: 5,
-                                                    offset: const Offset(0, 2),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: Icon(
-                                                LucideIcons.edit,
-                                                color: AppColor.primaryColor,
-                                                size: 20,
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(height: 10.h),
-                                          GestureDetector(
-                                            onTap: () => _deleteCategory(
-                                              context,
-                                              item.sId ?? "",
-                                            ),
-                                            child: Container(
-                                              padding: EdgeInsets.all(6.w),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white.withOpacity(
-                                                  0.9,
+                                                child: Icon(
+                                                  LucideIcons.edit,
+                                                  color: AppColor.primaryColor,
+                                                  size: 20,
                                                 ),
-                                                shape: BoxShape.circle,
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black
-                                                        .withOpacity(0.1),
-                                                    blurRadius: 5,
-                                                    offset: const Offset(0, 2),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: const Icon(
-                                                LucideIcons.trash2,
-                                                color: Colors.redAccent,
-                                                size: 20,
                                               ),
                                             ),
-                                          ),
-                                        ],
+                                            SizedBox(height: 10.h),
+                                            GestureDetector(
+                                              onTap: () => _deleteCategory(
+                                                context,
+                                                item.sId ?? "",
+                                              ),
+                                              child: Container(
+                                                padding: EdgeInsets.all(6.w),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white
+                                                      .withOpacity(0.9),
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black
+                                                          .withOpacity(0.1),
+                                                      blurRadius: 5,
+                                                      offset:
+                                                          const Offset(0, 2),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: const Icon(
+                                                  LucideIcons.trash2,
+                                                  color: Colors.redAccent,
+                                                  size: 20,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
                                   ],
                                 );
                               },
@@ -536,16 +563,23 @@ class _CategoryScreenState extends State<CategoryScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             onPressed: () async {
-              final added = await Navigator.push<bool>(
+              final result = await Navigator.push<String>(
                 context,
                 MaterialPageRoute(builder: (_) => const AddCategoryScreen()),
               );
 
               if (!mounted) return;
 
-              if (added == true) {
-                // ✅ toast yahan show karo (safe, no navigator lock)
+              if (result == 'added') {
                 AppToast.success("Category added successfully!");
+                Provider.of<GetCategoryProvider>(
+                  context,
+                  listen: false,
+                ).getCategories(forceRefresh: true);
+              } else if (result == 'queued') {
+                AppToast.show(
+                  "No internet — category saved and will sync automatically once you're back online.",
+                );
                 Provider.of<GetCategoryProvider>(
                   context,
                   listen: false,

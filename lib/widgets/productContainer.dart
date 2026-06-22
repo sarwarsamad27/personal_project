@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -11,6 +12,7 @@ class CategoryTile extends StatelessWidget {
   final VoidCallback onTap;
   final bool? hasLowStock;
   final bool? hasOutOfStock;
+  final bool isPendingSync;
 
   const CategoryTile({
     required this.name,
@@ -18,6 +20,7 @@ class CategoryTile extends StatelessWidget {
     required this.onTap,
     this.hasLowStock,
     this.hasOutOfStock,
+    this.isPendingSync = false,
   });
 
   @override
@@ -46,7 +49,9 @@ class CategoryTile extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: Image.network(image, fit: BoxFit.cover),
+                    child: image.startsWith('http')
+                        ? Image.network(image, fit: BoxFit.cover)
+                        : Image.file(File(image), fit: BoxFit.cover),
                   ),
                   // gradient overlay for effect
                   Positioned.fill(
@@ -96,6 +101,29 @@ class CategoryTile extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (isPendingSync)
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade800,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          "Syncing…",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

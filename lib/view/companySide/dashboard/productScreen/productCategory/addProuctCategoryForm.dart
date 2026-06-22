@@ -111,21 +111,21 @@ class AddCategoryScreen extends StatelessWidget {
                                 ? null
                                 : () async {
                                     final token = await LocalStorage.getToken();
+                                    final categoryProvider =
+                                        context.read<CreateCategoryProvider>();
 
-                                    final success = await context
-                                        .read<CreateCategoryProvider>()
+                                    final success = await categoryProvider
                                         .createCategory(token ?? "");
 
                                     if (!context.mounted) return;
 
                                     if (success) {
-                                      // ✅ CHANGE: Reset fields pehle
-                                      context
-                                          .read<CreateCategoryProvider>()
-                                          .resetFields();
-
-                                      // ✅ CHANGE: Pop with true to indicate success
-                                      Navigator.pop(context, true);
+                                      final wasQueued = categoryProvider.queued;
+                                      categoryProvider.resetFields();
+                                      Navigator.pop(
+                                        context,
+                                        wasQueued ? 'queued' : 'added',
+                                      );
                                     } else {
                                       AppToast.warning(
                                         "Please select image and name",

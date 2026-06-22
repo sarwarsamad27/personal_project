@@ -159,6 +159,10 @@ class AddProductScreen extends StatelessWidget {
         AppToast.show("Product added successfully!");
         Navigator.pop(context);
       },
+      onQueued: () {
+        AppToast.show("No internet — product saved and will upload automatically once you're back online.");
+        Navigator.pop(context);
+      },
       onError: (msg) => AppToast.show(msg),
     );
   }

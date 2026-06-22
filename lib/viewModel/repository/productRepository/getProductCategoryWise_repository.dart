@@ -14,7 +14,10 @@ class GetProductCategoryWiseRepository {
     try {
       final url = "$apiUrl?categoryId=$categoryId";
 
-      final response = await apiServices.getApi(url);
+      final response = await apiServices.cachedGetApi(
+        'seller_products_cat_$categoryId',
+        url,
+      );
 
       return GetProductCategoryWiseModel.fromJson(response);
     } catch (e) {
