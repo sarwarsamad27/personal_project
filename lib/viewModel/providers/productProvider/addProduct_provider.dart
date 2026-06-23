@@ -34,7 +34,7 @@ class AddProductProvider with ChangeNotifier {
     notifyListeners();
 
     // Offline: copy all files to permanent storage and queue
-    if (!ConnectivityProvider.online) {
+    if (!ConnectivityProvider.hasNetworkInterface) {
       try {
         final imagePaths = <String>[];
         for (final img in (images ?? [])) {
@@ -103,58 +103,56 @@ class AddProductProvider with ChangeNotifier {
     }
   }
 
-  /// Called on reconnect — submits queued products.
-  Future<void> processOfflineQueue() async {
-    final items = await OfflineQueue.getAll();
-    final prodItems =
-        items.where((e) => e['type'] == 'add_product').toList();
-    if (prodItems.isEmpty) return;
+  /// Submits one queued product. Returns true on success (removing it from
+  /// the queue), false on failure (left queued for the next sync attempt).
+  /// Driven by SyncCoordinator on reconnect — assumes [item]'s categoryId
+  /// has already been remapped if it referenced an offline-pending category.
+  Future<bool> syncOne(Map<String, dynamic> item) async {
+    try {
+      final d = item['data'] as Map<String, dynamic>;
+      final imagePaths = List<String>.from(d['imagePaths'] ?? []);
+      final imageFiles = imagePaths
+          .map((p) => File(p))
+          .where((f) => f.existsSync())
+          .toList();
 
-    for (final item in prodItems) {
-      try {
-        final d = item['data'] as Map<String, dynamic>;
-        final imagePaths = List<String>.from(d['imagePaths'] ?? []);
-        final imageFiles = imagePaths
-            .map((p) => File(p))
-            .where((f) => f.existsSync())
-            .toList();
+      File? videoFile;
+      if (d['videoPath'] != null) {
+        final vf = File(d['videoPath'] as String);
+        if (vf.existsSync()) videoFile = vf;
+      }
 
-        File? videoFile;
+      final result = await repository.addProduct(
+        token: '',
+        categoryId: d['categoryId'] as String,
+        name: d['name'] as String,
+        description: d['description'] as String?,
+        images: imageFiles.isEmpty ? null : imageFiles,
+        video: videoFile,
+        beforePrice: (d['beforePrice'] as num?)?.toInt(),
+        afterPrice: (d['afterPrice'] as num?)?.toInt(),
+        size: d['size'] != null ? List<String>.from(d['size'] as List) : null,
+        color:
+            d['color'] != null ? List<String>.from(d['color'] as List) : null,
+        quantity: (d['quantity'] as num?)?.toInt(),
+        weightInGrams: (d['weightInGrams'] as num?)?.toInt(),
+      );
+
+      if (result.product != null) {
+        await OfflineQueue.remove(item['id'] as String);
+        for (final path in imagePaths) {
+          try {
+            await File(path).delete();
+          } catch (_) {}
+        }
         if (d['videoPath'] != null) {
-          final vf = File(d['videoPath'] as String);
-          if (vf.existsSync()) videoFile = vf;
+          try {
+            await File(d['videoPath'] as String).delete();
+          } catch (_) {}
         }
-
-        final result = await repository.addProduct(
-          token: '',
-          categoryId: d['categoryId'] as String,
-          name: d['name'] as String,
-          description: d['description'] as String?,
-          images: imageFiles.isEmpty ? null : imageFiles,
-          video: videoFile,
-          beforePrice: (d['beforePrice'] as num?)?.toInt(),
-          afterPrice: (d['afterPrice'] as num?)?.toInt(),
-          size: d['size'] != null ? List<String>.from(d['size'] as List) : null,
-          color:
-              d['color'] != null ? List<String>.from(d['color'] as List) : null,
-          quantity: (d['quantity'] as num?)?.toInt(),
-          weightInGrams: (d['weightInGrams'] as num?)?.toInt(),
-        );
-
-        if (result.product != null) {
-          await OfflineQueue.remove(item['id'] as String);
-          for (final path in imagePaths) {
-            try {
-              await File(path).delete();
-            } catch (_) {}
-          }
-          if (d['videoPath'] != null) {
-            try {
-              await File(d['videoPath'] as String).delete();
-            } catch (_) {}
-          }
-        }
-      } catch (_) {}
-    }
+        return true;
+      }
+    } catch (_) {}
+    return false;
   }
 }

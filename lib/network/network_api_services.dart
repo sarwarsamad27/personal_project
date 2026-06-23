@@ -69,7 +69,7 @@ class NetworkApiServices extends BaseApiServices {
     // No token: if online force-logout; if offline let the request fail and
     // cachedGetApi will serve from cache.
     if (token == null || token.isEmpty) {
-      if (ConnectivityProvider.online) {
+      if (ConnectivityProvider.hasNetworkInterface) {
         AppToast.error("No active session found. Please login.");
         unawaited(_forceLogoutToLogin());
       }
@@ -82,7 +82,7 @@ class NetworkApiServices extends BaseApiServices {
     // Local expiry check: same offline guard — let 401 handle logout online.
     try {
       if (JwtDecoder.isExpired(token)) {
-        if (ConnectivityProvider.online) {
+        if (ConnectivityProvider.hasNetworkInterface) {
           AppToast.error("Session expired. Please login again.");
           unawaited(_forceLogoutToLogin());
         }
@@ -92,7 +92,7 @@ class NetworkApiServices extends BaseApiServices {
         };
       }
     } catch (_) {
-      if (ConnectivityProvider.online) {
+      if (ConnectivityProvider.hasNetworkInterface) {
         AppToast.error("Invalid session. Please login again.");
         unawaited(_forceLogoutToLogin());
       }
@@ -156,7 +156,7 @@ class NetworkApiServices extends BaseApiServices {
   /// When online, hits the network, updates cache on success, falls back to
   /// cache on failure. Returns the original error only if no cache exists.
   Future<Map<String, dynamic>> cachedGetApi(String cacheKey, String url) async {
-    if (!ConnectivityProvider.online) {
+    if (!ConnectivityProvider.hasNetworkInterface) {
       final cached = await CacheService.getData(cacheKey);
       if (cached != null) return Map<String, dynamic>.from(cached as Map);
       return {'code_status': false, 'message': 'No internet connection'};

@@ -52,7 +52,7 @@ class CreateCategoryProvider with ChangeNotifier {
     notifyListeners();
 
     // Offline: copy image to permanent storage and queue
-    if (!ConnectivityProvider.online) {
+    if (!ConnectivityProvider.hasNetworkInterface) {
       try {
         final permanentPath =
             await OfflineQueue.copyFilePermanent(_image!);
@@ -87,34 +87,31 @@ class CreateCategoryProvider with ChangeNotifier {
     return _response?.category != null;
   }
 
-  /// Called on reconnect — submits queued categories.
-  Future<void> processOfflineQueue() async {
-    final items = await OfflineQueue.getAll();
-    final catItems =
-        items.where((e) => e['type'] == 'add_category').toList();
-    if (catItems.isEmpty) return;
-
-    for (final item in catItems) {
-      try {
-        final data = item['data'] as Map<String, dynamic>;
-        final imageFile = File(data['imagePath'] as String);
-        if (!await imageFile.exists()) {
-          await OfflineQueue.remove(item['id'] as String);
-          continue;
-        }
-        final result = await repository.createCategory(
-          name: data['name'] as String,
-          image: imageFile,
-          token: '',
-        );
-        if (result.category != null) {
-          await OfflineQueue.remove(item['id'] as String);
-          try {
-            await imageFile.delete();
-          } catch (_) {}
-        }
-      } catch (_) {}
-    }
+  /// Submits one queued category. Returns the server-assigned real id on
+  /// success (removing it from the queue), or null on failure (left queued
+  /// for the next sync attempt). Driven by SyncCoordinator on reconnect.
+  Future<String?> syncOne(Map<String, dynamic> item) async {
+    try {
+      final data = item['data'] as Map<String, dynamic>;
+      final imageFile = File(data['imagePath'] as String);
+      if (!await imageFile.exists()) {
+        await OfflineQueue.remove(item['id'] as String);
+        return null;
+      }
+      final result = await repository.createCategory(
+        name: data['name'] as String,
+        image: imageFile,
+        token: '',
+      );
+      if (result.category?.sId != null) {
+        await OfflineQueue.remove(item['id'] as String);
+        try {
+          await imageFile.delete();
+        } catch (_) {}
+        return result.category!.sId;
+      }
+    } catch (_) {}
+    return null;
   }
 
   @override

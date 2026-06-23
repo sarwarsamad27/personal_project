@@ -104,27 +104,23 @@ bool get isOrderBlocked    => walletData?.isOrderBlocked   ?? false;
     }
   }
 
-  // ================= JAZZCASH CREDIT (INITIATE) =================
-  Future<Map<String, dynamic>?> initiateJazzcashCredit({
-    required String phone,
+  // ================= SAFEPAY: CREATE CHECKOUT =================
+  /// Returns `{url, trackId}` on success, null on failure.
+  Future<Map<String, dynamic>?> initSafepayCheckout({
     required String amount,
   }) async {
     try {
       isLoading = true;
       notifyListeners();
 
-      final res = await _addMoneyRepo.initiateJazzcashCredit(
-        phone: phone,
-        amount: amount,
-      );
+      final res = await _addMoneyRepo.initSafepayCheckout(amount: amount);
 
-      // ✅ txnRefNo aaya matlab success
-      if (res['txnRefNo'] != null) {
+      if (res['url'] != null && res['trackId'] != null) {
         return res;
       }
       return null;
     } catch (e) {
-      debugPrint("JazzCash Initiate Error: $e");
+      debugPrint("Safepay Checkout Error: $e");
       return null;
     } finally {
       isLoading = false;
@@ -132,39 +128,32 @@ bool get isOrderBlocked    => walletData?.isOrderBlocked   ?? false;
     }
   }
 
-  // ================= JAZZCASH CREDIT (CONFIRM/INQUIRE) =================
-  Future<bool> confirmJazzcashCredit({
-    required String txnRefNo,
-    required BuildContext context,
-    required String otp,
+  // ================= SAFEPAY: POLL STATUS =================
+  /// Polls until the webhook-driven status is no longer "pending", or
+  /// [maxAttempts] is reached. The wallet is only ever credited server-side
+  /// — this just watches for that to have happened.
+  Future<Map<String, dynamic>> pollSafepayStatus({
+    required String trackId,
+    BuildContext? context,
+    Duration interval = const Duration(seconds: 3),
+    int maxAttempts = 40, // ~2 minutes
   }) async {
-    try {
-      isLoading = true;
-      notifyListeners();
-
-      final res = await _addMoneyRepo.confirmJazzcashCredit(
-        txnRefNo: txnRefNo,
-        otp: otp,
-      );
-
-      if (res['message'] == "Wallet credited successfully") {
-        await fetchCompanyWallet();
-        // refresh transaction history — don't let failure block success
-        try {
-          if (context.mounted) {
-            context.read<TransactionHistoryProvider>().fetchTransactions();
-          }
-        } catch (_) {}
-        return true;
+    for (int i = 0; i < maxAttempts; i++) {
+      final res = await _addMoneyRepo.getSafepayStatus(trackId: trackId);
+      final status = res['status'];
+      if (status != null && status != 'pending') {
+        if (status == 'success') {
+          await fetchCompanyWallet();
+          try {
+            if (context != null && context.mounted) {
+              context.read<TransactionHistoryProvider>().fetchTransactions();
+            }
+          } catch (_) {}
+        }
+        return res;
       }
-
-      return false;
-    } catch (e) {
-      debugPrint("JazzCash Confirm Error: $e");
-      return false;
-    } finally {
-      isLoading = false;
-      notifyListeners();
+      await Future.delayed(interval);
     }
+    return {'status': 'pending', 'message': 'Payment confirmation timed out'};
   }
 }

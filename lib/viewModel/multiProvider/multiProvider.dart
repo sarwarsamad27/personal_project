@@ -40,6 +40,7 @@ import 'package:new_brand/viewModel/providers/reviewProvider/getAllReview_provid
 import 'package:new_brand/viewModel/providers/reviewProvider/replyReview_provider.dart';
 import 'package:new_brand/viewModel/providers/commissionProvider/commission_provider.dart';
 import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
+import 'package:new_brand/viewModel/providers/syncCoordinator_provider.dart';
 import 'package:new_brand/viewModel/providers/notificationProvider/company_notification_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCancelledOrders_provider.dart';
 import 'package:provider/provider.dart';
@@ -95,6 +96,12 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CompanyNotificationProvider()),
         ChangeNotifierProvider(create: (_) => GetCancelledOrdersProvider()),
         ChangeNotifierProvider(create: (_) => AiAssistantProvider()),
+        ChangeNotifierProvider(
+          create: (ctx) => SyncCoordinator(
+            categoryProvider: ctx.read<CreateCategoryProvider>(),
+            productProvider: ctx.read<AddProductProvider>(),
+          ),
+        ),
       ],
 
       child: child,

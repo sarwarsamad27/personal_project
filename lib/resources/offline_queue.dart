@@ -72,4 +72,26 @@ class OfflineQueue {
   }
 
   static Future<bool> get isEmpty async => (await _all()).isEmpty;
+
+  /// Rewrites categoryId on still-queued 'add_product' items that reference
+  /// a local (not-yet-synced) category id, now that it has a real server id.
+  /// Called right after a category finishes syncing so any product queued
+  /// against it can sync correctly afterwards.
+  static Future<void> remapProductCategoryIds(
+    Map<String, String> localToRealId,
+  ) async {
+    if (localToRealId.isEmpty) return;
+    final items = await _all();
+    var changed = false;
+    for (final item in items) {
+      if (item['type'] != 'add_product') continue;
+      final data = item['data'] as Map<String, dynamic>?;
+      final categoryId = data?['categoryId'] as String?;
+      if (categoryId != null && localToRealId.containsKey(categoryId)) {
+        data!['categoryId'] = localToRealId[categoryId];
+        changed = true;
+      }
+    }
+    if (changed) await _save(items);
+  }
 }

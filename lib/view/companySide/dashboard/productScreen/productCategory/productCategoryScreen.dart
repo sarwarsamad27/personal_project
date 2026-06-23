@@ -14,7 +14,7 @@ import 'package:new_brand/view/companySide/dashboard/productScreen/CategoryDetai
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProuctCategoryForm.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/getcategory_provider.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/updateAndDeleteCategory_provider.dart';
-import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
+import 'package:new_brand/viewModel/providers/syncCoordinator_provider.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
@@ -30,7 +30,7 @@ class CategoryScreen extends StatefulWidget {
 
 class _CategoryScreenState extends State<CategoryScreen> {
   String _searchQuery = "";
-  VoidCallback? _onReconnect;
+  int _lastSeenSyncVersion = -1;
 
   @override
   void initState() {
@@ -40,21 +40,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       await provider.getCategories();
     });
     _setupSocket();
-
-    _onReconnect = () {
-      if (!mounted) return;
-      Provider.of<GetCategoryProvider>(context, listen: false)
-          .getCategories(forceRefresh: true);
-    };
-    context.read<ConnectivityProvider>().addReconnectCallback(_onReconnect!);
-  }
-
-  @override
-  void dispose() {
-    if (_onReconnect != null) {
-      context.read<ConnectivityProvider>().removeReconnectCallback(_onReconnect!);
-    }
-    super.dispose();
+    _lastSeenSyncVersion = context.read<SyncCoordinator>().syncVersion;
   }
 
   Future<File?> _pickImage() async {
@@ -329,6 +315,16 @@ class _CategoryScreenState extends State<CategoryScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<GetCategoryProvider>(context);
+    final sync = context.watch<SyncCoordinator>();
+
+    // A sync run just finished while this screen was mounted — refresh so
+    // newly-synced categories drop their "Syncing…" badge and show for real.
+    if (sync.syncVersion != _lastSeenSyncVersion) {
+      _lastSeenSyncVersion = sync.syncVersion;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) provider.getCategories(forceRefresh: true);
+      });
+    }
 
     // Filter categories based on search query
     final allCategories = provider.displayCategories;
@@ -372,6 +368,38 @@ class _CategoryScreenState extends State<CategoryScreen> {
               )
             : Column(
                 children: [
+                  if (sync.isSyncing)
+                    Container(
+                      width: double.infinity,
+                      color: AppColor.primaryColor.withOpacity(0.1),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
+                      ),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 14.w,
+                            height: 14.w,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColor.primaryColor,
+                            ),
+                          ),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Text(
+                              "Syncing offline changes — ${sync.completed}/${sync.total} (${(sync.percent * 100).round()}%)",
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: AppColor.primaryColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   // ── Search Bar ──
                   Padding(
                     padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 4.h),
@@ -448,12 +476,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                       hasOutOfStock: item.hasOutOfStock,
                                       isPendingSync: isPending,
                                       onTap: () {
-                                        if (isPending) {
-                                          AppToast.show(
-                                            "Category is syncing — please wait for internet",
-                                          );
-                                          return;
-                                        }
+                                        // Allowed even while pending sync —
+                                        // the seller can go in and queue
+                                        // products against it; CategoryDetailScreen
+                                        // remaps to the real id once this category syncs.
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(

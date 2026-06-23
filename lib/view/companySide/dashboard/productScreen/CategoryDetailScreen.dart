@@ -9,8 +9,8 @@ import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/addProductScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
-import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getProductCategoryWise_provider.dart';
+import 'package:new_brand/viewModel/providers/syncCoordinator_provider.dart';
 import 'package:new_brand/widgets/productCard.dart';
 import 'package:new_brand/resources/socketServices.dart';
 import 'package:new_brand/resources/toast.dart';
@@ -29,11 +29,17 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
   String _searchQuery = "";
-  VoidCallback? _onReconnect;
+  int _lastSeenSyncVersion = -1;
+
+  /// Starts as the category's id (which may be a local offline-pending id).
+  /// Updated in [build] if SyncCoordinator reports this id got remapped to
+  /// a real server id once the category finishes syncing.
+  late String _effectiveCategoryId;
 
   @override
   void initState() {
     super.initState();
+    _effectiveCategoryId = widget.category.sId!;
 
     _scrollController.addListener(() {
       setState(() {
@@ -48,15 +54,11 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       );
       await provider.fetchProducts(
         token: await LocalStorage.getToken() ?? "",
-        categoryId: widget.category.sId!,
+        categoryId: _effectiveCategoryId,
       );
     });
     _setupSocket();
-
-    _onReconnect = () {
-      if (mounted) _refreshProducts();
-    };
-    context.read<ConnectivityProvider>().addReconnectCallback(_onReconnect!);
+    _lastSeenSyncVersion = context.read<SyncCoordinator>().syncVersion;
   }
 
   void _setupSocket() async {
@@ -75,7 +77,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
           Map<String, dynamic>.from(data as Map),
         );
         // Only update if it belongs to this category
-        if (product.categoryId == widget.category.sId) {
+        if (product.categoryId == _effectiveCategoryId) {
           Provider.of<GetProductCategoryWiseProvider>(
             context,
             listen: false,
@@ -91,7 +93,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       try {
         final String? productId = data['productId'];
         final String? categoryId = data['categoryId'];
-        if (productId != null && categoryId == widget.category.sId) {
+        if (productId != null && categoryId == _effectiveCategoryId) {
           Provider.of<GetProductCategoryWiseProvider>(
             context,
             listen: false,
@@ -106,7 +108,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       if (!mounted || data == null) return;
       try {
         final String? categoryId = data['categoryId'];
-        if (categoryId == widget.category.sId) {
+        if (categoryId == _effectiveCategoryId) {
           Navigator.pop(context); // Pop if current category is deleted
         }
       } catch (e) {
@@ -117,9 +119,6 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
 
   @override
   void dispose() {
-    if (_onReconnect != null) {
-      context.read<ConnectivityProvider>().removeReconnectCallback(_onReconnect!);
-    }
     _scrollController.dispose();
     super.dispose();
   }
@@ -131,7 +130,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     );
     await provider.fetchProducts(
       token: await LocalStorage.getToken() ?? "",
-      categoryId: widget.category.sId!,
+      categoryId: _effectiveCategoryId,
     );
   }
 
@@ -231,10 +230,19 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   }
 
   void _navigateToAddTask() async {
+    // Pass a category carrying the effective (possibly remapped) id — if
+    // this category synced while the seller was browsing, products must be
+    // queued against the real server id, not the stale local one.
+    final categoryForAdd = Categories(
+      sId: _effectiveCategoryId,
+      profileId: widget.category.profileId,
+      name: widget.category.name,
+      image: widget.category.image,
+    );
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddProductScreen(category: widget.category),
+        builder: (context) => AddProductScreen(category: categoryForAdd),
       ),
     );
     await _refreshProducts();
@@ -242,6 +250,19 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final sync = context.watch<SyncCoordinator>();
+
+    if (sync.syncVersion != _lastSeenSyncVersion) {
+      _lastSeenSyncVersion = sync.syncVersion;
+      // Follow this category to its real id if it just synced, then refresh
+      // so newly-synced products drop their "Syncing…" badge.
+      final realId = sync.lastIdMap[_effectiveCategoryId];
+      if (realId != null) _effectiveCategoryId = realId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _refreshProducts();
+      });
+    }
+
     final media = MediaQuery.of(context).size;
     final imageHeight = media.height * 0.48.h;
 
@@ -258,6 +279,42 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       child: Scaffold(
         body: Stack(
           children: [
+            if (sync.isSyncing)
+              Positioned(
+                top: MediaQuery.of(context).padding.top,
+                left: 0,
+                right: 0,
+                child: Container(
+                  color: AppColor.primaryColor.withOpacity(0.92),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 14.w,
+                        height: 14.w,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Text(
+                          "Syncing offline changes — ${sync.completed}/${sync.total} (${(sync.percent * 100).round()}%)",
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             // ── Scrollable content ──
             CustomScrollView(
               controller: _scrollController,

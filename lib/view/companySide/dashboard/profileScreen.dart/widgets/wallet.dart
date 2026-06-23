@@ -6,7 +6,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/toast.dart';
-import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/jazzcash_payment_screen.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/safepay_payment_screen.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
@@ -357,27 +357,18 @@ class _WalletState extends State<Wallet> {
               ),
               SizedBox(height: 16.h),
 
-              // JazzCash header
+              // Safepay header
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8.r),
-                    child: Image.asset(
-                      'assets/images/JazzCashLogo.jpg',
-                      width: 32.r,
-                      height: 32.r,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.account_balance_wallet_rounded,
-                        color: AppColor.primaryColor,
-                        size: 28.sp,
-                      ),
-                    ),
+                  Icon(
+                    Icons.shield_outlined,
+                    color: AppColor.primaryColor,
+                    size: 28.sp,
                   ),
                   SizedBox(width: 10.w),
                   Text(
-                    'Add Money via JazzCash',
+                    'Add Money via Safepay',
                     style: TextStyle(
                       fontSize: 17.sp,
                       fontWeight: FontWeight.bold,
@@ -401,8 +392,8 @@ class _WalletState extends State<Wallet> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.r),
-                    borderSide: const BorderSide(
-                      color: Color(0xFFCC0000),
+                    borderSide: BorderSide(
+                      color: AppColor.primaryColor,
                       width: 1.5,
                     ),
                   ),
@@ -416,7 +407,6 @@ class _WalletState extends State<Wallet> {
                 },
               ),
               SizedBox(height: 8.h),
-
               // Quick amounts
               Wrap(
                 spacing: 8.w,
@@ -425,9 +415,10 @@ class _WalletState extends State<Wallet> {
                       (a) => ActionChip(
                         label: Text('Rs $a'),
                         onPressed: () => amountCtrl.text = '$a',
-                        backgroundColor: const Color(0xFFFFF0F0),
-                        labelStyle: const TextStyle(
-                          color: Color(0xFFCC0000),
+                        backgroundColor:
+                            AppColor.primaryColor.withValues(alpha: 0.08),
+                        labelStyle: TextStyle(
+                          color: AppColor.primaryColor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -436,32 +427,52 @@ class _WalletState extends State<Wallet> {
               ),
               SizedBox(height: 20.h),
 
-              SizedBox(
-                width: double.infinity,
-                height: 50.h,
-                child: CustomButton(
-                  text: "Pay with JazzCash",
-                  onTap: () {
-                    if (!formKey.currentState!.validate()) return;
-                    final amount = double.parse(amountCtrl.text.trim());
-                    Navigator.pop(context); // close sheet
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => JazzCashPaymentScreen(
-                          amount: amount,
-                          onPaymentDone: () {
-                            if (mounted) {
-                              context
-                                  .read<CompanyWalletProvider>()
-                                  .fetchCompanyWallet();
+              Consumer<CompanyWalletProvider>(
+                builder: (context, provider, _) => SizedBox(
+                  width: double.infinity,
+                  height: 50.h,
+                  child: CustomButton(
+                    text: "Continue to Payment",
+                    isLoading: provider.isLoading,
+                    onTap: provider.isLoading
+                        ? null
+                        : () async {
+                            if (!formKey.currentState!.validate()) return;
+                            final amount =
+                                double.parse(amountCtrl.text.trim());
+
+                            final checkout = await provider.initSafepayCheckout(
+                              amount: amount.toStringAsFixed(0),
+                            );
+
+                            if (!context.mounted) return;
+                            if (checkout == null) {
+                              AppToast.show(
+                                'Could not start payment. Try again.',
+                              );
+                              return;
                             }
+
+                            Navigator.pop(context); // close sheet
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => SafepayPaymentScreen(
+                                  amount: amount,
+                                  checkoutUrl: checkout['url'] as String,
+                                  trackId: checkout['trackId'] as String,
+                                  onPaymentDone: () {
+                                    if (mounted) {
+                                      context
+                                          .read<CompanyWalletProvider>()
+                                          .fetchCompanyWallet();
+                                    }
+                                  },
+                                ),
+                              ),
+                            );
                           },
-                        ),
-                      ),
-                    );
-                  },
-                  second: true,
+                  ),
                 ),
               ),
               SizedBox(height: 8.h),

@@ -3,9 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appNav.dart';
 import 'package:new_brand/resources/sessionGuard.dart';
 import 'package:new_brand/view/companySide/auth/splashScreen.dart';
-import 'package:new_brand/viewModel/providers/categoryProvider/createCategory_provider.dart';
 import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
-import 'package:new_brand/viewModel/providers/productProvider/addProduct_provider.dart';
+import 'package:new_brand/viewModel/providers/syncCoordinator_provider.dart';
 import 'package:new_brand/resources/appTheme.dart';
 import 'package:new_brand/viewModel/multiProvider/multiProvider.dart';
 import 'package:provider/provider.dart';
@@ -137,10 +136,7 @@ class _OfflineSyncRegistrarState extends State<_OfflineSyncRegistrar> {
       if (!mounted) return;
       final connectivity = context.read<ConnectivityProvider>();
       connectivity.addReconnectCallback(
-        context.read<CreateCategoryProvider>().processOfflineQueue,
-      );
-      connectivity.addReconnectCallback(
-        context.read<AddProductProvider>().processOfflineQueue,
+        context.read<SyncCoordinator>().syncAll,
       );
     });
   }
