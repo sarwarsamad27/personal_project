@@ -19,6 +19,13 @@ class CompanyWalletProvider with ChangeNotifier {
 
   GetCompanyAmountModel? walletData;
 
+  // trackIds whose checkout screen was closed before the poll resolved —
+  // without this, the loop below keeps hitting the backend every few
+  // seconds for up to ~2 minutes after the user has already left the screen.
+  final Set<String> _cancelledTrackIds = {};
+
+  void cancelPolling(String trackId) => _cancelledTrackIds.add(trackId);
+
   // ================= FETCH WALLET =================
   Future<void> fetchCompanyWallet() async {
     try {
@@ -139,6 +146,9 @@ bool get isOrderBlocked    => walletData?.isOrderBlocked   ?? false;
     int maxAttempts = 40, // ~2 minutes
   }) async {
     for (int i = 0; i < maxAttempts; i++) {
+      if (_cancelledTrackIds.remove(trackId)) {
+        return {'status': 'cancelled'};
+      }
       final res = await _addMoneyRepo.getSafepayStatus(trackId: trackId);
       final status = res['status'];
       if (status != null && status != 'pending') {
@@ -154,6 +164,7 @@ bool get isOrderBlocked    => walletData?.isOrderBlocked   ?? false;
       }
       await Future.delayed(interval);
     }
+    _cancelledTrackIds.remove(trackId);
     return {'status': 'pending', 'message': 'Payment confirmation timed out'};
   }
 }

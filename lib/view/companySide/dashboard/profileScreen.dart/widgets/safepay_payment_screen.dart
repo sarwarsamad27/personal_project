@@ -31,6 +31,7 @@ class SafepayPaymentScreen extends StatefulWidget {
 
 class _SafepayPaymentScreenState extends State<SafepayPaymentScreen> {
   late final WebViewController _controller;
+  late final CompanyWalletProvider _provider;
   bool _loading = true;
   bool _verifying = false;
   bool _resolved = false;
@@ -38,6 +39,7 @@ class _SafepayPaymentScreenState extends State<SafepayPaymentScreen> {
   @override
   void initState() {
     super.initState();
+    _provider = context.read<CompanyWalletProvider>();
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
@@ -89,10 +91,15 @@ class _SafepayPaymentScreenState extends State<SafepayPaymentScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    _provider.cancelPolling(widget.trackId);
+    super.dispose();
+  }
+
   Future<void> _checkStatusNow() async {
     if (_resolved || !mounted) return;
-    final provider = context.read<CompanyWalletProvider>();
-    final res = await provider.pollSafepayStatus(
+    final res = await _provider.pollSafepayStatus(
       trackId: widget.trackId,
       context: context,
       maxAttempts: 1,
@@ -102,8 +109,7 @@ class _SafepayPaymentScreenState extends State<SafepayPaymentScreen> {
   }
 
   Future<void> _startPolling() async {
-    final provider = context.read<CompanyWalletProvider>();
-    final res = await provider.pollSafepayStatus(
+    final res = await _provider.pollSafepayStatus(
       trackId: widget.trackId,
       context: context,
     );

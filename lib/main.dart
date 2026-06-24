@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appNav.dart';
@@ -129,6 +132,9 @@ class _OfflineSyncRegistrar extends StatefulWidget {
 }
 
 class _OfflineSyncRegistrarState extends State<_OfflineSyncRegistrar> {
+  final AppLinks _appLinks = AppLinks();
+  StreamSubscription<Uri>? _linkSub;
+
   @override
   void initState() {
     super.initState();
@@ -139,6 +145,30 @@ class _OfflineSyncRegistrarState extends State<_OfflineSyncRegistrar> {
         context.read<SyncCoordinator>().syncAll,
       );
     });
+    _initDeepLinks();
+  }
+
+  // Admin "Account Visit" deep link: shookooseller://impersonate?token=...
+  Future<void> _initDeepLinks() async {
+    try {
+      final initial = await _appLinks.getInitialLink();
+      if (initial != null) _handleLink(initial);
+    } catch (_) {}
+
+    _linkSub = _appLinks.uriLinkStream.listen(_handleLink, onError: (_) {});
+  }
+
+  void _handleLink(Uri uri) {
+    if (uri.scheme != 'shookooseller' || uri.host != 'impersonate') return;
+    final token = uri.queryParameters['token'];
+    if (token == null || token.isEmpty) return;
+    AppNav.startImpersonation(token);
+  }
+
+  @override
+  void dispose() {
+    _linkSub?.cancel();
+    super.dispose();
   }
 
   @override

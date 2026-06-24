@@ -41,6 +41,14 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
+            <!-- Admin "Account Visit" impersonation deep link: shookooseller://impersonate?token=... -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="shookooseller" android:host="impersonate"/>
+            </intent-filter>
         </activity>
 
         <meta-data
