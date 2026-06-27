@@ -3,6 +3,7 @@ import 'package:new_brand/resources/global.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class AuthExpiredException implements Exception {
   final String message;
@@ -26,6 +27,20 @@ class LocalStorage {
   static Future<void> clearToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove("token");
+  }
+
+  /// Id of the seller account currently logged in on this device, decoded
+  /// from the JWT's `id` claim. Used to scope the offline queue so one
+  /// account never sees or syncs another account's pending writes.
+  static Future<String?> getCurrentAccountId() async {
+    final token = await getToken();
+    if (token == null || token.isEmpty) return null;
+    try {
+      final decoded = JwtDecoder.decode(token);
+      return decoded['id']?.toString();
+    } catch (_) {
+      return null;
+    }
   }
 
   // ------------------ TERMS & CONDITIONS AGREEMENT ------------------

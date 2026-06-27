@@ -33,6 +33,14 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
   // Guard: only fetch admin state once on first open
   bool _adminFetched = false;
 
+  // Guard: only register socket listeners once per screen lifetime — they
+  // stay bound the whole time this screen is mounted (even while a chat
+  // thread is pushed on top of it), since each handler is now unbound by
+  // reference in dispose(), not via a blanket socket.off(event) that would
+  // wipe it out from elsewhere.
+  bool _socketListenersBound = false;
+  final List<void Function()> _socketUnsubscribers = [];
+
   @override
   void initState() {
     super.initState();
@@ -51,6 +59,15 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
 
       _setupSocketListeners();
     });
+  }
+
+  @override
+  void dispose() {
+    for (final unsubscribe in _socketUnsubscribers) {
+      unsubscribe();
+    }
+    _socketUnsubscribers.clear();
+    super.dispose();
   }
 
   // ── Admin messages: one-time HTTP fetch ──────────────────────────────────
@@ -91,10 +108,13 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
   }
 
   // ── Socket listeners ─────────────────────────────────────────────────────
-  // Called on initState AND after returning from chat/admin screen
-  // (because CompanyChatProvider.init() calls socket.off("chat:message")
-  //  which removes our listener — we must re-register on return).
+  // Registered once and left bound for this screen's whole lifetime — each
+  // handler is unbound by reference in dispose() (via the unsubscribe
+  // callback socket.on() returns), so opening a chat thread or the admin
+  // screen on top no longer needs to wipe and re-register these.
   void _setupSocketListeners() async {
+    if (_socketListenersBound) return;
+
     final token = await LocalStorage.getToken() ?? "";
     if (token.isEmpty || !mounted) return;
 
@@ -103,16 +123,11 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
       baseUrl: Global.imageUrl,
       token: token,
     );
-    if (socket == null || !mounted) return;
-
-    // Clear first to avoid duplicate handlers
-    socket.off("chat:message");
-    socket.off("exchange:new");
-    socket.off("admin:message");
-    socket.off("admin:broadcast");
+    if (socket == null || !mounted || _socketListenersBound) return;
+    _socketListenersBound = true;
 
     // ── New buyer message: update thread list in-memory, no API call ─────
-    socket.on("chat:message", (data) {
+    _socketUnsubscribers.add(socket.on("chat:message", (data) {
       if (!mounted || data is! Map) return;
       final tId = data["threadId"]?.toString();
       final text = (data["text"] ?? "").toString();
@@ -130,10 +145,10 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
           isExchangeRequest: false,
         );
       }
-    });
+    }));
 
     // ── New exchange request: same in-memory update ───────────────────────
-    socket.on("exchange:new", (data) {
+    _socketUnsubscribers.add(socket.on("exchange:new", (data) {
       if (!mounted || data is! Map) return;
       final tId = data["threadId"]?.toString();
       final ts = DateTime.now().toIso8601String();
@@ -146,10 +161,10 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
           isExchangeRequest: true,
         );
       }
-    });
+    }));
 
     // ── Admin messages: update local state ───────────────────────────────
-    socket.on("admin:message", (data) {
+    _socketUnsubscribers.add(socket.on("admin:message", (data) {
       if (!mounted) return;
       final msg = (data is Map) ? data : {};
       if (msg['fromType'] == 'admin') {
@@ -159,9 +174,9 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
           _adminLastTime = DateTime.now();
         });
       }
-    });
+    }));
 
-    socket.on("admin:broadcast", (data) {
+    _socketUnsubscribers.add(socket.on("admin:broadcast", (data) {
       if (!mounted) return;
       final msg = (data is Map) ? data : {};
       if (msg['toType'] == 'all_sellers') {
@@ -171,7 +186,7 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
           _adminLastTime = DateTime.now();
         });
       }
-    });
+    }));
   }
 
   String _formatTime(String? timestamp) {
@@ -280,10 +295,7 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const SellerAdminMessagesScreen()),
-        ).then((_) {
-          // Re-register socket listeners — chat screens remove them
-          if (mounted) _setupSocketListeners();
-        });
+        );
       },
       child: ListTile(
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
@@ -491,11 +503,7 @@ class _CompanyChatListScreenState extends State<CompanyChatListScreen> {
               },
             ),
           ),
-        ).then((_) {
-          // Re-register socket listeners because CompanyChatProvider.init()
-          // calls socket.off("chat:message") which removes our listener.
-          if (mounted) _setupSocketListeners();
-        });
+        );
       },
     );
   }

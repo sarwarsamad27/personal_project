@@ -143,6 +143,9 @@ class _ProductImageState extends State<ProductImage> {
                     itemBuilder: (context, index) {
                       if (index < validImages.length) {
                         final url = Global.getImageUrl(validImages[index]);
+                        debugPrint(
+                          "🖼️ [ProductImage] raw='${validImages[index]}' resolved='$url'",
+                        );
                         return GestureDetector(
                           onTap: () {
                             Navigator.push(
@@ -188,8 +191,12 @@ class _ProductImageState extends State<ProductImage> {
                                   url,
                                   fit: BoxFit.contain,
                                   width: double.infinity,
-                                  errorBuilder: (_, __, ___) =>
-                                      const _NoImagePlaceholder(),
+                                  errorBuilder: (_, error, ___) {
+                                    debugPrint(
+                                      "❌ [ProductImage] failed to load '$url': $error",
+                                    );
+                                    return const _NoImagePlaceholder();
+                                  },
                                 ),
                               ],
                             ),

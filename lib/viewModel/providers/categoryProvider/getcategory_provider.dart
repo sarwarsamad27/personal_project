@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:new_brand/models/categoryModel/getCategory_model.dart';
+import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/offline_queue.dart';
 import 'package:new_brand/viewModel/repository/categoryRepository/getCategory_repository.dart';
 
@@ -44,7 +45,8 @@ class GetCategoryProvider with ChangeNotifier {
   /// Rebuilds [pendingCategories] from the offline queue. Safe to call
   /// anytime (e.g. right after queuing a category, or on reconnect).
   Future<void> refreshPendingCategories() async {
-    final items = await OfflineQueue.getAll();
+    final ownerId = await LocalStorage.getCurrentAccountId();
+    final items = await OfflineQueue.getForOwner(ownerId);
     pendingCategories = items
         .where((e) => e['type'] == 'add_category')
         .map((e) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:new_brand/models/productModel/getProductCategoryWise_model.dart';
+import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/offline_queue.dart';
 import 'package:new_brand/viewModel/repository/productRepository/getProductCategoryWise_repository.dart';
 
@@ -46,7 +47,8 @@ class GetProductCategoryWiseProvider with ChangeNotifier {
   /// Rebuilds [pendingProducts] for [categoryId] from the offline queue. Safe
   /// to call anytime (e.g. right after queuing a product, or on reconnect).
   Future<void> refreshPendingProducts(String categoryId) async {
-    final items = await OfflineQueue.getAll();
+    final ownerId = await LocalStorage.getCurrentAccountId();
+    final items = await OfflineQueue.getForOwner(ownerId);
     pendingProducts = items
         .where((e) =>
             e['type'] == 'add_product' &&

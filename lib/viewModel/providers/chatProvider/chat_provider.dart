@@ -72,6 +72,12 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool _listenersBound = false;
   bool isSendingImage = false;
 
+  // Unsubscribe callbacks returned by socket.on() — called on dispose so
+  // this provider's handlers are removed by reference, not via a blanket
+  // socket.off(event) (which would also wipe any other screen's handler
+  // for the same event, e.g. the chat list's "chat:message" listener).
+  final List<void Function()> _socketUnsubscribers = [];
+
   // =========================
   // Init / Dispose
   // =========================
@@ -126,6 +132,11 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _typingTimer?.cancel();
     SocketService().leaveThread(threadId);
+
+    for (final unsubscribe in _socketUnsubscribers) {
+      unsubscribe();
+    }
+    _socketUnsubscribers.clear();
 
     msgController.dispose();
     scrollController.dispose();
@@ -238,17 +249,14 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
     final socket = SocketService().socket;
     if (socket == null) return;
 
-    socket.off("chat:message");
-    socket.off("exchange:new");
-    socket.off("exchange:status");
-    socket.off("refund:new");
-    socket.off("refund:status");
-    socket.off("chat:typing");
-    socket.off("chat:status");
-    socket.off("chat:status_bulk");
+    // Each handler is registered by reference (not a blanket socket.off,
+    // which would also remove any other screen's listener for the same
+    // event — e.g. the chat list's "chat:message" handler) and unbound
+    // individually in dispose() via the unsubscribe callback socket.on()
+    // returns.
 
     // ------- chat:message -------
-    socket.on("chat:message", (data) {
+    _socketUnsubscribers.add(socket.on("chat:message", (data) {
       if (data is! Map) return;
       if (data["threadId"]?.toString() != threadId) return;
 
@@ -316,10 +324,10 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       notifyListeners();
       scrollToBottom();
-    });
+    }));
 
     // ------- exchange:new -------
-    socket.on("exchange:new", (data) {
+    _socketUnsubscribers.add(socket.on("exchange:new", (data) {
       if (data is! Map) return;
       if (data["threadId"]?.toString() != threadId) return;
 
@@ -334,10 +342,10 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       notifyListeners();
       scrollToBottom();
-    });
+    }));
 
     // ------- refund:new -------
-    socket.on("refund:new", (data) {
+    _socketUnsubscribers.add(socket.on("refund:new", (data) {
       if (data is! Map) return;
       if (data["threadId"]?.toString() != threadId) return;
 
@@ -352,36 +360,36 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       notifyListeners();
       scrollToBottom();
-    });
+    }));
 
     // ------- exchange:status -------
-    socket.on("exchange:status", (data) {
+    _socketUnsubscribers.add(socket.on("exchange:status", (data) {
       if (data is! Map) return;
       final exchangeId = data["exchangeRequestId"]?.toString();
       final newStatus = data["status"]?.toString();
       if (exchangeId == null || newStatus == null) return;
       _updateExchangeStatusLocally(exchangeId, newStatus, data);
-    });
+    }));
 
     // ------- refund:status -------
-    socket.on("refund:status", (data) {
+    _socketUnsubscribers.add(socket.on("refund:status", (data) {
       if (data is! Map) return;
       final refundId = data["refundRequestId"]?.toString();
       final newStatus = data["status"]?.toString();
       if (refundId == null || newStatus == null) return;
       _updateRefundStatusLocally(refundId, newStatus);
-    });
+    }));
 
     // ------- typing -------
-    socket.on("chat:typing", (data) {
+    _socketUnsubscribers.add(socket.on("chat:typing", (data) {
       if (data is Map && data["threadId"] == threadId) {
         isTyping = (data["isTyping"] ?? false) == true;
         notifyListeners();
       }
-    });
+    }));
 
     // ------- status single -------
-    socket.on("chat:status", (data) {
+    _socketUnsubscribers.add(socket.on("chat:status", (data) {
       if (data is! Map) return;
       final messageId = data["messageId"]?.toString();
       if (messageId == null) return;
@@ -415,9 +423,9 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
         }
       }
       notifyListeners();
-    });
+    }));
 
-    socket.on("chat:status_bulk", (data) {
+    _socketUnsubscribers.add(socket.on("chat:status_bulk", (data) {
       if (data is! Map) return;
       final List<dynamic> messageIds = data["messageIds"] ?? [];
       final readAt = data["readAt"]?.toString();
@@ -449,7 +457,7 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
         }
       }
       notifyListeners();
-    });
+    }));
   }
 
   void _updateExchangeStatusLocally(

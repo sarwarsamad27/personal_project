@@ -44,14 +44,18 @@ class OfflineQueue {
 
   /// Add a pending operation.
   /// [type] is 'add_category' | 'add_product'.
+  /// [ownerId] is the seller account id (from the JWT) active when this was
+  /// queued — used later to make sure only that account ever sees or syncs it.
   static Future<void> enqueue({
     required String type,
     required Map<String, dynamic> data,
+    String? ownerId,
   }) async {
     final items = await _all();
     items.add({
       'id': '${type}_${DateTime.now().millisecondsSinceEpoch}',
       'type': type,
+      'ownerId': ownerId,
       'data': data,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     });
@@ -59,6 +63,20 @@ class OfflineQueue {
   }
 
   static Future<List<Map<String, dynamic>>> getAll() => _all();
+
+  /// Items belonging to [ownerId], plus any legacy items queued before
+  /// per-account scoping existed (no ownerId recorded). Use this instead of
+  /// [getAll] anywhere the queue is shown to, or synced for, a specific
+  /// logged-in account — so one seller never sees or syncs another seller's
+  /// still-pending offline writes on a shared device.
+  static Future<List<Map<String, dynamic>>> getForOwner(
+    String? ownerId,
+  ) async {
+    final items = await _all();
+    return items
+        .where((e) => e['ownerId'] == null || e['ownerId'] == ownerId)
+        .toList();
+  }
 
   static Future<void> remove(String id) async {
     final items = await _all();

@@ -4,6 +4,7 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appNav.dart';
+import 'package:new_brand/resources/restartWidget.dart';
 import 'package:new_brand/resources/sessionGuard.dart';
 import 'package:new_brand/view/companySide/auth/splashScreen.dart';
 import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
@@ -110,7 +111,7 @@ void main() async {
   // ✅ start internet listener ONCE
   // await InternetListener.start();
 
-  runApp(const AppWrapper());
+  runApp(RestartWidget(key: restartAppKey, child: const AppWrapper()));
 }
 
 class AppWrapper extends StatelessWidget {

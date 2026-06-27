@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appColor.dart';
@@ -42,13 +43,14 @@ class EditProductDialog extends StatelessWidget {
     required this.weightInGrams,
   });
 
+  bool get _hasColors =>
+      color.trim().isNotEmpty && color.trim().toLowerCase() != "n/a";
+  bool get _hasSizes =>
+      size.trim().isNotEmpty && size.trim().toLowerCase() != "n/a";
+
   @override
   Widget build(BuildContext context) {
     final oldPrice = price.replaceAll("PKR", "").replaceAll(":", "").trim();
-    final bool hasColors =
-        color.trim().isNotEmpty && color.trim().toLowerCase() != "n/a";
-    final bool hasSizes =
-        size.trim().isNotEmpty && size.trim().toLowerCase() != "n/a";
 
     return ChangeNotifierProvider(
       create: (_) => EditProductNotifier(
@@ -69,257 +71,277 @@ class EditProductDialog extends StatelessWidget {
           color: Colors.white70,
           width: double.infinity,
           padding: EdgeInsets.all(20.w),
-          child: Consumer<EditProductNotifier>(
-            builder: (context, s, _) {
-              final bool canUpdate = s.isChanged && s.isValid;
+          child: Consumer<UpdateProductProvider>(
+            builder: (context, updateProvider, _) {
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Consumer<EditProductNotifier>(
+                    builder: (context, s, _) {
+                      final bool canUpdate =
+                          s.isChanged && s.isValid && !updateProvider.isLoading;
 
-              return SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "Edit Product",
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        color: AppColor.textPrimaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 20.h),
-
-                    // ── Images ──────────────────────────────────────────────
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Product Images (Max 5)",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColor.textPrimaryColor,
-                          fontSize: 14.sp,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 10.h),
-                    SizedBox(
-                      height: 110.h,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          ...List.generate(s.existingImages.length, (i) {
-                            return _ExistingImageTile(
-                              imagePath: s.existingImages[i],
-                              onRemove: () => s.removeExisting(i),
-                            );
-                          }),
-                          ...List.generate(s.newImages.length, (i) {
-                            return _NewImageTile(
-                              file: s.newImages[i],
-                              onRemove: () => s.removeNew(i),
-                            );
-                          }),
-                          if (s.canAddMore)
-                            GestureDetector(
-                              onTap: () => s.pickImages(),
-                              child: Container(
-                                width: 110.w,
-                                height: 110.h,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(14.r),
-                                  border: Border.all(
-                                    color: AppColor.primaryColor,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: Icon(
-                                  Icons.add_a_photo_outlined,
-                                  color: AppColor.primaryColor,
-                                  size: 30.sp,
-                                ),
+                      return _buildForm(context, s, canUpdate, updateProvider);
+                    },
+                  ),
+                  if (updateProvider.isLoading)
+                    Positioned.fill(
+                      child: AbsorbPointer(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20.r),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                            child: Container(
+                              color: Colors.black.withOpacity(0.15),
+                              alignment: Alignment.center,
+                              child: const CircularProgressIndicator(
+                                color: AppColor.primaryColor,
                               ),
                             ),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(height: 20.h),
-
-                    // ── Video ────────────────────────────────────────────────
-                    _VideoSection(notifier: s, context: context),
-
-                    SizedBox(height: 20.h),
-
-                    // ── Text fields ──────────────────────────────────────────
-                    CustomTextField(
-                      controller: s.nameController,
-                      headerText: "Product Name",
-                      hintText: "Enter product name",
-                      prefixIcon: Icons.edit,
-                    ),
-                    SizedBox(height: 15.h),
-                    CustomTextField(
-                      controller: s.priceController,
-                      headerText: "Price",
-                      hintText: "Enter price (PKR)",
-                      prefixIcon: Icons.currency_rupee,
-                      keyboardType: TextInputType.number,
-                    ),
-                    SizedBox(height: 15.h),
-                    CustomTextField(
-                      controller: s.descriptionController,
-                      headerText: "Description",
-                      hintText: "Write description",
-                      height: 100.h,
-                    ),
-                    SizedBox(height: 15.h),
-
-                    if (hasColors) ...[
-                      CustomTextField(
-                        controller: s.colorController,
-                        headerText: "Color",
-                        hintText: "Enter product color",
-                        prefixIcon: Icons.palette_outlined,
-                      ),
-                      SizedBox(height: 15.h),
-                    ],
-                    if (hasSizes) ...[
-                      CustomTextField(
-                        controller: s.sizeController,
-                        headerText: "Size",
-                        hintText: "Enter available size",
-                        prefixIcon: Icons.straighten,
-                      ),
-                      SizedBox(height: 15.h),
-                    ],
-
-                    CustomTextField(
-                      controller: s.weightController,
-                      headerText: "Weight (grams) *",
-                      hintText: "Enter weight in grams (e.g. 500)",
-                      keyboardType: TextInputType.number,
-                      prefixIcon: Icons.scale_outlined,
-                    ),
-                    SizedBox(height: 15.h),
-                    CustomTextField(
-                      controller: s.quantityController,
-                      headerText: "Quantity *",
-                      hintText: "Enter available quantity (e.g. 50)",
-                      keyboardType: TextInputType.number,
-                      prefixIcon: Icons.inventory_2_outlined,
-                    ),
-                    SizedBox(height: 25.h),
-
-                    // ── Buttons ──────────────────────────────────────────────
-                    Row(
-                      children: [
-                        Expanded(
-                          child: CustomButton(
-                            text: "Cancel",
-                            onTap: () => Navigator.pop(context),
                           ),
                         ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Opacity(
-                            opacity: canUpdate ? 1.0 : 0.5,
-                            child: CustomButton(
-                              text: "Update",
-                              onTap: canUpdate
-                                  ? () async {
-                                      await s.removeMissingFiles();
-
-                                      final validNewImages = s.newImages
-                                          .where((f) => f.existsSync())
-                                          .toList();
-
-                                      final token =
-                                          await LocalStorage.getToken() ?? "";
-                                      final provider =
-                                          Provider.of<UpdateProductProvider>(
-                                            context,
-                                            listen: false,
-                                          );
-
-                                      await provider.updateProduct(
-                                        productId: productId,
-                                        token: token,
-                                        name: s.nameController.text.trim(),
-                                        description: s
-                                            .descriptionController
-                                            .text
-                                            .trim(),
-                                        afterDiscountPrice:
-                                            int.tryParse(
-                                              s.priceController.text.trim(),
-                                            ) ??
-                                            0,
-                                        beforeDiscountPrice:
-                                            int.tryParse(
-                                              s.priceController.text.trim(),
-                                            ) ??
-                                            0,
-                                        size: hasSizes
-                                            ? s.sizeController.text
-                                                  .trim()
-                                                  .split(',')
-                                            : <String>[],
-                                        color: hasColors
-                                            ? s.colorController.text
-                                                  .trim()
-                                                  .split(',')
-                                            : <String>[],
-                                        quantity:
-                                            int.tryParse(
-                                              s.quantityController.text.trim(),
-                                            ) ??
-                                            0,
-                                        weightInGrams:
-                                            int.tryParse(
-                                              s.weightController.text.trim(),
-                                            ) ??
-                                            500,
-                                        images: validNewImages,
-                                        keepImages: s.existingImages,
-                                        deleteImages: s.deletedExistingImages,
-                                        video: s.newVideoFile,
-                                        removeVideo: s.videoRemoved,
-                                      );
-
-                                      if (provider
-                                              .updateProductModel
-                                              ?.product !=
-                                          null) {
-                                        Navigator.pop(context);
-                                        AppToast.show(
-                                          "Product updated successfully",
-                                        );
-                                        final getProvider =
-                                            Provider.of<
-                                              GetSingleProductProvider
-                                            >(context, listen: false);
-                                        final token2 =
-                                            await LocalStorage.getToken() ?? "";
-                                        await getProvider.fetchSingleProducts(
-                                          token: token2,
-                                          categoryId: categoryId,
-                                          productId: productId,
-                                        );
-                                      } else {
-                                        AppToast.error("Update failed");
-                                      }
-                                    }
-                                  : null,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ],
-                ),
+                ],
               );
             },
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildForm(
+    BuildContext context,
+    EditProductNotifier s,
+    bool canUpdate,
+    UpdateProductProvider updateProvider,
+  ) {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            "Edit Product",
+            style: TextStyle(
+              fontSize: 20.sp,
+              color: AppColor.textPrimaryColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 20.h),
+
+          // ── Images ──────────────────────────────────────────────
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              "Product Images (Max 5)",
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColor.textPrimaryColor,
+                fontSize: 14.sp,
+              ),
+            ),
+          ),
+          SizedBox(height: 10.h),
+          SizedBox(
+            height: 110.h,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                ...List.generate(s.existingImages.length, (i) {
+                  return _ExistingImageTile(
+                    imagePath: s.existingImages[i],
+                    onRemove: () => s.removeExisting(i),
+                  );
+                }),
+                ...List.generate(s.newImages.length, (i) {
+                  return _NewImageTile(
+                    file: s.newImages[i],
+                    onRemove: () => s.removeNew(i),
+                  );
+                }),
+                if (s.canAddMore)
+                  GestureDetector(
+                    onTap: () => s.pickImages(),
+                    child: Container(
+                      width: 110.w,
+                      height: 110.h,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14.r),
+                        border: Border.all(
+                          color: AppColor.primaryColor,
+                          width: 2,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.add_a_photo_outlined,
+                        color: AppColor.primaryColor,
+                        size: 30.sp,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 20.h),
+
+          // ── Video ────────────────────────────────────────────────
+          _VideoSection(notifier: s, context: context),
+
+          SizedBox(height: 20.h),
+
+          // ── Text fields ──────────────────────────────────────────
+          CustomTextField(
+            controller: s.nameController,
+            headerText: "Product Name",
+            hintText: "Enter product name",
+            prefixIcon: Icons.edit,
+          ),
+          SizedBox(height: 15.h),
+          CustomTextField(
+            controller: s.priceController,
+            headerText: "Price",
+            hintText: "Enter price (PKR)",
+            prefixIcon: Icons.currency_rupee,
+            keyboardType: TextInputType.number,
+          ),
+          SizedBox(height: 15.h),
+          CustomTextField(
+            controller: s.descriptionController,
+            headerText: "Description",
+            hintText: "Write description",
+            height: 100.h,
+          ),
+          SizedBox(height: 15.h),
+
+          if (_hasColors) ...[
+            CustomTextField(
+              controller: s.colorController,
+              headerText: "Color",
+              hintText: "Enter product color",
+              prefixIcon: Icons.palette_outlined,
+            ),
+            SizedBox(height: 15.h),
+          ],
+          if (_hasSizes) ...[
+            CustomTextField(
+              controller: s.sizeController,
+              headerText: "Size",
+              hintText: "Enter available size",
+              prefixIcon: Icons.straighten,
+            ),
+            SizedBox(height: 15.h),
+          ],
+
+          CustomTextField(
+            controller: s.weightController,
+            headerText: "Weight (grams) *",
+            hintText: "Enter weight in grams (e.g. 500)",
+            keyboardType: TextInputType.number,
+            prefixIcon: Icons.scale_outlined,
+          ),
+          SizedBox(height: 15.h),
+          CustomTextField(
+            controller: s.quantityController,
+            headerText: "Quantity *",
+            hintText: "Enter available quantity (e.g. 50)",
+            keyboardType: TextInputType.number,
+            prefixIcon: Icons.inventory_2_outlined,
+          ),
+          SizedBox(height: 25.h),
+
+          // ── Buttons ──────────────────────────────────────────────
+          Row(
+            children: [
+              Expanded(
+                child: CustomButton(
+                  text: "Cancel",
+                  onTap: () => Navigator.pop(context),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Opacity(
+                  opacity: canUpdate ? 1.0 : 0.5,
+                  child: CustomButton(
+                    text: "Update",
+                    onTap: canUpdate
+                        ? () async {
+                            await s.removeMissingFiles();
+
+                            final validNewImages = s.newImages
+                                .where((f) => f.existsSync())
+                                .toList();
+
+                            final token = await LocalStorage.getToken() ?? "";
+                            final provider = Provider.of<UpdateProductProvider>(
+                              context,
+                              listen: false,
+                            );
+
+                            await provider.updateProduct(
+                              productId: productId,
+                              token: token,
+                              name: s.nameController.text.trim(),
+                              description: s.descriptionController.text.trim(),
+                              afterDiscountPrice:
+                                  int.tryParse(s.priceController.text.trim()) ??
+                                  0,
+                              beforeDiscountPrice:
+                                  int.tryParse(s.priceController.text.trim()) ??
+                                  0,
+                              size: _hasSizes
+                                  ? s.sizeController.text.trim().split(',')
+                                  : <String>[],
+                              color: _hasColors
+                                  ? s.colorController.text.trim().split(',')
+                                  : <String>[],
+                              quantity:
+                                  int.tryParse(
+                                    s.quantityController.text.trim(),
+                                  ) ??
+                                  0,
+                              weightInGrams:
+                                  int.tryParse(
+                                    s.weightController.text.trim(),
+                                  ) ??
+                                  500,
+                              images: validNewImages,
+                              keepImages: s.existingImages,
+                              deleteImages: s.deletedExistingImages,
+                              video: s.newVideoFile,
+                              removeVideo: s.videoRemoved,
+                            );
+
+                            if (provider.updateProductModel?.product != null) {
+                              Navigator.pop(context);
+                              AppToast.show("Product updated successfully");
+                              final getProvider =
+                                  Provider.of<GetSingleProductProvider>(
+                                    context,
+                                    listen: false,
+                                  );
+                              final token2 =
+                                  await LocalStorage.getToken() ?? "";
+                              await getProvider.fetchSingleProducts(
+                                token: token2,
+                                categoryId: categoryId,
+                                productId: productId,
+                              );
+                            } else {
+                              AppToast.error("Update failed");
+                            }
+                          }
+                        : null,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

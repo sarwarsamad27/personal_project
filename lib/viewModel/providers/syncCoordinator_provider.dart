@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/offline_queue.dart';
 import 'package:new_brand/viewModel/providers/categoryProvider/createCategory_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/addProduct_provider.dart';
@@ -36,7 +37,11 @@ class SyncCoordinator with ChangeNotifier {
   Future<void> syncAll() async {
     if (isSyncing) return;
 
-    final items = await OfflineQueue.getAll();
+    // Only sync items queued by whichever account is currently logged in —
+    // syncing uses this session's token, so another account's still-pending
+    // items must wait until that account is the one signed in on this device.
+    final ownerId = await LocalStorage.getCurrentAccountId();
+    final items = await OfflineQueue.getForOwner(ownerId);
     if (items.isEmpty) return;
 
     isSyncing = true;
@@ -62,7 +67,7 @@ class SyncCoordinator with ChangeNotifier {
     }
 
     // 2) Products — re-read the queue since remap rewrote categoryId in place.
-    final productItems = (await OfflineQueue.getAll())
+    final productItems = (await OfflineQueue.getForOwner(ownerId))
         .where((e) => e['type'] == 'add_product')
         .toList();
     for (final item in productItems) {

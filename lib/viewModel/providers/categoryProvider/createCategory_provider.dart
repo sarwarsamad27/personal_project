@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:new_brand/models/categoryModel/createCategory_model.dart';
+import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/offline_queue.dart';
 import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
 import 'package:new_brand/viewModel/repository/categoryRepository/createCategory_repository.dart';
@@ -54,10 +55,12 @@ class CreateCategoryProvider with ChangeNotifier {
     // Offline: copy image to permanent storage and queue
     if (!ConnectivityProvider.hasNetworkInterface) {
       try {
+        final ownerId = await LocalStorage.getCurrentAccountId();
         final permanentPath =
             await OfflineQueue.copyFilePermanent(_image!);
         await OfflineQueue.enqueue(
           type: 'add_category',
+          ownerId: ownerId,
           data: {
             'name': nameController.text.trim(),
             'imagePath': permanentPath,

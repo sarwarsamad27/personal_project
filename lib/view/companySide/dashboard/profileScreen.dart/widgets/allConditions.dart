@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/local_storage.dart';
-import 'package:new_brand/view/companySide/auth/loginScreen.dart';
+import 'package:new_brand/resources/restartWidget.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/ContactUs.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/FAQScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/TermAndCondition.dart';
@@ -116,11 +116,11 @@ class AllCondition extends StatelessWidget {
     );
 
     if (shouldLogout == true) {
-      await _logout(context);
+      await _logout();
     }
   }
 
-  Future<void> _logout(BuildContext context) async {
+  Future<void> _logout() async {
     try {
       // Optional: stop push token updates (not required but safe)
       await FirebaseMessaging.instance.deleteToken();
@@ -128,13 +128,10 @@ class AllCondition extends StatelessWidget {
 
     await LocalStorage.clearToken();
 
-    if (!context.mounted) return;
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
+    // Full provider-tree restart (not just a nav push) — otherwise the
+    // previous seller's in-memory data (categories, orders, dashboard,
+    // chat...) stays cached for whoever logs in next on this device.
+    restartApp();
   }
 
   AllCondition({super.key});

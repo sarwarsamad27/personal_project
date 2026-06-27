@@ -11,11 +11,10 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 
 import 'package:new_brand/exception/exceptions.dart';
 import 'package:new_brand/network/base_api_services.dart';
-import 'package:new_brand/resources/appNav.dart';
 import 'package:new_brand/resources/cache_service.dart';
 import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/resources/restartWidget.dart';
 import 'package:new_brand/resources/toast.dart';
-import 'package:new_brand/view/companySide/auth/loginScreen.dart';
 import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
 
 class NetworkApiServices extends BaseApiServices {
@@ -37,21 +36,10 @@ class NetworkApiServices extends BaseApiServices {
         await LocalStorage.clearToken();
       } catch (_) {}
 
-      void doNav() {
-        final nav = appNavKey.currentState;
-        if (nav == null) return;
-
-        // ✅ Always use root navigator
-        nav.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
-        );
-      }
-
-      // ✅ Navigation reliable even during build phase
-      WidgetsBinding.instance.addPostFrameCallback((_) => doNav());
-      // also try immediate (works if already ready)
-      doNav();
+      // Full provider-tree restart (not just a nav push) — otherwise the
+      // previous seller's in-memory data (categories, orders, dashboard,
+      // chat...) stays cached for whoever logs in next on this device.
+      WidgetsBinding.instance.addPostFrameCallback((_) => restartApp());
     } finally {
       // ✅ ALWAYS reset (even if nav null)
       _isRedirecting = false;

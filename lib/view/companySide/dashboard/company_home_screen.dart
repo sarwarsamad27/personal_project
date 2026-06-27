@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/chatThread_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
+import 'package:new_brand/viewModel/providers/syncCoordinator_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'package:new_brand/resources/appColor.dart';
@@ -42,6 +43,13 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       Provider.of<GetMyOrdersProvider>(context, listen: false).fetchOrders();
       Provider.of<GetDispatchedOrderProvider>(context, listen: false)
           .fetchDispatchedOrders();
+      // This screen only mounts once a session is confirmed active (app
+      // start with a valid token, or right after login) — the one place
+      // guaranteed to run whether or not the offline→online connectivity
+      // transition fired while the app was closed/backgrounded. Without
+      // this, items queued offline and never resynced while the app was
+      // shut would sit as "Syncing…" forever even after reopening online.
+      Provider.of<SyncCoordinator>(context, listen: false).syncAll();
     });
   }
 

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:new_brand/models/productModel/addProduct_model.dart';
+import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/offline_queue.dart';
 import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
 import 'package:new_brand/viewModel/repository/productRepository/addProduct_repository.dart';
@@ -36,6 +37,7 @@ class AddProductProvider with ChangeNotifier {
     // Offline: copy all files to permanent storage and queue
     if (!ConnectivityProvider.hasNetworkInterface) {
       try {
+        final ownerId = await LocalStorage.getCurrentAccountId();
         final imagePaths = <String>[];
         for (final img in (images ?? [])) {
           imagePaths.add(await OfflineQueue.copyFilePermanent(img));
@@ -47,6 +49,7 @@ class AddProductProvider with ChangeNotifier {
 
         await OfflineQueue.enqueue(
           type: 'add_product',
+          ownerId: ownerId,
           data: {
             'categoryId': categoryId,
             'name': name,
