@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/restartWidget.dart';
 
-final GlobalKey<NavigatorState> appNavKey = GlobalKey<NavigatorState>();
+// Reassigned on every restartApp() (logout/impersonation) — see restartWidget.dart.
+// Must NOT be final: keeping the same GlobalKey across a provider-tree restart
+// makes Flutter reparent the old Navigator (and its whole route stack) onto
+// the new MaterialApp instead of recreating it, so `home: SplashScreen()`
+// never actually re-runs and the previous screen stays visible post-logout.
+GlobalKey<NavigatorState> appNavKey = GlobalKey<NavigatorState>();
 
 class AppNav {
   static bool _busy = false;
@@ -16,7 +21,7 @@ class AppNav {
     // Full provider-tree restart (not just a nav push) — otherwise the
     // previous seller's in-memory data (categories, orders, dashboard,
     // chat...) stays cached for whoever logs in next on this device.
-    restartApp();
+    restartApp(toLogin: true);
 
     _busy = false;
   }

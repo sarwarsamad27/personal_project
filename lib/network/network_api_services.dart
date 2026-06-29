@@ -39,7 +39,9 @@ class NetworkApiServices extends BaseApiServices {
       // Full provider-tree restart (not just a nav push) — otherwise the
       // previous seller's in-memory data (categories, orders, dashboard,
       // chat...) stays cached for whoever logs in next on this device.
-      WidgetsBinding.instance.addPostFrameCallback((_) => restartApp());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => restartApp(toLogin: true),
+      );
     } finally {
       // ✅ ALWAYS reset (even if nav null)
       _isRedirecting = false;
@@ -370,6 +372,33 @@ class NetworkApiServices extends BaseApiServices {
         'code_status': false,
         'message': 'Session expired. Please login again.',
       };
+    }
+
+    // ✅ Rate limited => tell the user how long to wait, using the
+    // standard Retry-After header (seconds) rate limiters send back.
+    if (response.statusCode == 429) {
+      String message = response.body.isNotEmpty
+          ? response.body
+          : "Too many requests, please try again later.";
+
+      final retryAfter = response.headers.entries
+          .firstWhere(
+            (e) => e.key.toLowerCase() == 'retry-after',
+            orElse: () => const MapEntry('', ''),
+          )
+          .value;
+      final retrySeconds = int.tryParse(retryAfter);
+
+      if (retrySeconds != null && retrySeconds > 0) {
+        final minutes = (retrySeconds / 60).ceil();
+        final wait = retrySeconds >= 60
+            ? "$minutes minute${minutes > 1 ? 's' : ''}"
+            : "$retrySeconds second${retrySeconds > 1 ? 's' : ''}";
+        message = "$message Try again in $wait.";
+      }
+
+      AppToast.error(message);
+      return {'code_status': false, 'message': message};
     }
 
     if (response.statusCode == 200 || response.statusCode == 201) {

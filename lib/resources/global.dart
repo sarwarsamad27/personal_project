@@ -1,12 +1,12 @@
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps
 
 class Global {
-//   static var BaseUrl = "https://seller-and-buyer-backend.onrender.com/api/auth";
-//   static var imageUrl = "https://seller-and-buyer-backend.onrender.com";
+  static var BaseUrl = "https://shookoo.pk/api/auth";
+  static var imageUrl = "https://shookoo.pk";
   // static var imageUrl = "http://192.168.30.124:5000";
   // static var BaseUrl = "http://192.168.30.124:5000/api/auth";
-  static var BaseUrl = "http://10.0.2.2:5000/api/auth";
-  static var imageUrl = "http://10.0.2.2:5000";
+  // static var BaseUrl = "http://10.0.2.2:5000/api/auth";
+  // static var imageUrl = "http://10.0.2.2:5000";
   static var SignUp = "${BaseUrl}/signup";
   static var Login = "${BaseUrl}/login";
   static var GoogleLogin = "${BaseUrl}/google/login";
@@ -37,7 +37,8 @@ class Global {
   static var GetCompanyAmount = "${BaseUrl}/get/company/wallet";
   static var PaymentRequest = "${BaseUrl}/withdraw/send/code";
   static var PaymentVerifycode = "${BaseUrl}/withdraw/verify";
-  static var SellerSafepayCheckout = "${BaseUrl}/seller/wallet/safepay/checkout";
+  static var SellerSafepayCheckout =
+      "${BaseUrl}/seller/wallet/safepay/checkout";
   static var SellerSafepayStatus = "${BaseUrl}/seller/wallet/safepay/status";
   static var TransactionHistory = "${BaseUrl}/transactions";
   static var GetDashboardData = "${BaseUrl}/get/dashboard/data";
@@ -141,7 +142,8 @@ class Global {
   static String getImageUrl(String? url) {
     if (url == null) return "";
     // Local file path (offline-queued image, not yet uploaded) — pass through unchanged
-    if (url.startsWith('/') || RegExp(r'^[a-zA-Z]:[\\/]').hasMatch(url)) return url;
+    if (url.startsWith('/') || RegExp(r'^[a-zA-Z]:[\\/]').hasMatch(url))
+      return url;
     if (url.startsWith('upload')) return "$imageUrl/$url";
     if (url.startsWith('http')) return url;
     return "$imageUrl$url";

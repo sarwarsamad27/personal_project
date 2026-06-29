@@ -101,41 +101,45 @@ class UpdatePasswordScreen extends StatelessWidget {
                                     textAlign: TextAlign.center,
                                   ),
                                   SizedBox(height: 50.h),
-                                  CustomButton(
-                                    text: "Update Password",
-                                    onTap: () async {
-                                      if (newPasswordController.text !=
-                                          confirmPasswordController.text) {
-                                        AppToast.error("Passwords do not match");
-                                        return;
-                                      }
-        
-                                      final provider =
-                                          Provider.of<UpdatePasswordProvider>(
-                                        context,
-                                        listen: false,
+                                  Consumer<UpdatePasswordProvider>(
+                                    builder: (context, provider, _) {
+                                      return CustomButton(
+                                        text: "Update Password",
+                                        isLoading: provider.loading,
+                                        onTap: () async {
+                                          if (newPasswordController.text !=
+                                              confirmPasswordController.text) {
+                                            AppToast.error(
+                                                "Passwords do not match");
+                                            return;
+                                          }
+
+                                          await provider.updatePassword(
+                                            email: email,
+                                            newPassword: newPasswordController
+                                                .text
+                                                .trim(),
+                                          );
+
+                                          if (provider.updateData != null &&
+                                              provider.updateData!.message !=
+                                                  null) {
+                                            AppToast.success(
+                                                provider.updateData!.message!);
+
+                                            Navigator.pushReplacement(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      LoginScreen()),
+                                            );
+                                          } else {
+                                            AppToast.error(provider
+                                                    .errorMessage ??
+                                                "Update failed");
+                                          }
+                                        },
                                       );
-        
-                                      await provider.updatePassword(
-                                        email: email,
-                                        newPassword:
-                                            newPasswordController.text.trim(),
-                                      );
-        
-                                      if (provider.updateData != null &&
-                                          provider.updateData!.message != null) {
-                                        AppToast.success(
-                                            provider.updateData!.message!);
-        
-                                        Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (_) => LoginScreen()),
-                                        );
-                                      } else {
-                                        AppToast.error(
-                                            provider.errorMessage ?? "Update failed");
-                                      }
                                     },
                                   ),
                                 ],

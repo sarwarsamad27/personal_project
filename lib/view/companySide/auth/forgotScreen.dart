@@ -77,41 +77,42 @@ class ForgotScreen extends StatelessWidget {
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 20.h),
-                      CustomButton(
-                        text: "Next",
-                        onTap: () async {
-                          final provider = Provider.of<ForgotProvider>(
-                            context,
-                            listen: false,
-                          );
-                          await provider.forgotPassword(
-                            email: emailController.text.trim(),
-                          );
+                      Consumer<ForgotProvider>(
+                        builder: (context, provider, _) {
+                          return CustomButton(
+                            text: "Next",
+                            isLoading: provider.loading,
+                            onTap: () async {
+                              await provider.forgotPassword(
+                                email: emailController.text.trim(),
+                              );
 
-                          // Check if API responded with success message
-                          if (provider.forgotData != null &&
-                              provider.forgotData!.message ==
-                                  "Verification code sent to your email") {
-                            // Show toast
-                            AppToast.success(provider.forgotData!.message!);
+                              // Check if API responded with success message
+                              if (provider.forgotData != null &&
+                                  provider.forgotData!.message ==
+                                      "Verification code sent to your email") {
+                                // Show toast
+                                AppToast.success(provider.forgotData!.message!);
 
-                            // Navigate to next screen
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => VerifyCodeScreen(
-                                  email: emailController.text.trim(),
-                                ),
-                              ),
-                            );
-                          } else {
-                            // Show error message from API
-                            AppToast.error(
-                              provider.errorMessage ??
-                                  provider.forgotData?.message ??
-                                  "Error occurred",
-                            );
-                          }
+                                // Navigate to next screen
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => VerifyCodeScreen(
+                                      email: emailController.text.trim(),
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                // Show error message from API
+                                AppToast.error(
+                                  provider.errorMessage ??
+                                      provider.forgotData?.message ??
+                                      "Error occurred",
+                                );
+                              }
+                            },
+                          );
                         },
                       ),
                     ],

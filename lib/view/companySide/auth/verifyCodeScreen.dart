@@ -119,36 +119,36 @@ class VerifyCodeScreen extends StatelessWidget {
                         ],
                       ),
                       SizedBox(height: 50.h),
-                      CustomButton(
-                        text: "Verify",
-                        onTap: () async {
-                          final provider = Provider.of<VerifyCodeProvider>(
-                            context,
-                            listen: false,
+                      Consumer<VerifyCodeProvider>(
+                        builder: (context, provider, _) {
+                          return CustomButton(
+                            text: "Verify",
+                            isLoading: provider.loading,
+                            onTap: () async {
+                              await provider.verifyCode(
+                                email: email,
+                                verificationCode: otpController.text.trim(),
+                              );
+
+                              if (provider.verifyData != null &&
+                                  provider.verifyData!.message ==
+                                      "Verification code is valid") {
+                                AppToast.success(provider.verifyData!.message!);
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        UpdatePasswordScreen(email: email),
+                                  ),
+                                );
+                              } else {
+                                AppToast.error(
+                                  provider.errorMessage ?? "Verification failed",
+                                );
+                              }
+                            },
                           );
-
-                          await provider.verifyCode(
-                            email: email,
-                            verificationCode: otpController.text.trim(),
-                          );
-
-                          if (provider.verifyData != null &&
-                              provider.verifyData!.message ==
-                                  "Verification code is valid") {
-                            AppToast.success(provider.verifyData!.message!);
-
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    UpdatePasswordScreen(email: email),
-                              ),
-                            );
-                          } else {
-                            AppToast.error(
-                              provider.errorMessage ?? "Verification failed",
-                            );
-                          }
                         },
                       ),
                     ],

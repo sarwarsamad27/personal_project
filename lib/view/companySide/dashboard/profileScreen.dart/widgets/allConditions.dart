@@ -131,7 +131,7 @@ class AllCondition extends StatelessWidget {
     // Full provider-tree restart (not just a nav push) — otherwise the
     // previous seller's in-memory data (categories, orders, dashboard,
     // chat...) stays cached for whoever logs in next on this device.
-    restartApp();
+    restartApp(toLogin: true);
   }
 
   AllCondition({super.key});

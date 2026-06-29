@@ -62,7 +62,9 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Network error. Check your connection.')),
+          const SnackBar(
+            content: Text('Network error. Check your connection.'),
+          ),
         );
       }
     } finally {
@@ -155,82 +157,172 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Quick Contact Cards ────────────────────────────
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _QuickCard(
-                          icon: LucideIcons.phone,
-                          label: 'Call Us',
-                          value: '+92 322-0270729',
-                          color: Colors.green,
-                          onTap: () => _launch('tel:+923220270729'),
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: _QuickCard(
-                          icon: LucideIcons.mail,
-                          label: 'Email Us',
-                          value: 'support@\nshookoo.pk',
-                          color: Colors.blue,
-                          onTap: () => _launch('mailto:support@shookoo.pk'),
-                        ),
-                      ),
-                    ],
+                  // ── Section Label ───────────────────────────────────
+                  Text(
+                    'Get in Touch',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87,
+                    ),
                   ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    'Choose your preferred way to reach us',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                  SizedBox(height: 14.h),
 
-                  SizedBox(height: 12.h),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _QuickCard(
-                          icon: LucideIcons.messageCircle,
-                          label: 'WhatsApp',
-                          value: '+92 322-0270729',
-                          color: const Color(0xFF25D366),
-                          onTap: () => _launch(
-                            'https://wa.me/923220270729?text=Hi Shookoo Support,',
+                  // ── WhatsApp Hero Card ──────────────────────────────
+                  GestureDetector(
+                    onTap: () => _launch('https://wa.me/923220270729'),
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(18.r),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF25D366), Color(0xFF128C7E)],
+                        ),
+                        borderRadius: BorderRadius.circular(18.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF25D366).withOpacity(0.3),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
                           ),
-                        ),
+                        ],
                       ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: _QuickCard(
-                          icon: LucideIcons.globe,
-                          label: 'Website',
-                          value: 'www.shookoo.pk',
-                          color: AppColor.appimagecolor,
-                          onTap: () => _launch('https://shookoo.pk'),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(12.r),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(14.r),
+                            ),
+                            child: Icon(
+                              LucideIcons.messageCircle,
+                              color: Colors.white,
+                              size: 26.sp,
+                            ),
+                          ),
+                          SizedBox(width: 14.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Chat on WhatsApp',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    SizedBox(width: 6.w),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 6.w,
+                                        vertical: 2.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.25),
+                                        borderRadius: BorderRadius.circular(
+                                          20.r,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Online',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9.sp,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 4.h),
+                                Text(
+                                  '+92 322-0270729',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12.5.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            LucideIcons.arrowRight,
+                            color: Colors.white,
+                            size: 18.sp,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 16.h),
+
+                  // ── Email Addresses ─────────────────────────────────
+                  Row(
+                    children: [
+                      Icon(
+                        LucideIcons.mail,
+                        color: AppColor.appimagecolor,
+                        size: 16.sp,
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'Email Us',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
                         ),
                       ),
                     ],
                   ),
-
-                  SizedBox(height: 24.h),
-
-                  // ── Office Info ────────────────────────────────────
-                  _InfoCard(
-                    icon: LucideIcons.mapPin,
-                    title: 'Our Office',
-                    children: [
-                      _InfoRow(
-                        icon: LucideIcons.building2,
-                        text:
-                            'House No. 677/B, Ghazia Bad,\nStreet #02, Sector 11½,\nOrangi Town, Karachi',
-                      ),
-                      SizedBox(height: 8.h),
-                      _InfoRow(
-                        icon: LucideIcons.clock,
-                        text: 'Mon – Sat: 9:00 AM – 6:00 PM',
-                      ),
-                      SizedBox(height: 8.h),
-                      _InfoRow(
-                        icon: LucideIcons.calendarX,
-                        text: 'Sunday: Closed',
-                      ),
-                    ],
+                  SizedBox(height: 10.h),
+                  _EmailCard(
+                    icon: LucideIcons.headphones,
+                    color: Colors.blue,
+                    label: 'Customer Support',
+                    email: 'support@shookoo.pk',
+                    onTap: () => _launch('mailto:support@shookoo.pk'),
+                  ),
+                  SizedBox(height: 10.h),
+                  _EmailCard(
+                    icon: LucideIcons.info,
+                    color: Colors.orange,
+                    label: 'General Info',
+                    email: 'info@shookoo.pk',
+                    onTap: () => _launch('mailto:info@shookoo.pk'),
+                  ),
+                  SizedBox(height: 10.h),
+                  _EmailCard(
+                    icon: LucideIcons.briefcase,
+                    color: Colors.purple,
+                    label: 'Business Contact',
+                    email: 'contact@shookoo.pk',
+                    onTap: () => _launch('mailto:contact@shookoo.pk'),
+                  ),
+                  SizedBox(height: 10.h),
+                  _EmailCard(
+                    icon: LucideIcons.alertCircle,
+                    color: Colors.red,
+                    label: 'Complaints',
+                    email: 'complaint@shookoo.pk',
+                    onTap: () => _launch('mailto:complaint@shookoo.pk'),
                   ),
 
                   SizedBox(height: 16.h),
@@ -430,7 +522,10 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
-                              icon: const Icon(Icons.chat_bubble_outline, size: 16),
+                              icon: const Icon(
+                                Icons.chat_bubble_outline,
+                                size: 16,
+                              ),
                               label: const Text('View Admin Replies'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColor.appimagecolor,
@@ -442,7 +537,8 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                               onPressed: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const SellerAdminMessagesScreen(),
+                                  builder: (_) =>
+                                      const SellerAdminMessagesScreen(),
                                 ),
                               ),
                             ),
@@ -479,68 +575,97 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
   }
 }
 
-// ── Quick Card ────────────────────────────────────────────────────────────────
-class _QuickCard extends StatelessWidget {
+// ── Email Card ────────────────────────────────────────────────────────────────
+class _EmailCard extends StatelessWidget {
   final IconData icon;
-  final String label, value;
   final Color color;
+  final String label;
+  final String email;
   final VoidCallback onTap;
 
-  const _QuickCard({
+  const _EmailCard({
     required this.icon,
-    required this.label,
-    required this.value,
     required this.color,
+    required this.label,
+    required this.email,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(14.r),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: EdgeInsets.all(8.r),
-              decoration: BoxDecoration(
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14.r),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14.r),
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(14.r),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(color: color.withOpacity(0.15)),
+            boxShadow: [
+              BoxShadow(
                 color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8.r),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-              child: Icon(icon, color: color, size: 18.sp),
-            ),
-            SizedBox(height: 10.h),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11.sp,
-                color: Colors.grey.shade500,
-                fontWeight: FontWeight.w500,
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(10.r),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [color, color.withOpacity(0.7)],
+                  ),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Icon(icon, color: Colors.white, size: 18.sp),
               ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.grey.shade500,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      email,
+                      style: TextStyle(
+                        fontSize: 13.5.sp,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              Container(
+                padding: EdgeInsets.all(6.r),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  LucideIcons.arrowUpRight,
+                  size: 14.sp,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -596,35 +721,6 @@ class _InfoCard extends StatelessWidget {
           ...children,
         ],
       ),
-    );
-  }
-}
-
-// ── Info Row ──────────────────────────────────────────────────────────────────
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _InfoRow({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 14.sp, color: Colors.grey.shade400),
-        SizedBox(width: 8.w),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: Colors.grey.shade600,
-              height: 1.5,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

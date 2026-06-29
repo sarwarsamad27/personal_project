@@ -32,7 +32,7 @@ class ConnectivityProvider with ChangeNotifier {
   void removeReconnectCallback(Future<void> Function() cb) =>
       _reconnectCallbacks.remove(cb);
 
-  late StreamSubscription<List<ConnectivityResult>> _subscription;
+  StreamSubscription<List<ConnectivityResult>>? _subscription;
 
   ConnectivityProvider() {
     _init();
@@ -88,7 +88,7 @@ class ConnectivityProvider with ChangeNotifier {
 
   @override
   void dispose() {
-    _subscription.cancel();
+    _subscription?.cancel();
     super.dispose();
   }
 }

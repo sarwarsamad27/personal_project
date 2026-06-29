@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appNav.dart';
 import 'package:new_brand/resources/restartWidget.dart';
 import 'package:new_brand/resources/sessionGuard.dart';
+import 'package:new_brand/view/companySide/auth/loginScreen.dart';
 import 'package:new_brand/view/companySide/auth/splashScreen.dart';
 import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
 import 'package:new_brand/viewModel/providers/syncCoordinator_provider.dart';
@@ -57,15 +59,35 @@ Future<void> _initLocalNotifications() async {
   await androidPlugin?.createNotificationChannel(_orderChannel);
 }
 
+// Downloads the notification's image (e.g. the ordered product's photo) so
+// it can be shown as a large icon + expandable big picture — Android's
+// notification API needs the actual bytes, not just a remote URL.
+Future<ByteArrayAndroidBitmap?> _downloadNotificationImage(String url) async {
+  try {
+    final response = await http.get(Uri.parse(url)).timeout(
+      const Duration(seconds: 6),
+    );
+    if (response.statusCode == 200) {
+      return ByteArrayAndroidBitmap(response.bodyBytes);
+    }
+  } catch (_) {}
+  return null;
+}
+
 Future<void> _setupFirebaseForegroundHandler() async {
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
     final notification = message.notification;
     if (notification == null) return;
 
     final isOrder = message.data['type'] == 'NEW_ORDER';
     final ch = isOrder ? _orderChannel : _highChannel;
 
-    flutterLocalNotificationsPlugin.show(
+    final imageUrl = message.data['image'];
+    final imageBitmap = (imageUrl != null && imageUrl.isNotEmpty)
+        ? await _downloadNotificationImage(imageUrl)
+        : null;
+
+    await flutterLocalNotificationsPlugin.show(
       notification.hashCode,
       notification.title,
       notification.body,
@@ -78,6 +100,15 @@ Future<void> _setupFirebaseForegroundHandler() async {
           priority: Priority.high,
           icon: 'ic_notification',
           color: const Color(0xFFDB9F3A),
+          largeIcon: imageBitmap,
+          styleInformation: imageBitmap != null
+              ? BigPictureStyleInformation(
+                  imageBitmap,
+                  largeIcon: imageBitmap,
+                  contentTitle: notification.title,
+                  summaryText: notification.body,
+                )
+              : null,
         ),
       ),
     );
@@ -193,7 +224,11 @@ class MyApp extends StatelessWidget {
               debugShowCheckedModeBanner: false,
               title: 'SHOOKOO',
               theme: AppTheme.lightTheme,
-              home: SessionGuard(child: SplashScreen()),
+              home: SessionGuard(
+                child: consumeGoStraightToLogin()
+                    ? const LoginScreen()
+                    : SplashScreen(),
+              ),
               builder: (context, child) => Column(
                 children: [
                   if (!connectivity.isConnected)
