@@ -41,13 +41,13 @@ class CompanyWalletProvider with ChangeNotifier {
     }
   }
 
-double get currentBalance  => walletData?.currentBalance  ?? 0.0;
-double get totalDelivered  => walletData?.totalDelivered  ?? 0.0;
-double get totalWithdrawn  => walletData?.totalWithdrawn  ?? 0.0;
-double get totalDeposited  => walletData?.totalDeposited  ?? 0.0;
-double get pendingBalance  => walletData?.pendingBalance  ?? 0.0;
-double get pendingDueAmount => walletData?.pendingDueAmount ?? 0.0;
-bool get isOrderBlocked    => walletData?.isOrderBlocked   ?? false;
+  double get currentBalance => walletData?.currentBalance ?? 0.0;
+  double get totalDelivered => walletData?.totalDelivered ?? 0.0;
+  double get totalWithdrawn => walletData?.totalWithdrawn ?? 0.0;
+  double get totalDeposited => walletData?.totalDeposited ?? 0.0;
+  double get pendingBalance => walletData?.pendingBalance ?? 0.0;
+  double get pendingDueAmount => walletData?.pendingDueAmount ?? 0.0;
+  bool get isOrderBlocked => walletData?.isOrderBlocked ?? false;
 
   // ================= SEND OTP =================
   Future<bool> sendWithdrawCode({
@@ -69,7 +69,7 @@ bool get isOrderBlocked    => walletData?.isOrderBlocked   ?? false;
         token: token ?? '',
       );
 
-      return res.message == "Verification code sent";
+      return res.message == "Verification code sent via SMS";
     } catch (e) {
       debugPrint("Send OTP Error: $e");
       return false;
@@ -82,6 +82,7 @@ bool get isOrderBlocked    => walletData?.isOrderBlocked   ?? false;
   // ================= VERIFY OTP =================
   Future<bool> verifyWithdrawCode({
     required String code,
+    required String phone,
     required BuildContext context,
   }) async {
     final token = await LocalStorage.getToken();
@@ -89,7 +90,11 @@ bool get isOrderBlocked    => walletData?.isOrderBlocked   ?? false;
       isLoading = true;
       notifyListeners();
 
-      final res = await _verifyCode.verifyCode(otp: code, token: token ?? '');
+      final res = await _verifyCode.verifyCode(
+        otp: code,
+        phone: phone,
+        token: token ?? '',
+      );
 
       if (res.message == "Withdrawal request submitted") {
         /// 🔥 refresh wallet balance

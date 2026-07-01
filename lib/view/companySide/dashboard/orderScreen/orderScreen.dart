@@ -1071,6 +1071,25 @@ class _OrderScreenState extends State<OrderScreen>
                   label:
                       "${products.length} Item${products.length != 1 ? 's' : ''}",
                 ),
+
+                // Tracking number — dispatched orders only
+                if (!isPendingTab &&
+                    order.trackNumber != null &&
+                    (order.trackNumber as String).isNotEmpty) ...[
+                  SizedBox(height: 5.h),
+                  _buildInfoRow(
+                    icon: Icons.local_shipping_outlined,
+                    label: "Track #: ${order.trackNumber}",
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => LeopardsTrackingScreen(
+                          trackNumber: order.trackNumber as String,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1243,24 +1262,38 @@ class _OrderScreenState extends State<OrderScreen>
     );
   }
 
-  Widget _buildInfoRow({required IconData icon, required String label}) {
-    return Row(
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    VoidCallback? onTap,
+  }) {
+    final row = Row(
       children: [
-        Icon(icon, color: Colors.white.withValues(alpha: 0.5), size: 13.sp),
+        Icon(
+          icon,
+          color: onTap != null
+              ? AppColor.primaryColor
+              : Colors.white.withValues(alpha: 0.5),
+          size: 13.sp,
+        ),
         SizedBox(width: 5.w),
         Flexible(
           child: Text(
             label,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.75),
+              color: onTap != null
+                  ? AppColor.primaryColor
+                  : Colors.white.withValues(alpha: 0.75),
               fontSize: 12.sp,
               fontWeight: FontWeight.w500,
+              decoration: onTap != null ? TextDecoration.underline : null,
             ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
     );
+    return onTap != null ? GestureDetector(onTap: onTap, child: row) : row;
   }
 
   Widget _buildBadge({

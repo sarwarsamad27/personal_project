@@ -7,8 +7,10 @@ import 'package:new_brand/resources/global.dart';
 class GetProfileRepository {
   final NetworkApiServices apiServices = NetworkApiServices();
   final String apiUrl = Global.GetProfile;
-  Future<ProfileScreenModel> getProfile() async { 
-    final response = await apiServices.getApi(apiUrl);
+  Future<ProfileScreenModel> getProfile() async {
+    // A brand-new user has no profile yet, so the backend's 404 here is an
+    // expected state, not an error — don't show the generic error toast for it.
+    final response = await apiServices.getApi(apiUrl, suppressErrorToast: true);
 log(response.toString());
     return ProfileScreenModel.fromJson(response);
   }

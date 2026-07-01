@@ -8,6 +8,7 @@ import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart'
 import 'package:new_brand/viewModel/providers/syncCoordinator_provider.dart';
 import 'package:provider/provider.dart';
 
+import 'package:new_brand/resources/app_version_checker.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/dashboard/ChatListScreen/chatList_screen.dart';
@@ -50,6 +51,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       // this, items queued offline and never resynced while the app was
       // shut would sit as "Syncing…" forever even after reopening online.
       Provider.of<SyncCoordinator>(context, listen: false).syncAll();
+      checkAppVersion(context);
     });
   }
 

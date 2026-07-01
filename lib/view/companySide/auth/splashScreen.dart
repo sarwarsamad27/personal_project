@@ -7,6 +7,7 @@ import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provide
 import 'package:permission_handler/permission_handler.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/auth/loginScreen.dart';
+import 'package:new_brand/view/companySide/auth/onboardingScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -95,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen>
     final tokenRaw = await LocalStorage.getToken();
     if (tokenRaw == null || tokenRaw.trim().isEmpty) {
       if (!mounted) return;
-      _goLogin();
+      _goLoginOrOnboarding();
       return;
     }
 
@@ -104,7 +105,7 @@ class _SplashScreenState extends State<SplashScreen>
     if (_isTokenExpiredSafe(token)) {
       await LocalStorage.clearToken();
       if (!mounted) return;
-      _goLogin();
+      _goLoginOrOnboarding();
       return;
     }
 
@@ -141,10 +142,12 @@ class _SplashScreenState extends State<SplashScreen>
     }
   }
 
-  void _goLogin() {
+  Future<void> _goLoginOrOnboarding() async {
     if (_navigated) return;
+    final seen = await LocalStorage.isOnboardingSeen();
+    if (!mounted || _navigated) return;
     _navigated = true;
-    navigateTo(const LoginScreen());
+    navigateTo(seen ? const LoginScreen() : const OnboardingScreen());
   }
 
   void _goHome() {

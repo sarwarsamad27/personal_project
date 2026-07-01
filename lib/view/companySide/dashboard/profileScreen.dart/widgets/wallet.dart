@@ -129,7 +129,7 @@ class _WalletState extends State<Wallet> {
                       SizedBox(height: 15.h),
 
                       CustomTextField(
-                        hintText: "Enter amount to withdraw",
+                        hintText: "Enter amount to withdraw (min Rs 300)",
                         controller: amountController,
                         keyboardType: TextInputType.number,
                       ),
@@ -225,6 +225,7 @@ class _WalletState extends State<Wallet> {
                                 final verified = await provider
                                     .verifyWithdrawCode(
                                       code: codeController.text,
+                                      phone: phoneController.text,
                                       context: context,
                                     );
 
@@ -280,13 +281,18 @@ class _WalletState extends State<Wallet> {
                                 phoneController.text.isEmpty ||
                                 amount == null ||
                                 amount <= 0 ||
-                                amount >
-                                    provider
-                                        .currentBalance || // ✅ REAL API BALANCE
                                 selectedMethod == null) {
-                              AppToast.show(
-                                "Insufficient wallet balance or invalid input",
-                              );
+                              AppToast.show("Please fill all fields correctly");
+                              return;
+                            }
+
+                            if (amount < 300) {
+                              AppToast.show("Minimum withdrawal is Rs 300");
+                              return;
+                            }
+
+                            if (amount > provider.currentBalance) {
+                              AppToast.show("Insufficient wallet balance");
                               return;
                             }
 
@@ -327,6 +333,11 @@ class _WalletState extends State<Wallet> {
   void _openAddMoneyDialog() {
     final amountCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    // Resolved via this State's own stable context — the bottom sheet's
+    // inner Consumer<CompanyWalletProvider> context gets deactivated once
+    // the sheet is popped, so onPaymentDone (which fires later, after the
+    // payment screen confirms) must not re-resolve the provider from it.
+    final walletProvider = context.read<CompanyWalletProvider>();
 
     showModalBottomSheet(
       backgroundColor: Colors.white,
@@ -401,7 +412,7 @@ class _WalletState extends State<Wallet> {
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'Enter amount';
                   final amt = double.tryParse(v) ?? 0;
-                  if (amt < 100) return 'Minimum Rs 100';
+                  if (amt < 500) return 'Minimum Rs 500';
                   if (amt > 50000) return 'Maximum Rs 50,000';
                   return null;
                 },
@@ -415,8 +426,9 @@ class _WalletState extends State<Wallet> {
                       (a) => ActionChip(
                         label: Text('Rs $a'),
                         onPressed: () => amountCtrl.text = '$a',
-                        backgroundColor:
-                            AppColor.primaryColor.withValues(alpha: 0.08),
+                        backgroundColor: AppColor.primaryColor.withValues(
+                          alpha: 0.08,
+                        ),
                         labelStyle: TextStyle(
                           color: AppColor.primaryColor,
                           fontWeight: FontWeight.w600,
@@ -438,8 +450,7 @@ class _WalletState extends State<Wallet> {
                         ? null
                         : () async {
                             if (!formKey.currentState!.validate()) return;
-                            final amount =
-                                double.parse(amountCtrl.text.trim());
+                            final amount = double.parse(amountCtrl.text.trim());
 
                             final checkout = await provider.initSafepayCheckout(
                               amount: amount.toStringAsFixed(0),
@@ -462,11 +473,7 @@ class _WalletState extends State<Wallet> {
                                   checkoutUrl: checkout['url'] as String,
                                   trackId: checkout['trackId'] as String,
                                   onPaymentDone: () {
-                                    if (mounted) {
-                                      context
-                                          .read<CompanyWalletProvider>()
-                                          .fetchCompanyWallet();
-                                    }
+                                    walletProvider.fetchCompanyWallet();
                                   },
                                 ),
                               ),

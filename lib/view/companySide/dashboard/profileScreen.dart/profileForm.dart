@@ -9,6 +9,7 @@ import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/toast.dart';
+import 'package:new_brand/view/companySide/auth/termsAgreementScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/aiStoreDescriptionChat.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/profile_provider.dart';
@@ -300,7 +301,8 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
     _nameCheckDebounce?.cancel();
 
     final trimmed = value.trim();
-    if (trimmed.isEmpty || trimmed.toLowerCase() == _originalName?.trim().toLowerCase()) {
+    if (trimmed.isEmpty ||
+        trimmed.toLowerCase() == _originalName?.trim().toLowerCase()) {
       setState(() {
         _checkingName = false;
         _nameTakenMessage = null;
@@ -375,13 +377,15 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.read<ProfileProvider>();
+    final hasExistingProfile =
+        context.watch<ProfileFetchProvider>().profileData?.profile != null;
 
     return Scaffold(
       body: CustomBgContainer(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.only(
-            left: 20.w,
-            right: 20.w,
+            left: 16.w,
+            right: 16.w,
             top: 30.h,
             bottom: 10.h,
           ),
@@ -396,304 +400,303 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                   letterSpacing: 0.5,
                 ),
               ),
+              if (!hasExistingProfile) ...[
+                SizedBox(height: 8.h),
+                Text(
+                  "Welcome! Please set up your profile to get started.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13.sp, color: Colors.white),
+                ),
+              ],
               SizedBox(height: 20.h),
 
-              Expanded(
-                child: Center(
-                  child: CustomAppContainer(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(24.w),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // ✅ Image picker
-                          GestureDetector(
-                            onTap: _pickImage,
-                            child: ValueListenableBuilder<File?>(
-                              valueListenable: _selectedImage,
-                              builder: (context, image, child) {
-                                return CustomImageContainer(
-                                  height: 140.h,
-                                  width: 140.w,
-                                  child: image == null
-                                      ? Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.add_a_photo,
-                                              color: Colors.white,
-                                              size: 40.sp,
-                                            ),
-                                            SizedBox(height: 8.h),
-                                            Text(
-                                              "Upload Image",
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 14.sp,
-                                              ),
-                                            ),
-                                          ],
-                                        )
-                                      : ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            12.r,
-                                          ),
-                                          child: Image.file(
-                                            image,
-                                            fit: BoxFit.cover,
-                                            width: double.infinity,
-                                            height: double.infinity,
-                                          ),
-                                        ),
-                                );
-                              },
-                            ),
-                          ),
-
-                          SizedBox(height: 30.h),
-
-                          CustomTextField(
-                            controller: _nameController,
-                            hintText: "Enter your name",
-                            headerText: "Full Name",
-                            validator: Validators.name,
-                            onChanged: _onNameChanged,
-                          ),
-                          if (_checkingName)
-                            Padding(
-                              padding: EdgeInsets.only(bottom: 8.h),
-                              child: Row(
-                                children: [
-                                  SizedBox(
-                                    width: 12.w,
-                                    height: 12.w,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white70,
-                                    ),
-                                  ),
-                                  SizedBox(width: 8.w),
-                                  Text(
-                                    "Checking availability...",
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 12.sp,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          if (_nameTakenMessage != null)
-                            Padding(
-                              padding: EdgeInsets.only(bottom: 8.h),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.error_outline,
-                                    color: AppColor.errorColor,
-                                    size: 14.sp,
-                                  ),
-                                  SizedBox(width: 4.w),
-                                  Text(
-                                    _nameTakenMessage!,
-                                    style: TextStyle(
-                                      color: AppColor.errorColor,
-                                      fontSize: 12.sp,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          SizedBox(height: 20.h),
-
-                          CustomTextField(
-                            controller: _emailController,
-                            headerText: "Email Address",
-                            readOnly: true,
-                            validator: Validators.email,
-                          ),
-                          SizedBox(height: 20.h),
-
-                          CustomTextField(
-                            controller: _phoneController,
-                            hintText: "Enter your phone number",
-                            keyboardType: TextInputType.number,
-                            headerText: "Phone Number",
-                            validator: Validators.phonePK,
-                          ),
-                          SizedBox(height: 20.h),
-
-                          CustomTextField(
-                            controller: _addressController,
-                            hintText: "Enter your address",
-                            headerText: "Address",
-                            validator: Validators.required,
-                          ),
-                          SizedBox(height: 20.h),
-
-                          // ✅ City Dropdown
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Leopards Origin City",
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              SizedBox(height: 8.h),
-                              GestureDetector(
-                                onTap: _showCityPicker,
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 16.w,
-                                    vertical: 14.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    border: Border.all(
-                                      color: _selectedCityId != null
-                                          ? Colors.green
-                                          : Colors.white.withOpacity(0.5),
-                                    ),
-                                  ),
-                                  child: Row(
+              CustomAppContainer(
+                width: double.infinity,
+                padding: EdgeInsets.all(24.w),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // ✅ Image picker
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: ValueListenableBuilder<File?>(
+                        valueListenable: _selectedImage,
+                        builder: (context, image, child) {
+                          return CustomImageContainer(
+                            height: 140.h,
+                            width: 140.w,
+                            child: image == null
+                                ? Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Icon(
-                                        Icons.location_city_rounded,
-                                        color: _selectedCityId != null
-                                            ? Colors.green
-                                            : Colors.white70,
-                                        size: 20.sp,
-                                      ),
-                                      SizedBox(width: 12.w),
-                                      Expanded(
-                                        child: Text(
-                                          _selectedCityName ??
-                                              "Select City (for Leopards)",
-                                          style: TextStyle(
-                                            fontSize: 14.sp,
-                                            color: _selectedCityName != null
-                                                ? Colors.white
-                                                : Colors.white60,
-                                          ),
-                                        ),
-                                      ),
-                                      _citiesLoading
-                                          ? SizedBox(
-                                              width: 16.w,
-                                              height: 16.w,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: Colors.white70,
-                                              ),
-                                            )
-                                          : Icon(
-                                              Icons.arrow_drop_down,
-                                              color: Colors.white70,
-                                            ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-
-                              // ✅ City selected confirmation
-                              if (_selectedCityId != null) ...[
-                                SizedBox(height: 6.h),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.check_circle,
-                                      color: Colors.green,
-                                      size: 14.sp,
-                                    ),
-                                    SizedBox(width: 4.w),
-                                    Text(
-                                      "Origin city set to: $_selectedCityName",
-                                      style: TextStyle(
-                                        fontSize: 11.sp,
-                                        color: Colors.green,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ],
-                          ),
-                          SizedBox(height: 20.h),
-
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Description",
-                                style: TextStyle(
-                                  color: AppColor.textPrimaryColor,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15.sp,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: _openAiDescriptionChat,
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 10.w,
-                                    vertical: 6.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        AppColor.primaryColor,
-                                        AppColor.primaryColor.withOpacity(0.75),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(20.r),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.auto_awesome,
+                                        Icons.add_a_photo,
                                         color: Colors.white,
-                                        size: 13.sp,
+                                        size: 40.sp,
                                       ),
-                                      SizedBox(width: 4.w),
+                                      SizedBox(height: 8.h),
                                       Text(
-                                        "Ask AI",
+                                        "Upload Image",
                                         style: TextStyle(
                                           color: Colors.white,
-                                          fontSize: 12.sp,
-                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14.sp,
                                         ),
                                       ),
                                     ],
+                                  )
+                                : ClipRRect(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    child: Image.file(
+                                      image,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                    ),
                                   ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    SizedBox(height: 30.h),
+
+                    CustomTextField(
+                      controller: _nameController,
+                      hintText: "Enter your name",
+                      headerText: "Full Name",
+                      validator: Validators.name,
+                      onChanged: _onNameChanged,
+                    ),
+                    if (_checkingName)
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 8.h),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 12.w,
+                              height: 12.w,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white70,
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              "Checking availability...",
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (_nameTakenMessage != null)
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 8.h),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: AppColor.errorColor,
+                              size: 14.sp,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              _nameTakenMessage!,
+                              style: TextStyle(
+                                color: AppColor.errorColor,
+                                fontSize: 12.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    SizedBox(height: 20.h),
+
+                    CustomTextField(
+                      controller: _emailController,
+                      headerText: "Email Address",
+                      readOnly: true,
+                      validator: Validators.email,
+                    ),
+                    SizedBox(height: 20.h),
+
+                    CustomTextField(
+                      controller: _phoneController,
+                      hintText: "Enter your phone number",
+                      keyboardType: TextInputType.number,
+                      headerText: "Phone Number",
+                      validator: Validators.phonePK,
+                    ),
+                    SizedBox(height: 20.h),
+
+                    CustomTextField(
+                      controller: _addressController,
+                      hintText: "Enter your address",
+                      headerText: "Address",
+                      validator: Validators.required,
+                    ),
+                    SizedBox(height: 20.h),
+
+                    // ✅ City Dropdown
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Leopards Origin City",
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        GestureDetector(
+                          onTap: _showCityPicker,
+                          child: Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 14.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(
+                                color: _selectedCityId != null
+                                    ? Colors.green
+                                    : Colors.white.withOpacity(0.5),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.location_city_rounded,
+                                  color: _selectedCityId != null
+                                      ? Colors.green
+                                      : Colors.white70,
+                                  size: 20.sp,
+                                ),
+                                SizedBox(width: 12.w),
+                                Expanded(
+                                  child: Text(
+                                    _selectedCityName ??
+                                        "Select City (for Leopards)",
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: _selectedCityName != null
+                                          ? Colors.white
+                                          : Colors.white60,
+                                    ),
+                                  ),
+                                ),
+                                _citiesLoading
+                                    ? SizedBox(
+                                        width: 16.w,
+                                        height: 16.w,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white70,
+                                        ),
+                                      )
+                                    : Icon(
+                                        Icons.arrow_drop_down,
+                                        color: Colors.white70,
+                                      ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // ✅ City selected confirmation
+                        if (_selectedCityId != null) ...[
+                          SizedBox(height: 6.h),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                                size: 14.sp,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                "Origin city set to: $_selectedCityName",
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: Colors.green,
                                 ),
                               ),
                             ],
                           ),
-                          SizedBox(height: 6.h),
-
-                          CustomTextField(
-                            controller: _descriptionController,
-                            hintText: "Write something about yourself",
-                            validator: Validators.required,
-                            maxLines: 5,
-                            height: 120.h,
-                          ),
-
-                          SizedBox(height: 30.h),
                         ],
-                      ),
+                      ],
                     ),
-                  ),
+                    SizedBox(height: 20.h),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Description",
+                          style: TextStyle(
+                            color: AppColor.textPrimaryColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15.sp,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: _openAiDescriptionChat,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10.w,
+                              vertical: 6.h,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColor.primaryColor,
+                                  AppColor.primaryColor.withOpacity(0.75),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.auto_awesome,
+                                  color: Colors.white,
+                                  size: 13.sp,
+                                ),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  "Ask AI",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 6.h),
+
+                    CustomTextField(
+                      controller: _descriptionController,
+                      hintText: "Write something about yourself",
+                      validator: Validators.required,
+                      maxLines: 5,
+                      height: 120.h,
+                    ),
+
+                    SizedBox(height: 30.h),
+                  ],
                 ),
               ),
             ],
@@ -761,10 +764,16 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
 
                         if (!mounted) return;
 
+                        final termsAgreed = await LocalStorage.isTermsAgreed();
+
+                        if (!mounted) return;
+
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => CompanyHomeScreen(),
+                            builder: (_) => termsAgreed
+                                ? CompanyHomeScreen()
+                                : const TermsAgreementScreen(),
                           ),
                         );
                       } else {

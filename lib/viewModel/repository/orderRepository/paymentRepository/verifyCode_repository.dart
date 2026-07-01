@@ -7,7 +7,7 @@ class VerifyCodeRepository {
 
   Future<VerifyCodeModel> verifyCode({
     required String otp,
-    
+    required String phone,
     required String token,
   }) async {
     try {
@@ -15,6 +15,7 @@ class VerifyCodeRepository {
 
       final response = await apiServices.postApi(url, ({
         "otp": otp,
+        "phone": phone,
       }));
       print(response);
 

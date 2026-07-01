@@ -130,12 +130,19 @@ class NetworkApiServices extends BaseApiServices {
   }
 
   @override
-  Future<Map<String, dynamic>> getApi(String url) async {
+  Future<Map<String, dynamic>> getApi(
+    String url, {
+    bool suppressErrorToast = false,
+  }) async {
     try {
       final response = await http
           .get(Uri.parse(url), headers: await getHeaders())
           .timeout(Duration(seconds: _timeoutDuration));
-      return _handleResponse(url, response);
+      return _handleResponse(
+        url,
+        response,
+        suppressErrorToast: suppressErrorToast,
+      );
     } catch (e) {
       return _handleError(e);
     }
@@ -356,6 +363,7 @@ class NetworkApiServices extends BaseApiServices {
     http.Response response, {
     Map<String, dynamic>? body,
     String? method,
+    bool suppressErrorToast = false,
   }) {
     if (kDebugMode) {
       print('✅ API URL: $url');
@@ -431,19 +439,25 @@ class NetworkApiServices extends BaseApiServices {
     }
 
     // Handle Error Responses (400, 500, etc)
-    String errorMessage = "Server Error occurred";
+    // Default to a short, user-facing message. Only the backend's own
+    // 'message' field (if present) overrides it — we never show the raw
+    // response body (e.g. an HTML error page) in a toast.
+    String errorMessage =
+        "Something went wrong (${response.statusCode}). Please try again.";
     try {
       final decoded = jsonDecode(response.body);
       if (decoded is Map<String, dynamic> && decoded.containsKey('message')) {
         errorMessage = decoded['message'].toString();
-      } else {
-        errorMessage = response.body;
       }
-    } catch (_) {
-      errorMessage = response.body;
+    } catch (_) {}
+
+    if (errorMessage.length > 200) {
+      errorMessage = '${errorMessage.substring(0, 200)}...';
     }
 
-    AppToast.error(errorMessage);
+    if (!suppressErrorToast) {
+      AppToast.error(errorMessage);
+    }
     return {'code_status': false, 'message': errorMessage};
   }
 
@@ -471,6 +485,9 @@ class NetworkApiServices extends BaseApiServices {
     String msg = e.toString();
     if (msg.contains("Exception:")) {
       msg = msg.split("Exception:").last.trim();
+    }
+    if (msg.length > 200) {
+      msg = '${msg.substring(0, 200)}...';
     }
     AppToast.error(msg);
     return {'code_status': false, 'message': 'Exception: $e'};

@@ -54,6 +54,17 @@ class LocalStorage {
     return prefs.getBool("terms_agreed") ?? false;
   }
 
+  // ------------------ ONBOARDING (SHOWN ONCE EVER) ------------------
+  static Future<void> saveOnboardingSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool("onboarding_seen", true);
+  }
+
+  static Future<bool> isOnboardingSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool("onboarding_seen") ?? false;
+  }
+
   // ------------------ POPUP REMINDER STORAGE ------------------
   static Future<void> saveProductConditionSeen() async {
     final prefs = await SharedPreferences.getInstance();

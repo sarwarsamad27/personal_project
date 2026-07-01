@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -64,9 +65,9 @@ Future<void> _initLocalNotifications() async {
 // notification API needs the actual bytes, not just a remote URL.
 Future<ByteArrayAndroidBitmap?> _downloadNotificationImage(String url) async {
   try {
-    final response = await http.get(Uri.parse(url)).timeout(
-      const Duration(seconds: 6),
-    );
+    final response = await http
+        .get(Uri.parse(url))
+        .timeout(const Duration(seconds: 6));
     if (response.statusCode == 200) {
       return ByteArrayAndroidBitmap(response.bodyBytes);
     }
@@ -128,6 +129,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -150,9 +152,7 @@ class AppWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppMultiProvider(
-      child: _OfflineSyncRegistrar(child: const MyApp()),
-    );
+    return AppMultiProvider(child: _OfflineSyncRegistrar(child: const MyApp()));
   }
 }
 
@@ -207,8 +207,23 @@ class _OfflineSyncRegistrarState extends State<_OfflineSyncRegistrar> {
   Widget build(BuildContext context) => widget.child;
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  // Read exactly once per mount. Consumer<ConnectivityProvider> below
+  // rebuilds shortly after launch (ConnectivityProvider's constructor does
+  // an async connectivity + internet probe before its first notifyListeners()),
+  // which used to re-evaluate consumeGoStraightToLogin() — a one-shot flag —
+  // a second time. The second read always came back false (already
+  // consumed), flipping `home` from LoginScreen back to SplashScreen right
+  // after a logout, so the splash screen would flash before redirecting
+  // back to login.
+  late final bool _goStraightToLogin = consumeGoStraightToLogin();
 
   @override
   Widget build(BuildContext context) {
@@ -225,7 +240,7 @@ class MyApp extends StatelessWidget {
               title: 'SHOOKOO',
               theme: AppTheme.lightTheme,
               home: SessionGuard(
-                child: consumeGoStraightToLogin()
+                child: _goStraightToLogin
                     ? const LoginScreen()
                     : SplashScreen(),
               ),
@@ -239,17 +254,24 @@ class MyApp extends StatelessWidget {
                           width: double.infinity,
                           color: const Color(0xFFE65100),
                           padding: const EdgeInsets.symmetric(
-                              vertical: 6, horizontal: 16),
+                            vertical: 6,
+                            horizontal: 16,
+                          ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.wifi_off,
-                                  color: Colors.white, size: 14),
+                              Icon(
+                                Icons.wifi_off,
+                                color: Colors.white,
+                                size: 14,
+                              ),
                               SizedBox(width: 6),
                               Text(
                                 'No internet — cached data',
                                 style: TextStyle(
-                                    color: Colors.white, fontSize: 12),
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),

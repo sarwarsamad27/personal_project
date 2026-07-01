@@ -339,68 +339,68 @@ class _LoginScreenState extends State<LoginScreen> {
                               }
                             },
                           ),
-                          SizedBox(width: 25.w),
-                          socialButton(
-                            icon: Icons.apple,
-                            color: Colors.black,
-                            onTap: () async {
-                              final appleProvider = context
-                                  .read<CompanyAppleLoginProvider>();
-                              final profileProvider = context
-                                  .read<ProfileFetchProvider>();
-                              final nav = Navigator.of(context);
+                          // SizedBox(width: 25.w),
+                          // socialButton(
+                          //   icon: Icons.apple,
+                          //   color: Colors.black,
+                          //   onTap: () async {
+                          //     final appleProvider = context
+                          //         .read<CompanyAppleLoginProvider>();
+                          //     final profileProvider = context
+                          //         .read<ProfileFetchProvider>();
+                          //     final nav = Navigator.of(context);
 
-                              appleProvider.clearError();
-                              await appleProvider.loginWithApple();
+                          //     appleProvider.clearError();
+                          //     await appleProvider.loginWithApple();
 
-                              final jwt = appleProvider.loginData?.token;
-                              if (jwt == null || jwt.isEmpty) {
-                                AppToast.error(
-                                  appleProvider.errorMessage ??
-                                      "Apple login failed",
-                                );
-                                return;
-                              }
+                          //     final jwt = appleProvider.loginData?.token;
+                          //     if (jwt == null || jwt.isEmpty) {
+                          //       AppToast.error(
+                          //         appleProvider.errorMessage ??
+                          //             "Apple login failed",
+                          //       );
+                          //       return;
+                          //     }
 
-                              profileProvider.clearProfileCache();
-                              await profileProvider.getProfileOnce(
-                                refresh: true,
-                              );
+                          //     profileProvider.clearProfileCache();
+                          //     await profileProvider.getProfileOnce(
+                          //       refresh: true,
+                          //     );
 
-                              final hasProfile =
-                                  profileProvider.profileData?.profile != null;
+                          //     final hasProfile =
+                          //         profileProvider.profileData?.profile != null;
 
-                              if (!nav.mounted) return;
+                          //     if (!nav.mounted) return;
 
-                              if (hasProfile) {
-                                try {
-                                  await LocalStorage.initPushAndSaveToken(
-                                    jwtToken: jwt,
-                                  );
-                                } catch (e) {
-                                  debugPrint("⚠️ FCM save skipped: $e");
-                                }
-                                final termsAgreed =
-                                    await LocalStorage.isTermsAgreed();
-                                nav.pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (_) => termsAgreed
-                                        ? CompanyHomeScreen()
-                                        : const TermsAgreementScreen(),
-                                  ),
-                                );
-                              } else {
-                                final email =
-                                    appleProvider.loginData?.user?.email ?? "";
-                                nav.pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        ProfileFormScreen(email: email),
-                                  ),
-                                );
-                              }
-                            },
-                          ),
+                          //     if (hasProfile) {
+                          //       try {
+                          //         await LocalStorage.initPushAndSaveToken(
+                          //           jwtToken: jwt,
+                          //         );
+                          //       } catch (e) {
+                          //         debugPrint("⚠️ FCM save skipped: $e");
+                          //       }
+                          //       final termsAgreed =
+                          //           await LocalStorage.isTermsAgreed();
+                          //       nav.pushReplacement(
+                          //         MaterialPageRoute(
+                          //           builder: (_) => termsAgreed
+                          //               ? CompanyHomeScreen()
+                          //               : const TermsAgreementScreen(),
+                          //         ),
+                          //       );
+                          //     } else {
+                          //       final email =
+                          //           appleProvider.loginData?.user?.email ?? "";
+                          //       nav.pushReplacement(
+                          //         MaterialPageRoute(
+                          //           builder: (_) =>
+                          //               ProfileFormScreen(email: email),
+                          //         ),
+                          //       );
+                          //     }
+                          //   },
+                          // ),
                         ],
                       ),
 
