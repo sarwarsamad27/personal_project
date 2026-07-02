@@ -148,4 +148,30 @@ class LocalStorage {
     // Helpful debug for backend issues
     throw Exception("FCM save failed (${resp.statusCode}): ${resp.body}");
   }
+
+  // ------------------ FCM REMOVE (on logout) ------------------
+  // Best-effort: logout must proceed even if this fails (offline, expired
+  // token, etc.), so errors are swallowed rather than thrown.
+  static Future<void> removeFcmTokenFromServer({
+    required String jwtToken,
+    required String fcmToken,
+  }) async {
+    try {
+      await http
+          .post(
+            Uri.parse(Global.removeFcmToken),
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer $jwtToken",
+            },
+            body: jsonEncode({"token": fcmToken}),
+          )
+          .timeout(const Duration(seconds: 8));
+      // ignore: avoid_print
+      print("FCM token removed from server");
+    } catch (e) {
+      // ignore: avoid_print
+      print("FCM remove failed (non-fatal): $e");
+    }
+  }
 }

@@ -55,6 +55,9 @@ class CompanyWalletProvider with ChangeNotifier {
     required String phone,
     required String amount,
     required String method,
+    String? bankName,
+    String? accountNumber,
+    String? iban,
   }) async {
     final token = await LocalStorage.getToken();
     try {
@@ -66,6 +69,9 @@ class CompanyWalletProvider with ChangeNotifier {
         phone: phone,
         amount: amount,
         method: method,
+        bankName: bankName,
+        accountNumber: accountNumber,
+        iban: iban,
         token: token ?? '',
       );
 
@@ -82,7 +88,6 @@ class CompanyWalletProvider with ChangeNotifier {
   // ================= VERIFY OTP =================
   Future<bool> verifyWithdrawCode({
     required String code,
-    required String phone,
     required BuildContext context,
   }) async {
     final token = await LocalStorage.getToken();
@@ -92,7 +97,6 @@ class CompanyWalletProvider with ChangeNotifier {
 
       final res = await _verifyCode.verifyCode(
         otp: code,
-        phone: phone,
         token: token ?? '',
       );
 

@@ -10,6 +10,9 @@ class PaymentRequestRepository {
     required String phone,
     required String amount,
     required String method,
+    String? bankName,
+    String? accountNumber,
+    String? iban,
     required String token,
   }) async {
     try {
@@ -20,6 +23,9 @@ class PaymentRequestRepository {
         "phone": phone,
         "amount": amount,
         "method": method,
+        if (bankName != null) "bankName": bankName,
+        if (accountNumber != null) "accountNumber": accountNumber,
+        if (iban != null) "iban": iban,
       }));
       print(response);
 

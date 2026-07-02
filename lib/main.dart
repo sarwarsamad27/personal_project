@@ -10,6 +10,7 @@ import 'package:new_brand/resources/restartWidget.dart';
 import 'package:new_brand/resources/sessionGuard.dart';
 import 'package:new_brand/view/companySide/auth/loginScreen.dart';
 import 'package:new_brand/view/companySide/auth/splashScreen.dart';
+import 'package:new_brand/view/companySide/dashboard/notificationScreen/company_notification_screen.dart';
 import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
 import 'package:new_brand/viewModel/providers/syncCoordinator_provider.dart';
 import 'package:new_brand/resources/appTheme.dart';
@@ -127,6 +128,27 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   }
 }
 
+void _openNotificationScreen() {
+  final nav = appNavKey.currentState;
+  if (nav == null) return;
+  nav.push(MaterialPageRoute(builder: (_) => const CompanyNotificationScreen()));
+}
+
+Future<void> _setupTapHandling() async {
+  // Background state — app was already running
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    _openNotificationScreen();
+  });
+
+  // Terminated state — app was launched by tapping the notification. This
+  // runs before runApp(), so the Navigator isn't mounted yet — defer the
+  // push until after the first frame instead of pushing immediately.
+  final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  if (initialMessage != null) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openNotificationScreen());
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
@@ -140,6 +162,7 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await _initLocalNotifications();
   await _setupFirebaseForegroundHandler();
+  await _setupTapHandling();
 
   // ✅ start internet listener ONCE
   // await InternetListener.start();

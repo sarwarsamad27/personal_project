@@ -122,7 +122,17 @@ class AllCondition extends StatelessWidget {
 
   Future<void> _logout() async {
     try {
-      // Optional: stop push token updates (not required but safe)
+      // Tell the backend to stop sending this device notifications for this
+      // account — otherwise a shared/reused device keeps getting this
+      // seller's pushes even after logging out.
+      final jwtToken = await LocalStorage.getToken();
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      if (jwtToken != null && jwtToken.isNotEmpty && fcmToken != null && fcmToken.isNotEmpty) {
+        await LocalStorage.removeFcmTokenFromServer(
+          jwtToken: jwtToken,
+          fcmToken: fcmToken,
+        );
+      }
       await FirebaseMessaging.instance.deleteToken();
     } catch (_) {}
 

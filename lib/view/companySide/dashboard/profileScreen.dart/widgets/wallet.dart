@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/pakistaniBanks.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/safepay_payment_screen.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
@@ -67,10 +68,43 @@ class _WalletState extends State<Wallet> {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
     final amountController = TextEditingController();
+    final accountNumberController = TextEditingController();
+    final ibanController = TextEditingController();
     final codeController = TextEditingController();
     String? selectedMethod;
+    String? selectedBank;
     bool showCodeField = false;
     bool isVerifying = false;
+
+    Widget methodButton(
+      String label,
+      String value,
+      void Function(void Function()) setSheetState,
+    ) {
+      final isSelected = selectedMethod == value;
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => setSheetState(() => selectedMethod = value),
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 4.w),
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.green : Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12.sp,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     showModalBottomSheet(
       backgroundColor: AppColor.appimagecolor,
@@ -84,6 +118,8 @@ class _WalletState extends State<Wallet> {
           onTap: () => FocusScope.of(context).unfocus(),
           child: StatefulBuilder(
             builder: (context, setSheetState) {
+              final isBank = selectedMethod == 'Bank Account';
+
               return Padding(
                 padding: EdgeInsets.fromLTRB(
                   20.w,
@@ -114,80 +150,95 @@ class _WalletState extends State<Wallet> {
                       ),
                       SizedBox(height: 25.h),
 
-                      CustomTextField(
-                        hintText: "Enter full name",
-                        controller: nameController,
-                        keyboardType: TextInputType.name,
+                      // Payment Method — chosen first, since the fields below
+                      // depend on which one is selected.
+                      Row(
+                        children: [
+                          methodButton('JazzCash', 'JazzCash', setSheetState),
+                          SizedBox(width: 10.w),
+                          methodButton('Easypaisa', 'Easypaisa', setSheetState),
+                          SizedBox(width: 10.w),
+                          methodButton(
+                            'Bank Account',
+                            'Bank Account',
+                            setSheetState,
+                          ),
+                        ],
                       ),
-                      SizedBox(height: 15.h),
+                      SizedBox(height: 20.h),
 
-                      CustomTextField(
-                        hintText: "Enter mobile number",
-                        controller: phoneController,
-                        keyboardType: TextInputType.phone,
-                      ),
+                      if (isBank) ...[
+                        DropdownButtonFormField<String>(
+                          initialValue: selectedBank,
+                          isExpanded: true,
+                          dropdownColor: AppColor.appimagecolor,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: "Select bank",
+                            hintStyle: const TextStyle(color: Colors.white60),
+                            filled: true,
+                            fillColor: Colors.white.withOpacity(0.1),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 14.h,
+                            ),
+                          ),
+                          items: kPakistaniBanks
+                              .map(
+                                (b) => DropdownMenuItem(value: b, child: Text(b)),
+                              )
+                              .toList(),
+                          onChanged: (v) => setSheetState(() => selectedBank = v),
+                        ),
+                        SizedBox(height: 15.h),
+                        CustomTextField(
+                          hintText: "Account holder name",
+                          controller: nameController,
+                          keyboardType: TextInputType.name,
+                        ),
+                        SizedBox(height: 15.h),
+                        CustomTextField(
+                          hintText: "Account number",
+                          controller: accountNumberController,
+                          keyboardType: TextInputType.text,
+                        ),
+                        SizedBox(height: 15.h),
+                        CustomTextField(
+                          hintText: "IBAN",
+                          controller: ibanController,
+                          keyboardType: TextInputType.text,
+                        ),
+                        SizedBox(height: 6.h),
+                        Text(
+                          "Enter at least one of Account Number or IBAN",
+                          style: TextStyle(
+                            color: Colors.white60,
+                            fontSize: 11.sp,
+                          ),
+                        ),
+                      ] else ...[
+                        CustomTextField(
+                          hintText: "Enter full name",
+                          controller: nameController,
+                          keyboardType: TextInputType.name,
+                        ),
+                        SizedBox(height: 15.h),
+                        CustomTextField(
+                          hintText: "Enter mobile number",
+                          controller: phoneController,
+                          keyboardType: TextInputType.phone,
+                        ),
+                      ],
                       SizedBox(height: 15.h),
 
                       CustomTextField(
                         hintText: "Enter amount to withdraw (min Rs 300)",
                         controller: amountController,
                         keyboardType: TextInputType.number,
-                      ),
-                      SizedBox(height: 20.h),
-
-                      // Payment Method
-                      Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => setSheetState(
-                                () => selectedMethod = 'JazzCash',
-                              ),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 12.h),
-                                decoration: BoxDecoration(
-                                  color: selectedMethod == 'JazzCash'
-                                      ? Colors.green
-                                      : Colors.white.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(10.r),
-                                ),
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  "JazzCash",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 15.w),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => setSheetState(
-                                () => selectedMethod = 'Easypaisa',
-                              ),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 12.h),
-                                decoration: BoxDecoration(
-                                  color: selectedMethod == 'Easypaisa'
-                                      ? Colors.green
-                                      : Colors.white.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(10.r),
-                                ),
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  "Easypaisa",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                       SizedBox(height: 25.h),
 
@@ -225,7 +276,6 @@ class _WalletState extends State<Wallet> {
                                 final verified = await provider
                                     .verifyWithdrawCode(
                                       code: codeController.text,
-                                      phone: phoneController.text,
                                       context: context,
                                     );
 
@@ -277,11 +327,24 @@ class _WalletState extends State<Wallet> {
                               amountController.text,
                             );
 
-                            if (nameController.text.isEmpty ||
-                                phoneController.text.isEmpty ||
+                            if (selectedMethod == null ||
+                                nameController.text.isEmpty ||
                                 amount == null ||
-                                amount <= 0 ||
-                                selectedMethod == null) {
+                                amount <= 0) {
+                              AppToast.show("Please fill all fields correctly");
+                              return;
+                            }
+
+                            if (isBank) {
+                              if (selectedBank == null ||
+                                  (accountNumberController.text.isEmpty &&
+                                      ibanController.text.isEmpty)) {
+                                AppToast.show(
+                                  "Select a bank and enter account number or IBAN",
+                                );
+                                return;
+                              }
+                            } else if (phoneController.text.isEmpty) {
                               AppToast.show("Please fill all fields correctly");
                               return;
                             }
@@ -300,7 +363,12 @@ class _WalletState extends State<Wallet> {
                               name: nameController.text,
                               phone: phoneController.text,
                               amount: amountController.text,
-                              method: selectedMethod!,
+                              method: isBank ? 'bank' : selectedMethod!,
+                              bankName: isBank ? selectedBank : null,
+                              accountNumber: isBank
+                                  ? accountNumberController.text
+                                  : null,
+                              iban: isBank ? ibanController.text : null,
                             );
 
                             if (success) {
