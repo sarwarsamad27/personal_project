@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -75,6 +77,27 @@ class _WalletState extends State<Wallet> {
     String? selectedBank;
     bool showCodeField = false;
     bool isVerifying = false;
+    Timer? otpClipboardTimer;
+
+    // WhatsApp OTPs can't be auto-read the way SMS can (no public API for
+    // that), so instead: once the user copies the code from WhatsApp and
+    // returns to the app, this poll picks it up from the clipboard and
+    // fills the field for them — they still tap Verify themselves.
+    void startOtpClipboardWatch(void Function(void Function()) setSheetState) {
+      otpClipboardTimer?.cancel();
+      otpClipboardTimer = Timer.periodic(const Duration(seconds: 1), (
+        _,
+      ) async {
+        final clip = await Clipboard.getData('text/plain');
+        final match = RegExp(
+          r'\b\d{6}\b',
+        ).firstMatch(clip?.text?.trim() ?? '');
+        final code = match?.group(0);
+        if (code != null && code != codeController.text) {
+          setSheetState(() => codeController.text = code);
+        }
+      });
+    }
 
     Widget methodButton(
       String label,
@@ -374,6 +397,7 @@ class _WalletState extends State<Wallet> {
                             if (success) {
                               AppToast.show("Verification code sent");
                               setSheetState(() => showCodeField = true);
+                              startOtpClipboardWatch(setSheetState);
                             } else {
                               AppToast.show("Failed to send verification code");
                             }
@@ -395,7 +419,7 @@ class _WalletState extends State<Wallet> {
           ),
         );
       },
-    );
+    ).whenComplete(() => otpClipboardTimer?.cancel());
   }
 
   void _openAddMoneyDialog() {
