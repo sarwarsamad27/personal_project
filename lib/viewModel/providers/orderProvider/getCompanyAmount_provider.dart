@@ -19,6 +19,10 @@ class CompanyWalletProvider with ChangeNotifier {
 
   GetCompanyAmountModel? walletData;
 
+  // Set by sendWithdrawCode() — the E.164 phone number the backend expects
+  // to be Firebase-verified before it'll finalize this withdrawal.
+  String? pendingWithdrawPhone;
+
   // trackIds whose checkout screen was closed before the poll resolved —
   // without this, the loop below keeps hitting the backend every few
   // seconds for up to ~2 minutes after the user has already left the screen.
@@ -75,7 +79,9 @@ class CompanyWalletProvider with ChangeNotifier {
         token: token ?? '',
       );
 
-      return res.message == "Verification code sent via SMS";
+      final ok = res.message == "Verification code sent via SMS";
+      if (ok) pendingWithdrawPhone = res.phone;
+      return ok;
     } catch (e) {
       debugPrint("Send OTP Error: $e");
       return false;
@@ -86,6 +92,8 @@ class CompanyWalletProvider with ChangeNotifier {
   }
 
   // ================= VERIFY OTP =================
+  // 💤 Firebase ID token version (restore when Blaze is enabled): change
+  // `code` -> `idToken` here and in verifyCode_repository.dart's verifyCode().
   Future<bool> verifyWithdrawCode({
     required String code,
     required BuildContext context,

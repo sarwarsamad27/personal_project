@@ -5,6 +5,8 @@ import 'package:new_brand/resources/global.dart';
 class VerifyCodeRepository {
   final NetworkApiServices apiServices = NetworkApiServices();
 
+  // 💤 Firebase ID token version (restore when Blaze is enabled):
+  //   required String idToken,   ->   body: {"idToken": idToken}
   Future<VerifyCodeModel> verifyCode({
     required String otp,
     required String token,

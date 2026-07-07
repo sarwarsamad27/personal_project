@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'dart:developer';
 
+// 💤 Firebase Phone Auth is not the active OTP provider (see backend's
+// utiles/twilioVerify.js — currently Veevo Tech SMS). Kept commented for a
+// future re-enable rather than deleted.
+// import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,12 +13,42 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/pakistaniBanks.dart';
 import 'package:new_brand/resources/toast.dart';
+// import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/firebasePhoneAuthTestScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/safepay_payment_screen.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart'; // used by _openWithdrawDialog
 import 'package:provider/provider.dart';
+
+// 💤 Maps Firebase Phone Auth's error codes to messages a seller can
+// actually act on. Unused while Firebase Phone Auth isn't the active
+// provider — kept for when it's re-enabled.
+// String firebaseAuthErrorMessage(FirebaseAuthException e) {
+//   switch (e.code) {
+//     case 'invalid-phone-number':
+//       return 'Invalid phone number. Please check and try again.';
+//     case 'too-many-requests':
+//     case 'quota-exceeded':
+//       return 'Too many attempts. Please try again later.';
+//     case 'invalid-verification-code':
+//       return 'Invalid code. Please check and try again.';
+//     case 'invalid-verification-id':
+//     case 'session-expired':
+//       return 'Verification session expired. Please request a new code.';
+//     case 'network-request-failed':
+//       return 'Network error. Please check your connection.';
+//     case 'user-disabled':
+//       return 'This account has been disabled. Contact support.';
+//     case 'operation-not-allowed':
+//       return 'Phone verification is not enabled. Contact support.';
+//     case 'app-not-authorized':
+//     case 'missing-client-identifier':
+//       return 'App verification failed. Please try again or contact support.';
+//     default:
+//       return e.message ?? 'Verification failed. Please try again.';
+//   }
+// }
 
 class Wallet extends StatefulWidget {
   Wallet({super.key});
@@ -73,31 +107,44 @@ class _WalletState extends State<Wallet> {
     final accountNumberController = TextEditingController();
     final ibanController = TextEditingController();
     final codeController = TextEditingController();
-    String? selectedMethod;
+    String? selectedMethod = 'JazzCash';
     String? selectedBank;
     bool showCodeField = false;
     bool isVerifying = false;
     Timer? otpClipboardTimer;
+    // The bottom sheet's StatefulBuilder can be gone by the time the
+    // clipboard timer fires — every setSheetState call below is guarded by
+    // this to avoid setState-after-dispose.
+    bool sheetDisposed = false;
 
-    // WhatsApp OTPs can't be auto-read the way SMS can (no public API for
-    // that), so instead: once the user copies the code from WhatsApp and
-    // returns to the app, this poll picks it up from the clipboard and
-    // fills the field for them — they still tap Verify themselves.
+    // No SMS Retriever/autofill wired up on this screen, so instead: once
+    // the user copies the code from their messaging app and returns here,
+    // this poll picks it up from the clipboard and fills the field for
+    // them — they still tap Verify themselves.
     void startOtpClipboardWatch(void Function(void Function()) setSheetState) {
       otpClipboardTimer?.cancel();
-      otpClipboardTimer = Timer.periodic(const Duration(seconds: 1), (
-        _,
-      ) async {
+      otpClipboardTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
+        if (sheetDisposed) return;
         final clip = await Clipboard.getData('text/plain');
-        final match = RegExp(
-          r'\b\d{6}\b',
-        ).firstMatch(clip?.text?.trim() ?? '');
+        if (sheetDisposed) return;
+        final match = RegExp(r'\b\d{6}\b').firstMatch(clip?.text?.trim() ?? '');
         final code = match?.group(0);
         if (code != null && code != codeController.text) {
           setSheetState(() => codeController.text = code);
         }
       });
     }
+
+    // 💤 Firebase Phone Auth version (restore once the Blaze billing plan is
+    // enabled — see wallet.dart's git history / the note in
+    // CompanyWalletProvider.verifyWithdrawCode for what else needs to flip
+    // back). Was: completeWithdrawal(credential, provider, setSheetState)
+    // signs in with Firebase, gets an ID token, and sends that to the
+    // backend instead of a raw OTP; startFirebasePhoneVerification(phone,
+    // provider, setSheetState) calls FirebaseAuth.verifyPhoneNumber to
+    // trigger the real SMS send and wires up its callbacks (auto-complete
+    // on Android SMS retrieval, error mapping via firebaseAuthErrorMessage,
+    // showCodeField=true + clipboard watch on codeSent).
 
     Widget methodButton(
       String label,
@@ -212,10 +259,12 @@ class _WalletState extends State<Wallet> {
                           ),
                           items: kPakistaniBanks
                               .map(
-                                (b) => DropdownMenuItem(value: b, child: Text(b)),
+                                (b) =>
+                                    DropdownMenuItem(value: b, child: Text(b)),
                               )
                               .toList(),
-                          onChanged: (v) => setSheetState(() => selectedBank = v),
+                          onChanged: (v) =>
+                              setSheetState(() => selectedBank = v),
                         ),
                         SizedBox(height: 15.h),
                         CustomTextField(
@@ -302,6 +351,7 @@ class _WalletState extends State<Wallet> {
                                       context: context,
                                     );
 
+                                if (sheetDisposed) return;
                                 setSheetState(() => isVerifying = false);
 
                                 if (!verified) {
@@ -309,8 +359,7 @@ class _WalletState extends State<Wallet> {
                                   return;
                                 }
 
-                                Navigator.pop(context, true);
-
+                                otpClipboardTimer?.cancel();
                                 AppToast.show("Withdrawal request submitted");
                                 Navigator.pop(context, true);
                               },
@@ -419,7 +468,10 @@ class _WalletState extends State<Wallet> {
           ),
         );
       },
-    ).whenComplete(() => otpClipboardTimer?.cancel());
+    ).whenComplete(() {
+      sheetDisposed = true;
+      otpClipboardTimer?.cancel();
+    });
   }
 
   void _openAddMoneyDialog() {
@@ -438,7 +490,7 @@ class _WalletState extends State<Wallet> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       context: context,
-      builder: (_) => Padding(
+      builder: (context) => Padding(
         padding: EdgeInsets.fromLTRB(
           20.w,
           14.h,
@@ -708,6 +760,22 @@ class _WalletState extends State<Wallet> {
                     ),
                   ],
                 ),
+                // 💤 TEST/EXPLORATION ONLY — Firebase Phone Auth isn't the
+                // active OTP provider, not wired into the real withdrawal
+                // flow. Kept commented (not deleted) alongside the import
+                // above for a future re-enable.
+                // TextButton(
+                //   onPressed: () => Navigator.push(
+                //     context,
+                //     MaterialPageRoute(
+                //       builder: (_) => const FirebasePhoneAuthTestScreen(),
+                //     ),
+                //   ),
+                //   child: const Text(
+                //     "🧪 Test Firebase Phone Auth",
+                //     style: TextStyle(color: Colors.white70, fontSize: 12),
+                //   ),
+                // ),
               ],
             ),
           ),
