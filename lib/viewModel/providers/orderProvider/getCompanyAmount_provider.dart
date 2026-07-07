@@ -19,8 +19,8 @@ class CompanyWalletProvider with ChangeNotifier {
 
   GetCompanyAmountModel? walletData;
 
-  // Set by sendWithdrawCode() — the E.164 phone number the backend expects
-  // to be Firebase-verified before it'll finalize this withdrawal.
+  // Set by sendWithdrawCode() — the E.164 phone number the backend sent the
+  // OTP to, kept around for display/reference during the verify step.
   String? pendingWithdrawPhone;
 
   // trackIds whose checkout screen was closed before the poll resolved —
