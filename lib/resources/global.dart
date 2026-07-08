@@ -47,6 +47,7 @@ class Global {
   static var SellerSafepayCheckout =
       "${BaseUrl}/seller/wallet/safepay/checkout";
   static var SellerSafepayStatus = "${BaseUrl}/seller/wallet/safepay/status";
+  static var GetSellerLeaderboard = "${BaseUrl}/seller/leaderboard";
   static var TransactionHistory = "${BaseUrl}/transactions";
   static var GetDashboardData = "${BaseUrl}/get/dashboard/data";
   static var GetCompanySalesChart = "${BaseUrl}/get/sales/chart";

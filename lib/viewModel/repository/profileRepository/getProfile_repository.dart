@@ -10,8 +10,14 @@ class GetProfileRepository {
   Future<ProfileScreenModel> getProfile() async {
     // A brand-new user has no profile yet, so the backend's 404 here is an
     // expected state, not an error — don't show the generic error toast for it.
-    final response = await apiServices.getApi(apiUrl, suppressErrorToast: true);
-log(response.toString());
+    // Cached so offline launches can still see a previously-created profile
+    // instead of being bounced back to the profile form.
+    final response = await apiServices.cachedGetApi(
+      'seller_profile',
+      apiUrl,
+      suppressErrorToast: true,
+    );
+    log(response.toString());
     return ProfileScreenModel.fromJson(response);
   }
 }

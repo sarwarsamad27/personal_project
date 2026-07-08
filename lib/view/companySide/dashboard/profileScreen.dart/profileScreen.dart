@@ -11,6 +11,7 @@ import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/allProfileField.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/myWallet.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/profileUserReview.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/sellerLeaderboard.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
@@ -297,6 +298,10 @@ class ProfileScreen extends StatelessWidget {
 
                     SizedBox(height: 20.h),
                     AllField(profile: profile),
+                    SizedBox(height: 25.h),
+
+                    // ---------------- TOP SELLERS LEADERBOARD ----------------
+                    SellerLeaderboard(myProfileId: profile.sId),
                     SizedBox(height: 25.h),
 
                     // ------------- MY WALLET -------------

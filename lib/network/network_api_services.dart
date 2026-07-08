@@ -152,13 +152,17 @@ class NetworkApiServices extends BaseApiServices {
   /// the JWT force-logout that would otherwise fire on an expired token).
   /// When online, hits the network, updates cache on success, falls back to
   /// cache on failure. Returns the original error only if no cache exists.
-  Future<Map<String, dynamic>> cachedGetApi(String cacheKey, String url) async {
+  Future<Map<String, dynamic>> cachedGetApi(
+    String cacheKey,
+    String url, {
+    bool suppressErrorToast = false,
+  }) async {
     if (!ConnectivityProvider.hasNetworkInterface) {
       final cached = await CacheService.getData(cacheKey);
       if (cached != null) return Map<String, dynamic>.from(cached as Map);
       return {'code_status': false, 'message': 'No internet connection'};
     }
-    final response = await getApi(url);
+    final response = await getApi(url, suppressErrorToast: suppressErrorToast);
     if (response['code_status'] != false) {
       await CacheService.save(cacheKey, response);
       return response;
