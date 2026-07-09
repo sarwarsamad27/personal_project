@@ -18,10 +18,26 @@ class TransactionDetailScreen extends StatelessWidget {
     // Clean up status label
     final status = _prettyStatus(tx.status ?? '');
 
-    // Order reference stored in meta.name
-    final orderRef = tx.meta?.name?.trim() ?? '';
-    // Account/phone stored in meta.phone (for withdrawal transactions)
-    final acctRef = tx.meta?.phone?.trim() ?? '';
+    final meta = tx.meta;
+    final bankName = meta?.bankName?.trim() ?? '';
+    final accountNumber = meta?.accountNumber?.trim() ?? '';
+    final iban = meta?.iban?.trim() ?? '';
+    final accountTitle = meta?.name?.trim() ?? '';
+    final phone = meta?.phone?.trim() ?? '';
+
+    // Bank withdrawal: bankName/accountNumber/iban are only ever set when
+    // the seller withdrew to a bank account (see WalletTransaction.meta on
+    // the backend) — meta.phone in that case is the seller's own account
+    // phone used for OTP, not a payout number, so it's deliberately not
+    // shown here.
+    final isBankWithdrawal =
+        isDebit && (bankName.isNotEmpty || accountNumber.isNotEmpty || iban.isNotEmpty);
+    // Mobile-wallet withdrawal (JazzCash/Easypaisa): phone is the real
+    // payout number here.
+    final isMobileWithdrawal = isDebit && !isBankWithdrawal && phone.isNotEmpty;
+    // Non-withdrawal transactions (credits, refunds, etc.) reuse meta.name
+    // as a free-text order reference/note.
+    final orderRef = !isDebit ? accountTitle : '';
 
     return Scaffold(
       appBar: AppBar(
@@ -48,8 +64,21 @@ class TransactionDetailScreen extends StatelessWidget {
               // Order reference (if available)
               if (orderRef.isNotEmpty) _row("Order ID", orderRef),
 
-              // Account number (if available — for JazzCash/Easypaisa withdrawals)
-              if (acctRef.isNotEmpty) _row("Account", acctRef),
+              // Bank withdrawal — show every payout detail the seller submitted
+              if (isBankWithdrawal) ...[
+                if (accountTitle.isNotEmpty)
+                  _row("Account Title", accountTitle),
+                if (bankName.isNotEmpty) _row("Bank Name", bankName),
+                if (accountNumber.isNotEmpty)
+                  _row("Account Number", accountNumber),
+                if (iban.isNotEmpty) _row("IBAN", iban),
+              ]
+              // JazzCash / Easypaisa withdrawal — phone is the real payout number here
+              else if (isMobileWithdrawal) ...[
+                if (accountTitle.isNotEmpty)
+                  _row("Account Title", accountTitle),
+                _row("Mobile Number", phone),
+              ],
             ],
           ),
         ),

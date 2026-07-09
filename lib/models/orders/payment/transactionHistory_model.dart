@@ -79,18 +79,33 @@ class Transactions {
 class Meta {
   String? name;
   String? phone;
+  String? bankName;
+  String? accountNumber;
+  String? iban;
 
-  Meta({this.name, this.phone});
+  Meta({
+    this.name,
+    this.phone,
+    this.bankName,
+    this.accountNumber,
+    this.iban,
+  });
 
   Meta.fromJson(Map<String, dynamic> json) {
     name = json['name'];
     phone = json['phone'];
+    bankName = json['bankName'];
+    accountNumber = json['accountNumber'];
+    iban = json['iban'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['name'] = this.name;
     data['phone'] = this.phone;
+    data['bankName'] = this.bankName;
+    data['accountNumber'] = this.accountNumber;
+    data['iban'] = this.iban;
     return data;
   }
 }
