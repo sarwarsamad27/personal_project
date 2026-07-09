@@ -17,6 +17,9 @@ class ProfileFetchProvider with ChangeNotifier {
   final GetProfileRepository repository = GetProfileRepository();
 
   Future<void> getProfileOnce({bool refresh = false}) async {
+    // A rebuild mid-fetch (e.g. from fast navigation) would otherwise fire a
+    // second identical request in parallel — skip while one's in flight.
+    if (_loading) return;
     // ❗ refresh = true => force re-fetch
     if (_fetched && !refresh) return;
 

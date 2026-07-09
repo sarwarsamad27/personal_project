@@ -10,6 +10,7 @@ class GetLeaderboardProvider with ChangeNotifier {
   GetLeaderboardModel? leaderboardData;
 
   Future<void> getLeaderboardOnce({bool forceRefresh = false}) async {
+    if (isLoading) return;
     if (isFetched && !forceRefresh) return;
 
     try {

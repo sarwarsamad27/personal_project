@@ -4,12 +4,30 @@ import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/appNav.dart';
 
 class AppToast {
+  // Screens along a fast navigation path each fire their own fetch-once
+  // network call; on a slow/offline connection several of them time out
+  // within moments of each other and would otherwise stack up as repeated
+  // identical toasts. Suppress an exact repeat of the same message while
+  // one is still likely visible.
+  static String? _lastMessage;
+  static DateTime? _lastShownAt;
+  static const _dedupeWindow = Duration(seconds: 4);
+
   static void _showFlushbar({
     required String message,
     required Color color,
     required IconData icon,
     String? title,
   }) {
+    final now = DateTime.now();
+    if (_lastMessage == message &&
+        _lastShownAt != null &&
+        now.difference(_lastShownAt!) < _dedupeWindow) {
+      return;
+    }
+    _lastMessage = message;
+    _lastShownAt = now;
+
     final context = appNavKey.currentContext;
     if (context == null) return;
 

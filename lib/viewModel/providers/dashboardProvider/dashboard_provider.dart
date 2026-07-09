@@ -17,6 +17,7 @@ class DashboardProvider with ChangeNotifier {
   final GetDashboardRepository repository = GetDashboardRepository();
 
   Future<void> getDashboardDataOnce({bool refresh = false}) async {
+    if (_loading) return;
     if (_fetched && !refresh) return;
 
     _loading = true;
