@@ -136,6 +136,50 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:900853727644:android:52a607ef05b95ccf8b4859",
+        "android_client_info": {
+          "package_name": "pk.shookoo.store"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "900853727644-opiv8rf13an51pabq9jsu982cbd44t78.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "pk.shookoo.store",
+            "certificate_hash": "9b189e53a14c1a5c66edd2b1a31184c7e436c31b"
+          }
+        },
+        {
+          "client_id": "900853727644-a6m3k2sf0bdumpfkvm7h2hhlal4ct76i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCh4BuOoOKGQkjWrzcGWFryidlkFuO-2sk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "900853727644-a6m3k2sf0bdumpfkvm7h2hhlal4ct76i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "900853727644-nmmd1q2bb7tamk9dqdm5o76t8inhh4e5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.adminSide"
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"

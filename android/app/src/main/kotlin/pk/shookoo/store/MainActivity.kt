@@ -1,4 +1,4 @@
-package com.example.new_brand
+package pk.shookoo.store
 
 import io.flutter.embedding.android.FlutterActivity
 
