@@ -29,7 +29,9 @@ class OrderScreen extends StatefulWidget {
 
 class _OrderScreenState extends State<OrderScreen>
     with SingleTickerProviderStateMixin {
-  final ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController(); // pending tab
+  final ScrollController _dispatchedScrollController = ScrollController();
+  final ScrollController _cancelledScrollController = ScrollController();
   final Set<String> _processingOrders = {};
 
   // ── Bulk selection state ──
@@ -46,11 +48,32 @@ class _OrderScreenState extends State<OrderScreen>
     _setupSocket();
     _scrollController.addListener(() {
       final provider = Provider.of<GetMyOrdersProvider>(context, listen: false);
-      if (_scrollController.position.pixels ==
-              _scrollController.position.maxScrollExtent &&
+      if (_isNearBottom(_scrollController) &&
           !provider.loading &&
           !provider.loadMore) {
         provider.fetchOrders(isLoadMore: true);
+      }
+    });
+    _dispatchedScrollController.addListener(() {
+      final provider = Provider.of<GetDispatchedOrderProvider>(
+        context,
+        listen: false,
+      );
+      if (_isNearBottom(_dispatchedScrollController) &&
+          !provider.loading &&
+          !provider.loadMore) {
+        provider.fetchDispatchedOrders(isLoadMore: true);
+      }
+    });
+    _cancelledScrollController.addListener(() {
+      final provider = Provider.of<GetCancelledOrdersProvider>(
+        context,
+        listen: false,
+      );
+      if (_isNearBottom(_cancelledScrollController) &&
+          !provider.loading &&
+          !provider.loadMore) {
+        provider.fetchCancelledOrders(isLoadMore: true);
       }
     });
   }
@@ -58,7 +81,19 @@ class _OrderScreenState extends State<OrderScreen>
   @override
   void dispose() {
     _scrollController.dispose();
+    _dispatchedScrollController.dispose();
+    _cancelledScrollController.dispose();
     super.dispose();
+  }
+
+  // Exact `pixels == maxScrollExtent` equality is unreliable with
+  // bouncing/overscroll physics — the position can overshoot or land a
+  // fraction short of the max and never match exactly, silently breaking
+  // load-more. A "close enough" threshold triggers reliably instead.
+  bool _isNearBottom(ScrollController controller) {
+    if (!controller.hasClients) return false;
+    final position = controller.position;
+    return position.pixels >= position.maxScrollExtent - 200;
   }
 
   void _setupSocket() async {
@@ -270,7 +305,8 @@ class _OrderScreenState extends State<OrderScreen>
     final Widget listWidget = _buildOrderList(
       list: list,
       isPendingTab: true,
-      pendingProvider: provider,
+      loadMore: provider.loadMore,
+      onRefresh: () => provider.fetchOrders(isRefresh: true),
       isApiLoading: provider.loading,
       scrollController: _scrollController,
     );
@@ -454,9 +490,10 @@ class _OrderScreenState extends State<OrderScreen>
     return _buildOrderList(
       list: list,
       isPendingTab: false,
-      pendingProvider: null,
+      loadMore: provider.loadMore,
+      onRefresh: () => provider.fetchDispatchedOrders(isRefresh: true),
       isApiLoading: provider.loading,
-      scrollController: null,
+      scrollController: _dispatchedScrollController,
     );
   }
 
@@ -523,9 +560,21 @@ class _OrderScreenState extends State<OrderScreen>
       onRefresh: () => provider.fetchCancelledOrders(isRefresh: true),
       child: ListView.separated(
         padding: EdgeInsets.only(top: 4.h, bottom: 60.h),
-        itemCount: list.length,
+        controller: _cancelledScrollController,
+        itemCount: list.length + (provider.loadMore ? 1 : 0),
         separatorBuilder: (_, __) => SizedBox(height: 14.h),
         itemBuilder: (context, index) {
+          if (index == list.length && provider.loadMore) {
+            return Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.h),
+              child: const Center(
+                child: SpinKitThreeBounce(
+                  color: AppColor.whiteColor,
+                  size: 24,
+                ),
+              ),
+            );
+          }
           final order = list[index];
           final products = (order.products ?? []);
           final firstProduct = products.isNotEmpty ? products.first : null;
@@ -775,7 +824,8 @@ class _OrderScreenState extends State<OrderScreen>
   Widget _buildOrderList({
     required List list,
     required bool isPendingTab,
-    GetMyOrdersProvider? pendingProvider,
+    bool loadMore = false,
+    required Future<void> Function() onRefresh,
     bool isApiLoading = false,
     ScrollController? scrollController,
   }) {
@@ -788,16 +838,7 @@ class _OrderScreenState extends State<OrderScreen>
     return RefreshIndicator(
       color: Colors.white,
       backgroundColor: AppColor.primaryColor,
-      onRefresh: () async {
-        if (isPendingTab && pendingProvider != null) {
-          await pendingProvider.fetchOrders(isRefresh: true);
-        } else {
-          await Provider.of<GetDispatchedOrderProvider>(
-            context,
-            listen: false,
-          ).fetchDispatchedOrders(isRefresh: true);
-        }
-      },
+      onRefresh: onRefresh,
       child: list.isEmpty
           ? _buildEmptyState(isPendingTab)
           : ListView.separated(
@@ -806,12 +847,10 @@ class _OrderScreenState extends State<OrderScreen>
                 bottom: _selectionMode && isPendingTab ? 100.h : 60.h,
               ),
               controller: scrollController,
-              itemCount:
-                  list.length + ((pendingProvider?.loadMore ?? false) ? 1 : 0),
+              itemCount: list.length + (loadMore ? 1 : 0),
               separatorBuilder: (_, __) => SizedBox(height: 14.h),
               itemBuilder: (context, index) {
-                if (index == list.length &&
-                    (pendingProvider?.loadMore ?? false)) {
+                if (index == list.length && loadMore) {
                   return Padding(
                     padding: EdgeInsets.symmetric(vertical: 16.h),
                     child: const Center(

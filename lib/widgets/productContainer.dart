@@ -50,7 +50,47 @@ class CategoryTile extends StatelessWidget {
                 children: [
                   Positioned.fill(
                     child: image.startsWith('http')
-                        ? Image.network(image, fit: BoxFit.cover)
+                        ? Image.network(
+                            image,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: Colors.grey.shade200,
+                                child: Center(
+                                  child: SizedBox(
+                                    height: 24.h,
+                                    width: 24.h,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColor.primaryColor,
+                                      value:
+                                          loadingProgress
+                                                  .expectedTotalBytes !=
+                                              null
+                                          ? loadingProgress
+                                                    .cumulativeBytesLoaded /
+                                                loadingProgress
+                                                    .expectedTotalBytes!
+                                          : null,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey.shade200,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.broken_image_outlined,
+                                    color: Colors.grey.shade400,
+                                    size: 32.sp,
+                                  ),
+                                ),
+                              );
+                            },
+                          )
                         : Image.file(File(image), fit: BoxFit.cover),
                   ),
                   // gradient overlay for effect

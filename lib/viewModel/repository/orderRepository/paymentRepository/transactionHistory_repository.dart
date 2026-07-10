@@ -8,9 +8,12 @@ class GetTransactionRepository {
   final NetworkApiServices apiServices = NetworkApiServices();
   final String apiUrl = Global.TransactionHistory;
 
-  Future<TransactionHistoryModel> getTransaction() async {
+  Future<TransactionHistoryModel> getTransaction({
+    int page = 1,
+    int limit = 20,
+  }) async {
     final response = await apiServices.getApi(
-      apiUrl,
+      "$apiUrl?page=$page&limit=$limit",
     );
     log("Get transaction Response: $response");
     return TransactionHistoryModel.fromJson(response);

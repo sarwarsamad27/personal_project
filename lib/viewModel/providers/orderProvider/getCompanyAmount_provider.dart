@@ -113,7 +113,9 @@ class CompanyWalletProvider with ChangeNotifier {
         await fetchCompanyWallet();
 
         /// 🔥 refresh transaction history
-        await context.read<TransactionHistoryProvider>().fetchTransactions();
+        await context.read<TransactionHistoryProvider>().fetchTransactions(
+          refresh: true,
+        );
 
         return true;
       }
@@ -173,7 +175,9 @@ class CompanyWalletProvider with ChangeNotifier {
           await fetchCompanyWallet();
           try {
             if (context != null && context.mounted) {
-              context.read<TransactionHistoryProvider>().fetchTransactions();
+              context.read<TransactionHistoryProvider>().fetchTransactions(
+                refresh: true,
+              );
             }
           } catch (_) {}
         }

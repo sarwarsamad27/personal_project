@@ -15,6 +15,8 @@ class GetReturnedorderScreen extends StatefulWidget {
 }
 
 class _GetReturnedorderScreenState extends State<GetReturnedorderScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -24,6 +26,23 @@ class _GetReturnedorderScreenState extends State<GetReturnedorderScreen> {
         provider.fetchReturnedOrders(refresh: false);
       }
     });
+    _scrollController.addListener(() {
+      if (!_scrollController.hasClients) return;
+      final position = _scrollController.position;
+      final nearBottom = position.pixels >= position.maxScrollExtent - 200;
+      if (!nearBottom) return;
+
+      final provider = context.read<GetReturnedOrderProvider>();
+      if (!provider.isLoading && provider.hasMore) {
+        provider.fetchReturnedOrders();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   String _formatDate(String? raw) {
@@ -69,10 +88,23 @@ class _GetReturnedorderScreenState extends State<GetReturnedorderScreen> {
           onRefresh: () => provider.fetchReturnedOrders(refresh: true),
           color: AppColor.primaryColor,
           child: ListView.separated(
-            itemCount: provider.orders.length,
+            controller: _scrollController,
+            itemCount: provider.orders.length + (provider.hasMore ? 1 : 0),
             separatorBuilder: (_, __) =>
                 Divider(color: Colors.white24, height: 15.h),
             itemBuilder: (context, index) {
+              if (index == provider.orders.length) {
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  child: Center(
+                    child: SpinKitThreeBounce(
+                      color: AppColor.whiteColor,
+                      size: 24,
+                    ),
+                  ),
+                );
+              }
+
               final order = provider.orders[index];
 
               return GestureDetector(

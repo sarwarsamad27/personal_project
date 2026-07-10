@@ -7,20 +7,51 @@ class GetCancelledOrdersProvider extends ChangeNotifier {
 
   GetMyPendingOrders? model;
   bool loading = false;
+  bool loadMore = false;
+
+  int page = 1;
+  final int limit = 20;
 
   List<Orders> get orders => model?.orders ?? [];
 
-  Future<void> fetchCancelledOrders({bool isRefresh = false}) async {
-    if (loading) return;
-    if (isRefresh) model = null;
-    loading = true;
+  Future<void> fetchCancelledOrders({
+    bool isLoadMore = false,
+    bool isRefresh = false,
+  }) async {
+    if (isLoadMore && loadMore) return;
+    if (!isLoadMore && loading) return;
+
+    if (isRefresh) {
+      page = 1;
+      model = null;
+    }
+
+    isLoadMore ? loadMore = true : loading = true;
     notifyListeners();
+
     try {
-      model = await _repo.getCancelledOrders();
+      final response = await _repo.getCancelledOrders(page: page, limit: limit);
+
+      if (response.orders == null || response.orders!.isEmpty) {
+        loading = false;
+        loadMore = false;
+        notifyListeners();
+        return;
+      }
+
+      if (isLoadMore && model != null) {
+        model!.orders!.addAll(response.orders!);
+      } else {
+        model = response;
+      }
+
+      page++;
     } catch (e) {
       debugPrint('GetCancelledOrdersProvider error: $e');
     }
+
     loading = false;
+    loadMore = false;
     notifyListeners();
   }
 

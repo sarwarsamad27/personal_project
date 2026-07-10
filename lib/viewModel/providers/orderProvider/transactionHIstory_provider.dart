@@ -5,29 +5,41 @@ import 'package:new_brand/viewModel/repository/orderRepository/paymentRepository
 class TransactionHistoryProvider with ChangeNotifier {
   final GetTransactionRepository _repo = GetTransactionRepository();
 
-  bool _isLoading = false;
-  TransactionHistoryModel? _historyData;
-  String? _error;
+  bool isLoading = false;
+  String? error;
 
-  bool get isLoading => _isLoading;
-  TransactionHistoryModel? get historyData => _historyData;
-  String? get error => _error;
+  List<Transactions> transactions = [];
+  int page = 1;
+  bool hasMore = true;
 
-  List<Transactions> get transactions => _historyData?.transactions ?? [];
+  Future<void> fetchTransactions({bool refresh = false}) async {
+    if (isLoading) return;
 
-  Future<void> fetchTransactions() async {
-    _isLoading = true;
-    _error = null;
+    if (refresh) {
+      page = 1;
+      transactions.clear();
+      hasMore = true;
+    }
+
+    isLoading = true;
+    error = null;
     notifyListeners();
 
     try {
-      _historyData = await _repo.getTransaction();
+      final res = await _repo.getTransaction(page: page);
+
+      if (res.transactions != null && res.transactions!.isNotEmpty) {
+        transactions.addAll(res.transactions!);
+        page++;
+      } else {
+        hasMore = false;
+      }
     } catch (e) {
-      _error = e.toString();
+      error = e.toString();
       debugPrint("Transaction Error: $e");
-    } finally {
-      _isLoading = false;
-      notifyListeners();
     }
+
+    isLoading = false;
+    notifyListeners();
   }
 }

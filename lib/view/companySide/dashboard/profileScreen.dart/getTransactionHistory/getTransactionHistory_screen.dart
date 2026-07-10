@@ -17,6 +17,8 @@ class TransactionHistoryScreen extends StatefulWidget {
 }
 
 class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -26,6 +28,23 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         provider.fetchTransactions();
       }
     });
+    _scrollController.addListener(() {
+      if (!_scrollController.hasClients) return;
+      final position = _scrollController.position;
+      final nearBottom = position.pixels >= position.maxScrollExtent - 200;
+      if (!nearBottom) return;
+
+      final provider = context.read<TransactionHistoryProvider>();
+      if (!provider.isLoading && provider.hasMore) {
+        provider.fetchTransactions();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   // ---------- Helpers (Premium Mapping) ----------
@@ -170,7 +189,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   Widget build(BuildContext context) {
     return Consumer<TransactionHistoryProvider>(
       builder: (context, provider, _) {
-        if (provider.isLoading) {
+        if (provider.isLoading && provider.transactions.isEmpty) {
           return Center(
             child: SpinKitThreeBounce(color: AppColor.whiteColor, size: 30.0),
           );
@@ -196,14 +215,28 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         }
 
         return RefreshIndicator(
-          onRefresh: () => provider.fetchTransactions(),
+          onRefresh: () => provider.fetchTransactions(refresh: true),
           color: AppColor.primaryColor,
           child: ListView.separated(
+            controller: _scrollController,
             padding: EdgeInsets.symmetric(vertical: 10.h),
-            itemCount: provider.transactions.length,
+            itemCount:
+                provider.transactions.length + (provider.hasMore ? 1 : 0),
             separatorBuilder: (_, __) =>
                 Divider(color: Colors.white24, height: 18.h),
             itemBuilder: (context, index) {
+              if (index == provider.transactions.length) {
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  child: Center(
+                    child: SpinKitThreeBounce(
+                      color: AppColor.whiteColor,
+                      size: 24,
+                    ),
+                  ),
+                );
+              }
+
               final tx = provider.transactions[index];
 
               final icon = _statusIcon(tx);

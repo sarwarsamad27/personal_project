@@ -103,7 +103,20 @@ class ProductCard extends StatelessWidget {
                               ),
                             ),
                           )
-                        : Image.file(File(imageUrl), fit: BoxFit.cover),
+                        : Image.file(
+                            File(imageUrl),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                              color: Colors.grey[100],
+                              alignment: Alignment.center,
+                              child: Icon(
+                                Icons.broken_image_outlined,
+                                color: Colors.grey[500],
+                                size: 26.sp,
+                              ),
+                            ),
+                          ),
                   ),
                 ),
                 Positioned.fill(

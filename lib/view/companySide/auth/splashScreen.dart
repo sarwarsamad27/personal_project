@@ -26,6 +26,16 @@ class _SplashScreenState extends State<SplashScreen>
 
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  static const List<String> _loadingMessages = [
+    "Checking your session...",
+    "Loading your store...",
+    "Getting things ready...",
+    "Almost there...",
+  ];
+  int _messageIndex = 0;
+  Timer? _messageTimer;
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +59,13 @@ class _SplashScreenState extends State<SplashScreen>
             curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
           ),
         );
+
+    _messageTimer = Timer.periodic(const Duration(milliseconds: 1600), (_) {
+      if (!mounted) return;
+      setState(() {
+        _messageIndex = (_messageIndex + 1) % _loadingMessages.length;
+      });
+    });
 
     checkLoginStatus();
   }
@@ -179,6 +196,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     _controller.dispose();
+    _messageTimer?.cancel();
     super.dispose();
   }
 
@@ -392,10 +410,12 @@ class _SplashScreenState extends State<SplashScreen>
                             ),
                             SizedBox(height: 28.h),
 
-                            // Gold loading bar
+                            // Gold indeterminate loading bar (smooth sliding
+                            // segment, no jump-reset like a filled progress bar)
                             Container(
                               width: 140.w,
                               height: 3,
+                              clipBehavior: Clip.hardEdge,
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(10),
@@ -403,22 +423,56 @@ class _SplashScreenState extends State<SplashScreen>
                               child: AnimatedBuilder(
                                 animation: _controller,
                                 builder: (context, _) {
-                                  return FractionallySizedBox(
-                                    alignment: Alignment.centerLeft,
-                                    widthFactor: _controller.value,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10),
-                                        gradient: const LinearGradient(
-                                          colors: [
-                                            Color(0xFFC9A84C),
-                                            Color(0xFFE8C96B),
-                                          ],
+                                  final t = _controller.value;
+                                  return Align(
+                                    alignment: Alignment(-1.6 + 3.2 * t, 0),
+                                    child: FractionallySizedBox(
+                                      widthFactor: 0.35,
+                                      child: Container(
+                                        height: 3,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Color(0xFFC9A84C),
+                                              Color(0xFFE8C96B),
+                                              Color(0xFFC9A84C),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),
                                   );
                                 },
+                              ),
+                            ),
+
+                            SizedBox(height: 14.h),
+
+                            // Rotating status message so the wait feels alive
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 400),
+                              transitionBuilder: (child, animation) =>
+                                  FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0, 0.2),
+                                    end: Offset.zero,
+                                  ).animate(animation),
+                                  child: child,
+                                ),
+                              ),
+                              child: Text(
+                                _loadingMessages[_messageIndex],
+                                key: ValueKey<int>(_messageIndex),
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: Colors.white.withOpacity(0.55),
+                                  letterSpacing: 0.8,
+                                ),
                               ),
                             ),
 

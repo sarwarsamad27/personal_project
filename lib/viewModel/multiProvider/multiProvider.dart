@@ -17,6 +17,7 @@ import 'package:new_brand/viewModel/providers/courierProvider/leopards_tracking_
 import 'package:new_brand/viewModel/providers/dashboardProvider/companySaleChart_provider.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
 import 'package:new_brand/viewModel/providers/leaderboardProvider/getLeaderboard_provider.dart';
+import 'package:new_brand/viewModel/providers/sellerAnnouncementProvider/getSellerAnnouncement_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/acceptOrder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDeliveredOrder_provider.dart';
@@ -98,6 +99,7 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => GetCancelledOrdersProvider()),
         ChangeNotifierProvider(create: (_) => AiAssistantProvider()),
         ChangeNotifierProvider(create: (_) => GetLeaderboardProvider()),
+        ChangeNotifierProvider(create: (_) => GetSellerAnnouncementProvider()),
         ChangeNotifierProvider(
           create: (ctx) => SyncCoordinator(
             categoryProvider: ctx.read<CreateCategoryProvider>(),

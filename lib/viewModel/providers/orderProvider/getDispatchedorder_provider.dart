@@ -15,27 +15,30 @@ class GetDispatchedOrderProvider extends ChangeNotifier {
 
   // FETCH + PAGINATION
   Future<void> fetchDispatchedOrders({bool isLoadMore = false, bool isRefresh = false}) async {
-    if (loading || loadMore) return;
+    if (isLoadMore && loadMore) return;
+    if (!isLoadMore && loading) return;
 
     if (isRefresh) {
       page = 1;
       dispatchedModel = null;
-      notifyListeners();
     }
 
-    if (isLoadMore) {
-      loadMore = true;
-      notifyListeners();
-    } else {
-      loading = true;
-      notifyListeners();
-    }
+    isLoadMore ? loadMore = true : loading = true;
+    notifyListeners();
 
     try {
-      final response = await repo.getDispatchedOrder();
+      final response = await repo.getDispatchedOrder(page: page, limit: limit);
+
+      if (response.orders == null || response.orders!.isEmpty) {
+        // No more pages — don't advance page so a later retry re-checks the same one
+        loading = false;
+        loadMore = false;
+        notifyListeners();
+        return;
+      }
 
       if (isLoadMore && dispatchedModel != null) {
-        dispatchedModel!.orders!.addAll(response.orders ?? []);
+        dispatchedModel!.orders!.addAll(response.orders!);
       } else {
         dispatchedModel = response;
       }

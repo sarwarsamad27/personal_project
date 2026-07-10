@@ -5,6 +5,7 @@ import 'package:lottie/lottie.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/view/companySide/dashboard/dashboardScreen/widget/statesScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/notificationScreen/company_notification_screen.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/sellerAnnouncementCarousel.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/companySaleChart_provider.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
 import 'package:new_brand/viewModel/providers/notificationProvider/company_notification_provider.dart';
@@ -501,6 +502,8 @@ class _HomeDashboardState extends State<HomeDashboard>
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
                   child: Column(
                     children: [
+                      SizedBox(height: 20.h),
+                      const SellerAnnouncementCarousel(),
                       SizedBox(height: 20.h),
                       StatsView(),
                       SizedBox(height: 90.h),
