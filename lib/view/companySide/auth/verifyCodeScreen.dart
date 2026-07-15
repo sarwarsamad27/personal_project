@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/auth/updatepasswordScreen.dart';
+import 'package:new_brand/viewModel/providers/AuthProvider/forgotPassword_provider.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/verifyCode_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
@@ -10,11 +11,36 @@ import 'package:new_brand/widgets/customContainer.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:provider/provider.dart';
 
-class VerifyCodeScreen extends StatelessWidget {
+class VerifyCodeScreen extends StatefulWidget {
   final String email;
-  VerifyCodeScreen({super.key, required this.email});
+  const VerifyCodeScreen({super.key, required this.email});
 
+  @override
+  State<VerifyCodeScreen> createState() => _VerifyCodeScreenState();
+}
+
+class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   final TextEditingController otpController = TextEditingController();
+  bool resending = false;
+
+  Future<void> _resendCode() async {
+    setState(() => resending = true);
+
+    final provider = Provider.of<ForgotProvider>(context, listen: false);
+    await provider.forgotPassword(email: widget.email);
+
+    if (!mounted) return;
+    setState(() => resending = false);
+
+    if (provider.forgotData != null &&
+        provider.forgotData!.message == "Verification code sent to your email") {
+      AppToast.success(provider.forgotData!.message!);
+    } else {
+      AppToast.error(
+        provider.errorMessage ?? provider.forgotData?.message ?? "Failed to resend code",
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,15 +130,15 @@ class VerifyCodeScreen extends StatelessWidget {
                             ),
                           ),
                           GestureDetector(
-                            onTap: () {
-                              // resend code logic
-                            },
+                            onTap: resending ? null : _resendCode,
                             child: Text(
-                              "Resend",
+                              resending ? "Sending..." : "Resend",
                               style: TextStyle(
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.bold,
-                                color: AppColor.primaryColor,
+                                color: resending
+                                    ? Colors.grey
+                                    : AppColor.primaryColor,
                               ),
                             ),
                           ),
@@ -126,7 +152,7 @@ class VerifyCodeScreen extends StatelessWidget {
                             isLoading: provider.loading,
                             onTap: () async {
                               await provider.verifyCode(
-                                email: email,
+                                email: widget.email,
                                 verificationCode: otpController.text.trim(),
                               );
 
@@ -138,8 +164,8 @@ class VerifyCodeScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
-                                        UpdatePasswordScreen(email: email),
+                                    builder: (_) => UpdatePasswordScreen(
+                                        email: widget.email),
                                   ),
                                 );
                               } else {
