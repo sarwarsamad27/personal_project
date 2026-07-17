@@ -10,6 +10,13 @@ class AllField extends StatelessWidget {
 
   AllField({super.key, required this.profile});
 
+  String get _fullAddress {
+    final address = profile.address?.trim() ?? "";
+    final city = profile.leopardsCityName?.trim() ?? "";
+    if (address.isEmpty) return "";
+    return city.isEmpty ? address : "$address, $city";
+  }
+
   @override
   Widget build(BuildContext context) {
     return CustomAppContainer(
@@ -37,7 +44,7 @@ class AllField extends StatelessWidget {
           SizedBox(height: 15.h),
 
           CustomTextField(
-            controller: TextEditingController(text: profile.address ?? ""),
+            controller: TextEditingController(text: _fullAddress),
             headerText: "Address",
             readOnly: true,
             maxLines: null,

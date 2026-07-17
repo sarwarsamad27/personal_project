@@ -1,15 +1,37 @@
 class GetLeaderboardModel {
   String? message;
   int? badgeThreshold;
+  int? page;
+  int? limit;
+  int? totalSellers;
+  int? totalPages;
   List<SellerRank>? leaderboard;
 
-  GetLeaderboardModel({this.message, this.badgeThreshold, this.leaderboard});
+  GetLeaderboardModel({
+    this.message,
+    this.badgeThreshold,
+    this.page,
+    this.limit,
+    this.totalSellers,
+    this.totalPages,
+    this.leaderboard,
+  });
 
   GetLeaderboardModel.fromJson(Map<String, dynamic> json) {
     message = json['message'];
     badgeThreshold = json['badgeThreshold'] == null
         ? null
         : int.tryParse(json['badgeThreshold'].toString());
+    page = json['page'] == null ? null : int.tryParse(json['page'].toString());
+    limit = json['limit'] == null
+        ? null
+        : int.tryParse(json['limit'].toString());
+    totalSellers = json['totalSellers'] == null
+        ? null
+        : int.tryParse(json['totalSellers'].toString());
+    totalPages = json['totalPages'] == null
+        ? null
+        : int.tryParse(json['totalPages'].toString());
     if (json['leaderboard'] != null) {
       leaderboard = <SellerRank>[];
       json['leaderboard'].forEach((v) {
@@ -22,6 +44,10 @@ class GetLeaderboardModel {
     final data = <String, dynamic>{};
     data['message'] = message;
     data['badgeThreshold'] = badgeThreshold;
+    data['page'] = page;
+    data['limit'] = limit;
+    data['totalSellers'] = totalSellers;
+    data['totalPages'] = totalPages;
     if (leaderboard != null) {
       data['leaderboard'] = leaderboard!.map((v) => v.toJson()).toList();
     }

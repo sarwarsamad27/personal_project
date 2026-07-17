@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/models/leaderboard/getLeaderboard_model.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/sellerLeaderboardFullScreen.dart';
 import 'package:new_brand/viewModel/providers/leaderboardProvider/getLeaderboard_provider.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:provider/provider.dart';
@@ -42,12 +43,41 @@ class SellerLeaderboard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(
-                  "🏆 Top Sellers",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    "🏆 Top Sellers",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          SellerLeaderboardFullScreen(myProfileId: myProfileId),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        "See More",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(width: 2.w),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: Colors.white,
+                        size: 11.sp,
+                      ),
+                    ],
                   ),
                 ),
               ],

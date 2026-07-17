@@ -148,6 +148,22 @@ class NetworkApiServices extends BaseApiServices {
     }
   }
 
+  // Stable per-account suffix so every cachedGetApi entry is scoped to
+  // whoever's logged in — without this, the same disk cache key served
+  // whichever seller was cached last, leaking their profile/orders/etc.
+  // into a different account on the same device after a logout+switch.
+  Future<String> _currentUserCacheSuffix() async {
+    try {
+      final token = await LocalStorage.getToken();
+      if (token == null || token.isEmpty) return 'anon';
+      final decoded = JwtDecoder.decode(token);
+      final id = decoded['id'] ?? decoded['_id'] ?? decoded['email'];
+      return id?.toString() ?? 'anon';
+    } catch (_) {
+      return 'anon';
+    }
+  }
+
   /// Cache-first GET. When offline, returns cached data immediately (avoids
   /// the JWT force-logout that would otherwise fire on an expired token).
   /// When online, hits the network, updates cache on success, falls back to
@@ -157,17 +173,19 @@ class NetworkApiServices extends BaseApiServices {
     String url, {
     bool suppressErrorToast = false,
   }) async {
+    final scopedKey = '${cacheKey}_${await _currentUserCacheSuffix()}';
+
     if (!ConnectivityProvider.hasNetworkInterface) {
-      final cached = await CacheService.getData(cacheKey);
+      final cached = await CacheService.getData(scopedKey);
       if (cached != null) return Map<String, dynamic>.from(cached as Map);
       return {'code_status': false, 'message': 'No internet connection'};
     }
     final response = await getApi(url, suppressErrorToast: suppressErrorToast);
     if (response['code_status'] != false) {
-      await CacheService.save(cacheKey, response);
+      await CacheService.save(scopedKey, response);
       return response;
     }
-    final cached = await CacheService.getData(cacheKey);
+    final cached = await CacheService.getData(scopedKey);
     if (cached != null) return Map<String, dynamic>.from(cached as Map);
     return response;
   }
