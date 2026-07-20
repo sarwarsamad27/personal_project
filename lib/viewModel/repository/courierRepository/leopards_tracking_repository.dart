@@ -33,4 +33,21 @@ class LeopardsTrackingRepository {
       return {"status": 0, "error": e.toString()};
     }
   }
+
+  // Fired silently on app open — reconciles Pending/Dispatched orders with
+  // Leopards in case a webhook was missed. Errors are swallowed (suppressErrorToast)
+  // since this runs in the background with no UI of its own; the resulting
+  // status changes surface via the "order_status_updated" socket event instead.
+  Future<bool> syncAllOrders() async {
+    try {
+      final response = await apiService.getApi(
+        Global.leopardsSyncAllOrders,
+        suppressErrorToast: true,
+      );
+      return response != null && response['status'] == 1;
+    } catch (e) {
+      print("❌ syncAllOrders Error: $e");
+      return false;
+    }
+  }
 }

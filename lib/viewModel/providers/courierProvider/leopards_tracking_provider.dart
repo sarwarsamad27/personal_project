@@ -43,4 +43,13 @@ class LeopardsTrackingProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // Silent, no loading state / no UI of its own — see repository doc.
+  Future<void> syncAllOrdersOnOpen() async {
+    try {
+      await _repository.syncAllOrders();
+    } catch (e) {
+      print("❌ syncAllOrdersOnOpen Error: $e");
+    }
+  }
 }

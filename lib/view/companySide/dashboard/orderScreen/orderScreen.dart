@@ -14,6 +14,7 @@ import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_p
 import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/pendingToCancel_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/pendingToDispatched_provider.dart';
+import 'package:new_brand/viewModel/providers/courierProvider/leopards_tracking_provider.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/paymentTabbar.dart';
 import 'package:provider/provider.dart';
@@ -46,6 +47,18 @@ class _OrderScreenState extends State<OrderScreen>
       Provider.of<GetMyOrdersProvider>(context, listen: false).fetchOrders();
     });
     _setupSocket();
+    // Fallback for when the Leopards webhook doesn't fire: reconcile every
+    // Pending/Dispatched order that has a tracking number as soon as the
+    // screen opens. The backend applies whatever status change comes back
+    // and emits "order_status_updated" (same event the webhook emits), so
+    // _setupSocket's listener below moves the order to the right tab —
+    // no separate handling needed here.
+    Future.microtask(() {
+      Provider.of<LeopardsTrackingProvider>(
+        context,
+        listen: false,
+      ).syncAllOrdersOnOpen();
+    });
     _scrollController.addListener(() {
       final provider = Provider.of<GetMyOrdersProvider>(context, listen: false);
       if (_isNearBottom(_scrollController) &&
@@ -113,7 +126,13 @@ class _OrderScreenState extends State<OrderScreen>
           listen: false,
         );
         ordersProvider.updateOrderInList(orderId, status: status);
-        if (status == 'Dispatched') {
+        if (status == 'Dispatched' ||
+            status == 'Delivered' ||
+            status == 'Returned') {
+          // Covers both directions: a Pending order newly reaching this
+          // screen's Dispatched tab, and a Dispatched order leaving it
+          // (Delivered/Returned) — the dispatched list is always re-fetched
+          // from the server, which only ever returns status == "Dispatched".
           Provider.of<GetDispatchedOrderProvider>(
             context,
             listen: false,
