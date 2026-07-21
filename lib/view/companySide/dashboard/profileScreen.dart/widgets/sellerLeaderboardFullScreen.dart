@@ -48,10 +48,20 @@ class _SellerLeaderboardFullScreenState
 
   void _onScroll() {
     if (!_scrollController.hasClients) return;
+    // Once "You" is visible in the loaded list, sellers ranked below are
+    // hidden — no point fetching further pages.
+    if (_meIndex(context.read<GetLeaderboardProvider>().fullList) != -1) {
+      return;
+    }
     final threshold = _scrollController.position.maxScrollExtent - 200;
     if (_scrollController.position.pixels >= threshold) {
       context.read<GetLeaderboardProvider>().loadMoreFullList();
     }
+  }
+
+  int _meIndex(List<SellerRank> list) {
+    if (widget.myProfileId == null) return -1;
+    return list.indexWhere((s) => s.profileId == widget.myProfileId);
   }
 
   void _onSearchChanged(String query) {
@@ -73,7 +83,7 @@ class _SellerLeaderboardFullScreenState
         elevation: 0,
         title: Text(
           "Top Sellers",
-          style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.w700),
+          style: TextStyle(fontSize: 17.sp,color: Colors.white, fontWeight: FontWeight.w700),
         ),
       ),
       body: Column(
@@ -85,6 +95,7 @@ class _SellerLeaderboardFullScreenState
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
                 hintText: "Search seller by name...",
+                
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
@@ -138,14 +149,21 @@ class _SellerLeaderboardFullScreenState
                   );
                 }
 
+                final meIndex = _meIndex(provider.fullList);
+                // Show only up to (and including) "You" — sellers ranked
+                // below your own position stay hidden.
+                final displayList = meIndex == -1
+                    ? provider.fullList
+                    : provider.fullList.sublist(0, meIndex + 1);
+                final showTrailingLoader = meIndex == -1 && provider.hasMore;
+
                 return ListView.separated(
                   controller: _scrollController,
                   padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 20.h),
-                  itemCount:
-                      provider.fullList.length + (provider.hasMore ? 1 : 0),
+                  itemCount: displayList.length + (showTrailingLoader ? 1 : 0),
                   separatorBuilder: (_, __) => SizedBox(height: 10.h),
                   itemBuilder: (context, index) {
-                    if (index >= provider.fullList.length) {
+                    if (index >= displayList.length) {
                       return Padding(
                         padding: EdgeInsets.symmetric(vertical: 16.h),
                         child: const Center(
@@ -156,11 +174,10 @@ class _SellerLeaderboardFullScreenState
                         ),
                       );
                     }
-                    final seller = provider.fullList[index];
+                    final seller = displayList[index];
                     return _SellerRow(
                       seller: seller,
-                      isMe: widget.myProfileId != null &&
-                          seller.profileId == widget.myProfileId,
+                      isMe: index == meIndex,
                     );
                   },
                 );

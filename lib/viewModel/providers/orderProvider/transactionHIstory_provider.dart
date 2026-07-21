@@ -4,6 +4,7 @@ import 'package:new_brand/viewModel/repository/orderRepository/paymentRepository
 
 class TransactionHistoryProvider with ChangeNotifier {
   final GetTransactionRepository _repo = GetTransactionRepository();
+  static const int _pageSize = 20;
 
   bool isLoading = false;
   String? error;
@@ -26,14 +27,18 @@ class TransactionHistoryProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final res = await _repo.getTransaction(page: page);
+      final res = await _repo.getTransaction(page: page, limit: _pageSize);
+      final fetched = res.transactions ?? [];
 
-      if (res.transactions != null && res.transactions!.isNotEmpty) {
-        transactions.addAll(res.transactions!);
+      if (fetched.isNotEmpty) {
+        transactions.addAll(fetched);
         page++;
-      } else {
-        hasMore = false;
       }
+      // A page shorter than the requested size means there's nothing left,
+      // even if it wasn't empty — otherwise the trailing spinner spins
+      // forever because a short list never scrolls far enough to trigger
+      // the next fetch.
+      hasMore = fetched.length == _pageSize;
     } catch (e) {
       error = e.toString();
       debugPrint("Transaction Error: $e");

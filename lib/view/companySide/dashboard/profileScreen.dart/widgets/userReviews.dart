@@ -28,7 +28,7 @@ class UserReviewsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("User Reviews"), backgroundColor: AppColor.primaryColor),
+      appBar: AppBar(title: const Text("User Reviews" , style: TextStyle(color: Colors.white),), backgroundColor: AppColor.primaryColor),
       body: CustomBgContainer(
         child: Padding(
           padding: EdgeInsets.all(15.w),
