@@ -26,6 +26,7 @@ class AddProductProvider with ChangeNotifier {
     List<String>? color,
     int? quantity,
     int? weightInGrams,
+    void Function(double progress)? onProgress,
     required VoidCallback onSuccess,
     VoidCallback? onQueued,
     required Function(String) onError,
@@ -90,6 +91,7 @@ class AddProductProvider with ChangeNotifier {
         color: color,
         quantity: quantity,
         weightInGrams: weightInGrams,
+        onProgress: onProgress,
       );
       isLoading = false;
       productResponse = response;

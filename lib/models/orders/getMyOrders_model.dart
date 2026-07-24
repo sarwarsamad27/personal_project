@@ -66,6 +66,8 @@ class Orders {
   String? cancelledBy;
   String? cancelReason;
   String? cancelledAt;
+  String? paymentMethod;
+  String? paymentStatus;
 
   Orders({
     this.sId,
@@ -86,6 +88,8 @@ class Orders {
     this.cancelledBy,
     this.cancelReason,
     this.cancelledAt,
+    this.paymentMethod,
+    this.paymentStatus,
   });
 
   Orders.fromJson(Map<String, dynamic> json) {
@@ -114,6 +118,8 @@ class Orders {
     cancelledBy = json['cancelledBy'];
     cancelReason = json['cancelReason'];
     cancelledAt = json['cancelledAt'];
+    paymentMethod = json['paymentMethod'];
+    paymentStatus = json['paymentStatus'];
   }
 
   Map<String, dynamic> toJson() {
@@ -140,6 +146,8 @@ class Orders {
     data['cancelledBy'] = cancelledBy;
     data['cancelReason'] = cancelReason;
     data['cancelledAt'] = cancelledAt;
+    data['paymentMethod'] = paymentMethod;
+    data['paymentStatus'] = paymentStatus;
     return data;
   }
 }

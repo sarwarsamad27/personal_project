@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:new_brand/models/productModel/addProduct_model.dart';
+import 'package:new_brand/network/multipart_progress.dart';
 import 'package:new_brand/network/network_api_services.dart';
 import 'package:new_brand/resources/global.dart';
 
@@ -22,6 +23,7 @@ class AddProductRepository {
     List<String>? color,
     int? quantity,
     int? weightInGrams,
+    void Function(double progress)? onProgress,
   }) async {
     try {
       final fields = <String, String>{
@@ -61,9 +63,13 @@ class AddProductRepository {
         );
       }
 
-      final streamed = await request.send().timeout(
-        const Duration(seconds: 300),
-      );
+      final streamed = onProgress != null
+          ? await sendMultipartWithProgress(
+              request,
+              onProgress: onProgress,
+              timeout: const Duration(seconds: 300),
+            )
+          : await request.send().timeout(const Duration(seconds: 300));
       final response = await http.Response.fromStream(streamed);
 
       if (response.statusCode == 200 || response.statusCode == 201) {

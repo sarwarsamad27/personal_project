@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appColor.dart';
@@ -9,6 +8,7 @@ import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/viewModel/providers/productProvider/editProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getSingleProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/updateProduct_provider.dart';
+import 'package:new_brand/viewModel/providers/uploadProvider/backgroundUpload_provider.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customTextFeld.dart';
@@ -71,39 +71,14 @@ class EditProductDialog extends StatelessWidget {
           color: Colors.white70,
           width: double.infinity,
           padding: EdgeInsets.all(20.w),
-          child: Consumer<UpdateProductProvider>(
-            builder: (context, updateProvider, _) {
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Consumer<EditProductNotifier>(
-                    builder: (context, s, _) {
-                      final bool canUpdate =
-                          s.isChanged && s.isValid && !updateProvider.isLoading;
-
-                      return _buildForm(context, s, canUpdate, updateProvider);
-                    },
-                  ),
-                  if (updateProvider.isLoading)
-                    Positioned.fill(
-                      child: AbsorbPointer(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20.r),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                            child: Container(
-                              color: Colors.black.withOpacity(0.15),
-                              alignment: Alignment.center,
-                              child: const CircularProgressIndicator(
-                                color: AppColor.primaryColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              );
+          // No loading/blur overlay here on purpose: submitting now hands
+          // the actual update off to the app-wide background upload queue
+          // and closes this dialog immediately (see the Update button
+          // below), so there's nothing left to block on.
+          child: Consumer<EditProductNotifier>(
+            builder: (context, s, _) {
+              final bool canUpdate = s.isChanged && s.isValid;
+              return _buildForm(context, s, canUpdate);
             },
           ),
         ),
@@ -115,7 +90,6 @@ class EditProductDialog extends StatelessWidget {
     BuildContext context,
     EditProductNotifier s,
     bool canUpdate,
-    UpdateProductProvider updateProvider,
   ) {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -275,65 +249,102 @@ class EditProductDialog extends StatelessWidget {
                             final validNewImages = s.newImages
                                 .where((f) => f.existsSync())
                                 .toList();
-
                             final token = await LocalStorage.getToken() ?? "";
+
+                            // Captured now — the dialog closes right after
+                            // this (see below), so nothing past this point
+                            // may touch `context` or `s` again. Both
+                            // providers are app-root singletons and stay
+                            // valid regardless.
                             final provider = Provider.of<UpdateProductProvider>(
                               context,
                               listen: false,
                             );
+                            final uploadManager =
+                                Provider.of<BackgroundUploadManager>(
+                                  context,
+                                  listen: false,
+                                );
+                            final getProvider =
+                                Provider.of<GetSingleProductProvider>(
+                                  context,
+                                  listen: false,
+                                );
+                            final productName = s.nameController.text.trim();
+                            final description = s.descriptionController.text
+                                .trim();
+                            final price =
+                                int.tryParse(s.priceController.text.trim()) ??
+                                0;
+                            final sizeList = _hasSizes
+                                ? s.sizeController.text.trim().split(',')
+                                : <String>[];
+                            final colorList = _hasColors
+                                ? s.colorController.text.trim().split(',')
+                                : <String>[];
+                            final quantityVal = int.tryParse(
+                                  s.quantityController.text.trim(),
+                                ) ??
+                                0;
+                            final weightVal = int.tryParse(
+                                  s.weightController.text.trim(),
+                                ) ??
+                                500;
+                            final keepImages = s.existingImages;
+                            final deleteImages = s.deletedExistingImages;
+                            final videoFile = s.newVideoFile;
+                            final removeVideoFlag = s.videoRemoved;
 
-                            await provider.updateProduct(
-                              productId: productId,
-                              token: token,
-                              name: s.nameController.text.trim(),
-                              description: s.descriptionController.text.trim(),
-                              afterDiscountPrice:
-                                  int.tryParse(s.priceController.text.trim()) ??
-                                  0,
-                              beforeDiscountPrice:
-                                  int.tryParse(s.priceController.text.trim()) ??
-                                  0,
-                              size: _hasSizes
-                                  ? s.sizeController.text.trim().split(',')
-                                  : <String>[],
-                              color: _hasColors
-                                  ? s.colorController.text.trim().split(',')
-                                  : <String>[],
-                              quantity:
-                                  int.tryParse(
-                                    s.quantityController.text.trim(),
-                                  ) ??
-                                  0,
-                              weightInGrams:
-                                  int.tryParse(
-                                    s.weightController.text.trim(),
-                                  ) ??
-                                  500,
-                              images: validNewImages,
-                              keepImages: s.existingImages,
-                              deleteImages: s.deletedExistingImages,
-                              video: s.newVideoFile,
-                              removeVideo: s.videoRemoved,
+                            // Runs after this dialog is gone — same
+                            // reasoning as addProductScreen's background
+                            // handoff: let the seller keep working while a
+                            // large video keeps uploading.
+                            uploadManager.enqueue(
+                              title: 'Update: $productName',
+                              task: (reportProgress) async {
+                                await provider.updateProduct(
+                                  productId: productId,
+                                  token: token,
+                                  name: productName,
+                                  description: description,
+                                  afterDiscountPrice: price,
+                                  beforeDiscountPrice: price,
+                                  size: sizeList,
+                                  color: colorList,
+                                  quantity: quantityVal,
+                                  weightInGrams: weightVal,
+                                  images: validNewImages,
+                                  keepImages: keepImages,
+                                  deleteImages: deleteImages,
+                                  video: videoFile,
+                                  removeVideo: removeVideoFlag,
+                                  onProgress: reportProgress,
+                                );
+                                if (provider.updateProductModel?.product ==
+                                    null) {
+                                  throw Exception(
+                                    provider.updateProductModel?.message ??
+                                        "Update failed",
+                                  );
+                                }
+                                await getProvider.fetchSingleProducts(
+                                  token: token,
+                                  categoryId: categoryId,
+                                  productId: productId,
+                                );
+                              },
+                              successTitle: "Product updated",
+                              successBody:
+                                  '"$productName" was updated successfully.',
+                              failureTitle: "Product update failed",
                             );
 
-                            if (provider.updateProductModel?.product != null) {
-                              Navigator.pop(context);
-                              AppToast.show("Product updated successfully");
-                              final getProvider =
-                                  Provider.of<GetSingleProductProvider>(
-                                    context,
-                                    listen: false,
-                                  );
-                              final token2 =
-                                  await LocalStorage.getToken() ?? "";
-                              await getProvider.fetchSingleProducts(
-                                token: token2,
-                                categoryId: categoryId,
-                                productId: productId,
-                              );
-                            } else {
-                              AppToast.error("Update failed");
-                            }
+                            if (context.mounted) Navigator.pop(context);
+                            AppToast.show(
+                              videoFile != null
+                                  ? 'Updating "$productName" in the background — you can keep working.'
+                                  : 'Updating "$productName"...',
+                            );
                           }
                         : null,
                   ),

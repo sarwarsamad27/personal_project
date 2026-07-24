@@ -41,6 +41,7 @@ import 'package:new_brand/viewModel/providers/profileProvider/updateProfile_prov
 import 'package:new_brand/viewModel/providers/reviewProvider/getAllReview_provider.dart';
 import 'package:new_brand/viewModel/providers/reviewProvider/replyReview_provider.dart';
 import 'package:new_brand/viewModel/providers/commissionProvider/commission_provider.dart';
+import 'package:new_brand/viewModel/providers/uploadProvider/backgroundUpload_provider.dart';
 import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
 import 'package:new_brand/viewModel/providers/syncCoordinator_provider.dart';
 import 'package:new_brand/viewModel/providers/notificationProvider/company_notification_provider.dart';
@@ -100,6 +101,7 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AiAssistantProvider()),
         ChangeNotifierProvider(create: (_) => GetLeaderboardProvider()),
         ChangeNotifierProvider(create: (_) => GetSellerAnnouncementProvider()),
+        ChangeNotifierProvider(create: (_) => BackgroundUploadManager()),
         ChangeNotifierProvider(
           create: (ctx) => SyncCoordinator(
             categoryProvider: ctx.read<CreateCategoryProvider>(),

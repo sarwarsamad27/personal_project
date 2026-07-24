@@ -11,6 +11,7 @@ class ReplyReviewProvider with ChangeNotifier {
     required String replyText,
     List<String> replyImages = const [],
     String? replyVideo,
+    void Function(double progress)? onProgress,
   }) async {
     try {
       isLoading = true;
@@ -22,6 +23,7 @@ class ReplyReviewProvider with ChangeNotifier {
         token: token ?? '',
         replyImages: replyImages,
         replyVideo: replyVideo,
+        onProgress: onProgress,
       );
       isLoading = false;
       notifyListeners();

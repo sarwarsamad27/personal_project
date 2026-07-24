@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart' as http;
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:new_brand/resources/utiles.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
@@ -115,8 +116,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           "Address",
                           order.buyerDetails?.address ?? "N/A",
                         ),
-                        _buildRow("Date", _formatDate(order.createdAt ?? "")),
-                        _buildRow("Payment", "Cash on Delivery"),
+                        SizedBox(height: 10.h),
+                        Row(
+                          children: [
+                            Expanded(child: _dateBadge(order.createdAt)),
+                            SizedBox(width: 10.w),
+                            Expanded(
+                              child: _paymentBadge(
+                                order.paymentMethod,
+                                order.paymentStatus,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 10.h),
                         if (order.trackNumber != null)
                           _buildRow("Track #", order.trackNumber!),
                         Divider(color: Colors.white.withValues(alpha: 0.3)),
@@ -421,6 +434,65 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 color: Colors.green,
                 fontWeight: FontWeight.bold,
                 fontSize: 13.sp,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dateBadge(String? createdAt) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.calendar_month_rounded, color: Colors.white70, size: 14.sp),
+          SizedBox(width: 6.w),
+          Flexible(
+            child: Text(
+              _formatDate(createdAt ?? ""),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 11.5.sp,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _paymentBadge(String? paymentMethod, String? paymentStatus) {
+    final color = Utils.paymentColor(paymentStatus);
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: color.withValues(alpha: 0.6)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Utils.paymentIcon(paymentStatus), color: color, size: 14.sp),
+          SizedBox(width: 6.w),
+          Flexible(
+            child: Text(
+              Utils.paymentLabel(paymentMethod, paymentStatus),
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w700,
+                fontSize: 11.5.sp,
               ),
               overflow: TextOverflow.ellipsis,
             ),

@@ -61,6 +61,8 @@ class Orders {
   int? iV;
   String? trackNumber;
   String? slipLink;
+  String? paymentMethod;
+  String? paymentStatus;
 
   Orders({
     this.sId,
@@ -77,6 +79,8 @@ class Orders {
     this.iV,
     this.trackNumber,
     this.slipLink,
+    this.paymentMethod,
+    this.paymentStatus,
   });
 
   Orders.fromJson(Map<String, dynamic> json) {
@@ -101,6 +105,8 @@ class Orders {
     iV = json['__v'];
     trackNumber = json['trackNumber'];
     slipLink = json['slipLink'];
+    paymentMethod = json['paymentMethod'];
+    paymentStatus = json['paymentStatus'];
   }
 
   Map<String, dynamic> toJson() {
@@ -122,6 +128,8 @@ class Orders {
     data['__v'] = this.iV;
     data['trackNumber'] = trackNumber;
     data['slipLink'] = slipLink;
+    data['paymentMethod'] = paymentMethod;
+    data['paymentStatus'] = paymentStatus;
     return data;
   }
 }

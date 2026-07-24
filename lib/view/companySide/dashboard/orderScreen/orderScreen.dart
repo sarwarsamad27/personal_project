@@ -4,6 +4,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/toast.dart';
+import 'package:new_brand/resources/utiles.dart';
 import 'package:new_brand/resources/socketServices.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/leopards_tracking_screen.dart';
@@ -715,6 +716,34 @@ class _OrderScreenState extends State<OrderScreen>
                               label:
                                   "${products.length} Item${products.length != 1 ? 's' : ''}",
                             ),
+                            SizedBox(height: 8.h),
+                            Wrap(
+                              spacing: 6.w,
+                              runSpacing: 6.h,
+                              children: [
+                                _buildBadge(
+                                  label: _formatOrderDate(order.createdAt),
+                                  bgColor: AppColor.primaryColor,
+                                  textColor: AppColor.primaryColor,
+                                  icon: Icons.calendar_month_rounded,
+                                ),
+                                _buildBadge(
+                                  label: Utils.paymentLabel(
+                                    order.paymentMethod,
+                                    order.paymentStatus,
+                                  ),
+                                  bgColor: Utils.paymentColor(
+                                    order.paymentStatus,
+                                  ),
+                                  textColor: Utils.paymentColor(
+                                    order.paymentStatus,
+                                  ),
+                                  icon: Utils.paymentIcon(
+                                    order.paymentStatus,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -1129,6 +1158,34 @@ class _OrderScreenState extends State<OrderScreen>
                   label:
                       "${products.length} Item${products.length != 1 ? 's' : ''}",
                 ),
+                SizedBox(height: 8.h),
+
+                // Order date + payment method — highlighted chips
+                Wrap(
+                  spacing: 6.w,
+                  runSpacing: 6.h,
+                  children: [
+                    _buildBadge(
+                      label: _formatOrderDate(order.createdAt as String?),
+                      bgColor: AppColor.primaryColor,
+                      textColor: AppColor.primaryColor,
+                      icon: Icons.calendar_month_rounded,
+                    ),
+                    _buildBadge(
+                      label: Utils.paymentLabel(
+                        order.paymentMethod as String?,
+                        order.paymentStatus as String?,
+                      ),
+                      bgColor: Utils.paymentColor(
+                        order.paymentStatus as String?,
+                      ),
+                      textColor: Utils.paymentColor(
+                        order.paymentStatus as String?,
+                      ),
+                      icon: Utils.paymentIcon(order.paymentStatus as String?),
+                    ),
+                  ],
+                ),
 
                 // Tracking number — dispatched orders only
                 if (!isPendingTab &&
@@ -1481,6 +1538,23 @@ class _OrderScreenState extends State<OrderScreen>
         ),
       ],
     );
+  }
+
+  String _formatOrderDate(String? isoDate) {
+    if (isoDate == null || isoDate.isEmpty) return "N/A";
+    try {
+      final date = DateTime.parse(isoDate).toLocal();
+      const months = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+      ];
+      int hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
+      final period = date.hour >= 12 ? "PM" : "AM";
+      final minute = date.minute.toString().padLeft(2, '0');
+      return "${date.day} ${months[date.month - 1]}, $hour:$minute $period";
+    } catch (_) {
+      return "N/A";
+    }
   }
 
   bool _isStaleOrder(String? createdAt) {

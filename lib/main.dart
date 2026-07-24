@@ -20,46 +20,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-// ✅ ADD
-
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
-
-const AndroidNotificationChannel _highChannel = AndroidNotificationChannel(
-  'high_importance_channel',
-  'High Importance Notifications',
-  description: 'Used for general notifications',
-  importance: Importance.high,
-);
-
-const AndroidNotificationChannel _orderChannel = AndroidNotificationChannel(
-  'new_order_alert_channel',
-  'New Order Alerts',
-  description: 'Used for new order notifications',
-  importance: Importance.max,
-);
-
-Future<void> _initLocalNotifications() async {
-  const AndroidInitializationSettings androidInit =
-      AndroidInitializationSettings('ic_notification');
-
-  const InitializationSettings initSettings = InitializationSettings(
-    android: androidInit,
-  );
-
-  await flutterLocalNotificationsPlugin.initialize(
-    initSettings,
-    onDidReceiveNotificationResponse: (_) {},
-  );
-
-  final androidPlugin = flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin
-      >();
-
-  await androidPlugin?.createNotificationChannel(_highChannel);
-  await androidPlugin?.createNotificationChannel(_orderChannel);
-}
+import 'package:new_brand/resources/localNotifications.dart';
+import 'package:new_brand/widgets/uploadProgressOverlay.dart';
 
 // Downloads the notification's image (e.g. the ordered product's photo) so
 // it can be shown as a large icon + expandable big picture — Android's
@@ -82,7 +44,7 @@ Future<void> _setupFirebaseForegroundHandler() async {
     if (notification == null) return;
 
     final isOrder = message.data['type'] == 'NEW_ORDER';
-    final ch = isOrder ? _orderChannel : _highChannel;
+    final ch = isOrder ? newOrderAlertChannel : highImportanceChannel;
 
     final imageUrl = message.data['image'];
     final imageBitmap = (imageUrl != null && imageUrl.isNotEmpty)
@@ -160,7 +122,7 @@ void main() async {
     if (!e.toString().contains('duplicate-app')) rethrow;
   }
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  await _initLocalNotifications();
+  await initLocalNotifications();
   await _setupFirebaseForegroundHandler();
   await _setupTapHandling();
 
@@ -301,7 +263,14 @@ class _MyAppState extends State<MyApp> {
                         ),
                       ),
                     ),
-                  Expanded(child: child!),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        child!,
+                        const UploadProgressOverlay(),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             );

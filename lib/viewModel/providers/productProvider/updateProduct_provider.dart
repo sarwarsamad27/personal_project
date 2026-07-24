@@ -25,6 +25,7 @@ class UpdateProductProvider with ChangeNotifier {
     required List<File> images,
     File? video,
     bool removeVideo = false,
+    void Function(double progress)? onProgress,
   }) async {
     isLoading = true;
     notifyListeners();
@@ -46,6 +47,7 @@ class UpdateProductProvider with ChangeNotifier {
         images: images,
         video: video,
         removeVideo: removeVideo,
+        onProgress: onProgress,
       );
     } catch (e) {
       updateProductModel = UpdateProductModel(message: e.toString());

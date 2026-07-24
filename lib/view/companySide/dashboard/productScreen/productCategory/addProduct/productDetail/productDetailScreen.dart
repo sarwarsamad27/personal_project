@@ -11,9 +11,11 @@ import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/widget/metaChip.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/widget/premium_card.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/widget/productImage.dart';
+import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getRelatedProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getSingleProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/reviewProvider/replyReview_provider.dart';
+import 'package:new_brand/viewModel/providers/uploadProvider/backgroundUpload_provider.dart';
 import 'package:new_brand/widgets/blinking_badge.dart';
 import 'package:new_brand/widgets/productCard.dart';
 import 'package:provider/provider.dart';
@@ -766,62 +768,78 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               onPressed: () => Navigator.pop(dialogCtx),
               child: const Text("Cancel"),
             ),
+            // No isLoading-driven disable/spinner here on purpose: Save
+            // hands the reply off to the app-wide background upload queue
+            // and closes this dialog immediately (see below) — encoding +
+            // sending happens after the dialog is already gone, the same
+            // way addProductScreen/edit_product_dialog do it, so the
+            // seller isn't stuck waiting on a base64-encoded video.
             Consumer<ReplyReviewProvider>(
               builder: (_, replyProvider, __) => ElevatedButton(
-                onPressed: replyProvider.isLoading
-                    ? null
-                    : () async {
-                        debugPrint(
-                          "🚀 Save clicked. Image count: ${replyImages.length}",
-                        );
-                        // Encode to base64
-                        final b64Images = <String>[];
-                        for (final img in replyImages) {
-                          final bytes = await img.readAsBytes();
-                          b64Images.add(
-                            "data:image/jpg;base64,${base64Encode(bytes)}",
-                          );
-                        }
-                        String? b64Video;
-                        if (replyVideo != null) {
-                          final bytes = await replyVideo!.readAsBytes();
-                          b64Video =
-                              "data:video/mp4;base64,${base64Encode(bytes)}";
-                        }
+                onPressed: () {
+                  final reviewId = review.sId!;
+                  final replyText = controller.text;
+                  final imagesSnapshot = List<File>.from(replyImages);
+                  final videoSnapshot = replyVideo;
+                  final categoryId = widget.categoryId;
+                  final productId = widget.productId;
 
-                        debugPrint(
-                          "📤 Sending reply with ${b64Images.length} images",
-                        );
-                        final success = await replyProvider.replyOnReview(
-                          reviewId: review.sId!,
-                          replyText: controller.text,
-                          replyImages: b64Images,
-                          replyVideo: b64Video,
-                        );
+                  final uploadManager = Provider.of<BackgroundUploadManager>(
+                    context,
+                    listen: false,
+                  );
 
-                        if (success) {
-                          provider.markAsReplied(review.sId!);
-                          final token = await LocalStorage.getToken() ?? "";
-                          await provider.fetchSingleProducts(
-                            token: token,
-                            categoryId: widget.categoryId,
-                            productId: widget.productId,
-                          );
-                          if (dialogCtx.mounted) {
-                            Navigator.pop(dialogCtx);
-                          }
-                        }
-                      },
-                child: replyProvider.isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Text("Save"),
+                  uploadManager.enqueue(
+                    title: 'Reply to review',
+                    task: (reportProgress) async {
+                      final b64Images = <String>[];
+                      for (final img in imagesSnapshot) {
+                        final bytes = await img.readAsBytes();
+                        b64Images.add(
+                          "data:image/jpg;base64,${base64Encode(bytes)}",
+                        );
+                      }
+                      String? b64Video;
+                      if (videoSnapshot != null) {
+                        final bytes = await videoSnapshot.readAsBytes();
+                        b64Video =
+                            "data:video/mp4;base64,${base64Encode(bytes)}";
+                      }
+
+                      final success = await replyProvider.replyOnReview(
+                        reviewId: reviewId,
+                        replyText: replyText,
+                        replyImages: b64Images,
+                        replyVideo: b64Video,
+                        onProgress: reportProgress,
+                      );
+
+                      if (!success) {
+                        throw Exception("Failed to post reply");
+                      }
+
+                      provider.markAsReplied(reviewId);
+                      final token = await LocalStorage.getToken() ?? "";
+                      await provider.fetchSingleProducts(
+                        token: token,
+                        categoryId: categoryId,
+                        productId: productId,
+                      );
+                    },
+                    successTitle: "Reply posted",
+                    successBody:
+                        "Your reply to the review was posted successfully.",
+                    failureTitle: "Reply failed to send",
+                  );
+
+                  Navigator.pop(dialogCtx);
+                  AppToast.show(
+                    videoSnapshot != null
+                        ? "Sending your reply in the background — you can keep browsing."
+                        : "Sending your reply...",
+                  );
+                },
+                child: const Text("Save"),
               ),
             ),
           ],

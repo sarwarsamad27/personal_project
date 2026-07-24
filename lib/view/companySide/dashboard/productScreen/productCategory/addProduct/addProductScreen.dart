@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,6 +12,8 @@ import 'package:new_brand/view/companySide/dashboard/productScreen/productCatego
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/uploadImages.dart';
 import 'package:new_brand/viewModel/providers/productProvider/AnalyzeProductProvider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/addProduct_provider.dart';
+import 'package:new_brand/viewModel/providers/productProvider/getProductCategoryWise_provider.dart';
+import 'package:new_brand/viewModel/providers/uploadProvider/backgroundUpload_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
@@ -140,53 +143,102 @@ class AddProductScreen extends StatelessWidget {
       return;
     }
 
-    provider.addProduct(
-      token: token,
-      categoryId: category.sId!,
-      name: _nameController.text.trim(),
-      description: _descriptionController.text.trim(),
-      images: validImages,
-      video: selectedVideoNotifier.value,
-      beforePrice: int.tryParse(_beforePriceController.text),
-      afterPrice: int.tryParse(_afterPriceController.text),
-      size: selectedSizesNotifier.value,
-      color: selectedColorsNotifier.value
-          .map((e) => e["name"].toString())
-          .toList(),
-      quantity: quantity,
-      weightInGrams: weight,
-      onSuccess: () {
-        AppToast.show("Product added successfully!");
-        Navigator.pop(context);
-      },
-      onQueued: () {
-        AppToast.show("No internet — product saved and will upload automatically once you're back online.");
-        Navigator.pop(context);
-      },
-      onError: (msg) => AppToast.show(msg),
+    // Captured now (not inside the background closure) — by the time the
+    // upload finishes, this screen's own BuildContext may already be gone
+    // (user backed out to keep working, per the background-upload design
+    // below), but these provider instances live at the app root and stay
+    // valid regardless.
+    final uploadManager = Provider.of<BackgroundUploadManager>(
+      context,
+      listen: false,
     );
+    final categoryListProvider = Provider.of<GetProductCategoryWiseProvider>(
+      context,
+      listen: false,
+    );
+    final productName = _nameController.text.trim();
+    final categoryId = category.sId!;
+    final description = _descriptionController.text.trim();
+    final beforePrice = int.tryParse(_beforePriceController.text);
+    final afterPrice = int.tryParse(_afterPriceController.text);
+    final sizes = selectedSizesNotifier.value;
+    final colors = selectedColorsNotifier.value
+        .map((e) => e["name"].toString())
+        .toList();
+    final video = selectedVideoNotifier.value;
+
+    // Runs after this screen is gone — hand the actual upload to the
+    // app-wide background queue so the seller can immediately start a
+    // second product (or do anything else) while this one keeps
+    // uploading, the same way Instagram lets you leave a post mid-upload.
+    // `addProduct()` only ever signals success/failure through its
+    // callbacks (its own returned Future never throws), so bridge that
+    // into a throwing Future here — that's what BackgroundUploadManager
+    // needs to tell success from failure and fire the right notification.
+    uploadManager.enqueue(
+      title: 'Product "$productName"',
+      task: (reportProgress) {
+        final completer = Completer<void>();
+        provider.addProduct(
+          token: token,
+          categoryId: categoryId,
+          name: productName,
+          description: description,
+          images: validImages,
+          video: video,
+          beforePrice: beforePrice,
+          afterPrice: afterPrice,
+          size: sizes,
+          color: colors,
+          quantity: quantity,
+          weightInGrams: weight,
+          onProgress: reportProgress,
+          onSuccess: () {
+            categoryListProvider.fetchProducts(
+              token: token ?? '',
+              categoryId: categoryId,
+            );
+            if (!completer.isCompleted) completer.complete();
+          },
+          onQueued: () {
+            // Offline: already safely persisted to the offline queue —
+            // nothing left for this job to do.
+            if (!completer.isCompleted) completer.complete();
+          },
+          onError: (msg) {
+            if (!completer.isCompleted) completer.completeError(Exception(msg));
+          },
+        );
+        return completer.future;
+      },
+      successTitle: "Product uploaded",
+      successBody: '"$productName" was added successfully.',
+      failureTitle: "Product upload failed",
+    );
+
+    AppToast.show(
+      video != null
+          ? 'Uploading "$productName" in the background — you can keep working.'
+          : 'Adding "$productName"...',
+    );
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColor.appimagecolor,
+      // Submission now hands off to the background upload queue and pops
+      // this screen right away (see _saveProduct) — the button no longer
+      // needs to block on AddProductProvider.isLoading, which is shared
+      // app-wide and would otherwise misreport "uploading" here if a
+      // *different* product (started from a previous visit to this screen)
+      // is still uploading in the background.
       bottomNavigationBar: Padding(
         padding: EdgeInsets.only(bottom: 20.h, left: 24.w, right: 24.w),
-        child: Consumer<AddProductProvider>(
-          builder: (context, provider, _) {
-            final hasVideo = selectedVideoNotifier.value != null;
-            String btnText = "Add Product";
-            if (provider.isLoading) {
-              btnText = hasVideo
-                  ? "Uploading… (video may take 1-2 min)"
-                  : "Adding...";
-            }
-            return CustomButton(
-              text: btnText,
-              onTap: provider.isLoading ? null : () => _saveProduct(context),
-            );
-          },
+        child: CustomButton(
+          text: "Add Product",
+          onTap: () => _saveProduct(context),
         ),
       ),
       body: CustomBgContainer(
