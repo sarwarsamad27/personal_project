@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 /// re-wraps the request's finalized byte stream (the encoded multipart
 /// body built by `MultipartRequest.finalize()`) in a `StreamedRequest`,
 /// counting bytes as they're consumed off that stream.
-Future<http.StreamedResponse> sendMultipartWithProgress(
+Future<http.Response> sendMultipartWithProgress(
   http.MultipartRequest request, {
   required void Function(double progress) onProgress,
   Duration? timeout,
@@ -39,14 +39,18 @@ Future<http.StreamedResponse> sendMultipartWithProgress(
     cancelOnError: true,
   );
 
-  // Mirrors http package's own BaseRequest.send(): close(force: false)
-  // stops the client accepting new requests but lets the in-flight
-  // response finish streaming, so it's safe to close right after send()
-  // resolves rather than after the response body is fully read.
   final client = http.Client();
   try {
     final future = client.send(streamedRequest);
-    return timeout != null ? await future.timeout(timeout) : await future;
+    final streamedResponse = timeout != null
+        ? await future.timeout(timeout)
+        : await future;
+    // Must fully drain the body BEFORE closing the client below — closing
+    // while the response stream is still being read is what caused
+    // uploads that actually succeeded server-side to intermittently read
+    // back as failed client-side (truncated/corrupted response body).
+    final response = await http.Response.fromStream(streamedResponse);
+    return response;
   } finally {
     client.close();
   }

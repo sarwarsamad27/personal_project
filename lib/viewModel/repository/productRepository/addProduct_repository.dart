@@ -63,14 +63,15 @@ class AddProductRepository {
         );
       }
 
-      final streamed = onProgress != null
+      final response = onProgress != null
           ? await sendMultipartWithProgress(
               request,
               onProgress: onProgress,
               timeout: const Duration(seconds: 300),
             )
-          : await request.send().timeout(const Duration(seconds: 300));
-      final response = await http.Response.fromStream(streamed);
+          : await http.Response.fromStream(
+              await request.send().timeout(const Duration(seconds: 300)),
+            );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final decoded = jsonDecode(response.body) as Map<String, dynamic>;

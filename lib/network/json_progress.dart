@@ -43,7 +43,12 @@ Future<http.Response> postJsonWithProgress(
     await request.sink.close();
 
     final streamedResponse = await responseFuture;
-    return http.Response.fromStream(streamedResponse);
+    // Must fully drain the body BEFORE closing the client below — closing
+    // while `fromStream` is still reading off the wire is what caused
+    // reviews/replies that actually succeeded server-side to intermittently
+    // read back as failed client-side (truncated/corrupted response body).
+    final response = await http.Response.fromStream(streamedResponse);
+    return response;
   } finally {
     client.close();
   }

@@ -66,9 +66,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Download error: $e")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Download error: $e")));
       }
     } finally {
       if (mounted) setState(() => _downloadingSlip = false);
@@ -454,7 +454,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.calendar_month_rounded, color: Colors.white70, size: 14.sp),
+          Icon(
+            Icons.calendar_month_rounded,
+            color: Colors.white70,
+            size: 14.sp,
+          ),
           SizedBox(width: 6.w),
           Flexible(
             child: Text(
