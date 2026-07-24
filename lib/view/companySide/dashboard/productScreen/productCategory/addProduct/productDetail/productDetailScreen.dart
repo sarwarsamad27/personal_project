@@ -789,42 +789,51 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     listen: false,
                   );
 
+                  // Optimistic: hide the Reply button for this review right
+                  // away — don't wait for the background send to finish.
+                  // Rolled back below if it actually fails.
+                  provider.markAsReplied(reviewId);
+
                   uploadManager.enqueue(
                     title: 'Reply to review',
                     task: (reportProgress) async {
-                      final b64Images = <String>[];
-                      for (final img in imagesSnapshot) {
-                        final bytes = await img.readAsBytes();
-                        b64Images.add(
-                          "data:image/jpg;base64,${base64Encode(bytes)}",
+                      try {
+                        final b64Images = <String>[];
+                        for (final img in imagesSnapshot) {
+                          final bytes = await img.readAsBytes();
+                          b64Images.add(
+                            "data:image/jpg;base64,${base64Encode(bytes)}",
+                          );
+                        }
+                        String? b64Video;
+                        if (videoSnapshot != null) {
+                          final bytes = await videoSnapshot.readAsBytes();
+                          b64Video =
+                              "data:video/mp4;base64,${base64Encode(bytes)}";
+                        }
+
+                        final success = await replyProvider.replyOnReview(
+                          reviewId: reviewId,
+                          replyText: replyText,
+                          replyImages: b64Images,
+                          replyVideo: b64Video,
+                          onProgress: reportProgress,
                         );
-                      }
-                      String? b64Video;
-                      if (videoSnapshot != null) {
-                        final bytes = await videoSnapshot.readAsBytes();
-                        b64Video =
-                            "data:video/mp4;base64,${base64Encode(bytes)}";
-                      }
 
-                      final success = await replyProvider.replyOnReview(
-                        reviewId: reviewId,
-                        replyText: replyText,
-                        replyImages: b64Images,
-                        replyVideo: b64Video,
-                        onProgress: reportProgress,
-                      );
+                        if (!success) {
+                          throw Exception("Failed to post reply");
+                        }
 
-                      if (!success) {
-                        throw Exception("Failed to post reply");
+                        final token = await LocalStorage.getToken() ?? "";
+                        await provider.fetchSingleProducts(
+                          token: token,
+                          categoryId: categoryId,
+                          productId: productId,
+                        );
+                      } catch (e) {
+                        provider.unmarkAsReplied(reviewId);
+                        rethrow;
                       }
-
-                      provider.markAsReplied(reviewId);
-                      final token = await LocalStorage.getToken() ?? "";
-                      await provider.fetchSingleProducts(
-                        token: token,
-                        categoryId: categoryId,
-                        productId: productId,
-                      );
                     },
                     successTitle: "Reply posted",
                     successBody:

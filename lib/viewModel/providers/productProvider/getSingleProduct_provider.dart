@@ -24,6 +24,14 @@ class GetSingleProductProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Rolls back an optimistic markAsReplied() when the reply that triggered
+  // it actually fails to send — lets the seller see the Reply button again.
+  void unmarkAsReplied(String reviewId) {
+    repliedReviews.remove(reviewId);
+    showReplyButton[reviewId] = true;
+    notifyListeners();
+  }
+
   void setShowReplyButton(String reviewId, bool show) {
     showReplyButton[reviewId] = show;
     notifyListeners();
