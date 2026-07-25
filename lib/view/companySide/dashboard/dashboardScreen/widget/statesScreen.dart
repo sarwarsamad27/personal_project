@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/view/companySide/dashboard/allOrdersScreen/allOrders_screen.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -38,6 +39,10 @@ class StatsView extends StatelessWidget {
         'value': '${data.totalOrders}',
         'icon': LucideIcons.shoppingBag,
         'gradient': [const Color(0xFF8E2DE2), const Color(0xFF4A00E0)],
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AllOrdersScreen()),
+        ),
       },
       {
         'title': 'Delivered Orders',
@@ -112,7 +117,8 @@ class StatsView extends StatelessWidget {
       ),
       itemBuilder: (context, i) {
         final item = stats[i];
-        return Container(
+        final onTap = item['onTap'] as VoidCallback?;
+        final card = Container(
               padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -154,7 +160,11 @@ class StatsView extends StatelessWidget {
                   ),
                 ],
               ),
-            )
+            );
+
+        return (onTap != null
+                ? GestureDetector(onTap: onTap, child: card)
+                : card)
             .animate()
             .fadeIn(duration: 400.ms, delay: (i * 50).ms)
             .slideY(

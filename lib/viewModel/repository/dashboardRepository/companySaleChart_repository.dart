@@ -6,13 +6,19 @@ class GetCompanySalesChartRepository {
   final NetworkApiServices apiServices = NetworkApiServices();
   final String apiUrl = Global.GetCompanySalesChart;
 
-  /// Delete category by Id
   Future<CompanySalesChartModel> getCompanySalesChart({
     required String type,
     required String token,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     try {
-      final url = "$apiUrl?type=$type";
+      var url = "$apiUrl?type=$type";
+      if (startDate != null && endDate != null) {
+        String iso(DateTime d) =>
+            "${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+        url += "&startDate=${iso(startDate)}&endDate=${iso(endDate)}";
+      }
 
       final response = await apiServices.getApi(url);
 

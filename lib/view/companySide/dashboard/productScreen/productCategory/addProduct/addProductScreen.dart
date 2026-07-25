@@ -1,17 +1,17 @@
-import 'dart:async';
 import 'dart:io';
+import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:new_brand/models/categoryModel/getCategory_model.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/colorSelect.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/sizeSelect.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/uploadImages.dart';
 import 'package:new_brand/viewModel/providers/productProvider/AnalyzeProductProvider.dart';
-import 'package:new_brand/viewModel/providers/productProvider/addProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getProductCategoryWise_provider.dart';
 import 'package:new_brand/viewModel/providers/uploadProvider/backgroundUpload_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
@@ -108,7 +108,6 @@ class AddProductScreen extends StatelessWidget {
 
   void _saveProduct(BuildContext context) async {
     final token = await LocalStorage.getToken();
-    final provider = Provider.of<AddProductProvider>(context, listen: false);
 
     if (selectedImagesNotifier.value.isEmpty ||
         _nameController.text.isEmpty ||
@@ -167,53 +166,52 @@ class AddProductScreen extends StatelessWidget {
         .toList();
     final video = selectedVideoNotifier.value;
 
-    // Runs after this screen is gone — hand the actual upload to the
-    // app-wide background queue so the seller can immediately start a
-    // second product (or do anything else) while this one keeps
-    // uploading, the same way Instagram lets you leave a post mid-upload.
-    // `addProduct()` only ever signals success/failure through its
-    // callbacks (its own returned Future never throws), so bridge that
-    // into a throwing Future here — that's what BackgroundUploadManager
-    // needs to tell success from failure and fire the right notification.
-    uploadManager.enqueue(
-      title: 'Product "$productName"',
-      task: (reportProgress) {
-        final completer = Completer<void>();
-        provider.addProduct(
-          token: token,
-          categoryId: categoryId,
-          name: productName,
-          description: description,
-          images: validImages,
-          video: video,
-          beforePrice: beforePrice,
-          afterPrice: afterPrice,
-          size: sizes,
-          color: colors,
-          quantity: quantity,
-          weightInGrams: weight,
-          onProgress: reportProgress,
-          onSuccess: () {
-            categoryListProvider.fetchProducts(
-              token: token ?? '',
-              categoryId: categoryId,
-            );
-            if (!completer.isCompleted) completer.complete();
-          },
-          onQueued: () {
-            // Offline: already safely persisted to the offline queue —
-            // nothing left for this job to do.
-            if (!completer.isCompleted) completer.complete();
-          },
-          onError: (msg) {
-            if (!completer.isCompleted) completer.completeError(Exception(msg));
-          },
-        );
-        return completer.future;
+    // Hands the actual upload off to the OS-managed background queue
+    // (WorkManager on Android, background URLSession on iOS) — it keeps
+    // going if the seller leaves this screen, loses signal (resumes
+    // automatically once connectivity returns), or — on Android — kills
+    // the app outright. Completion fires a native notification, not a
+    // callback here, so it's reported even if this app process is gone by
+    // the time the upload finishes.
+    final files = <(String, String)>[
+      for (final img in validImages) ('images', img.path),
+      if (video != null) ('video', video.path),
+    ];
+
+    final task = MultiUploadTask(
+      url: Global.CreateProduct,
+      files: files,
+      fields: {
+        'categoryId': categoryId,
+        'name': productName,
+        if (description.isNotEmpty) 'description': description,
+        if (beforePrice != null) 'beforeDiscountPrice': beforePrice.toString(),
+        if (afterPrice != null) 'afterDiscountPrice': afterPrice.toString(),
+        if (sizes.isNotEmpty) 'size': sizes.join(','),
+        if (colors.isNotEmpty) 'color': colors.join(','),
+        'quantity': quantity.toString(),
+        'weightInGrams': weight.toString(),
       },
-      successTitle: "Product uploaded",
-      successBody: '"$productName" was added successfully.',
-      failureTitle: "Product upload failed",
+      headers: {
+        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+      },
+      group: UploadGroups.addProduct,
+      displayName: 'Product "$productName"',
+      updates: Updates.statusAndProgress,
+      retries: 5,
+    );
+
+    await uploadManager.enqueueUpload(
+      task,
+      title: 'Product "$productName"',
+      onDone: (update) {
+        if (update.status == TaskStatus.complete) {
+          categoryListProvider.fetchProducts(
+            token: token ?? '',
+            categoryId: categoryId,
+          );
+        }
+      },
     );
 
     AppToast.show(
@@ -228,12 +226,9 @@ class AddProductScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColor.appimagecolor,
-      // Submission now hands off to the background upload queue and pops
-      // this screen right away (see _saveProduct) — the button no longer
-      // needs to block on AddProductProvider.isLoading, which is shared
-      // app-wide and would otherwise misreport "uploading" here if a
-      // *different* product (started from a previous visit to this screen)
-      // is still uploading in the background.
+      // Submission now hands off to the OS-managed background upload queue
+      // and pops this screen right away (see _saveProduct) — nothing here
+      // needs to block while the upload runs.
       bottomNavigationBar: Padding(
         padding: EdgeInsets.only(bottom: 20.h, left: 24.w, right: 24.w),
         child: CustomButton(

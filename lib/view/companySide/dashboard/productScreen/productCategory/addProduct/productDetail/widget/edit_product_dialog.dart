@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_brand/resources/appColor.dart';
@@ -7,7 +8,6 @@ import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/viewModel/providers/productProvider/editProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getSingleProduct_provider.dart';
-import 'package:new_brand/viewModel/providers/productProvider/updateProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/uploadProvider/backgroundUpload_provider.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
@@ -256,10 +256,6 @@ class EditProductDialog extends StatelessWidget {
                             // may touch `context` or `s` again. Both
                             // providers are app-root singletons and stay
                             // valid regardless.
-                            final provider = Provider.of<UpdateProductProvider>(
-                              context,
-                              listen: false,
-                            );
                             final uploadManager =
                                 Provider.of<BackgroundUploadManager>(
                                   context,
@@ -282,61 +278,71 @@ class EditProductDialog extends StatelessWidget {
                             final colorList = _hasColors
                                 ? s.colorController.text.trim().split(',')
                                 : <String>[];
-                            final quantityVal = int.tryParse(
+                            final quantityVal =
+                                int.tryParse(
                                   s.quantityController.text.trim(),
                                 ) ??
                                 0;
-                            final weightVal = int.tryParse(
-                                  s.weightController.text.trim(),
-                                ) ??
+                            final weightVal =
+                                int.tryParse(s.weightController.text.trim()) ??
                                 500;
                             final keepImages = s.existingImages;
                             final deleteImages = s.deletedExistingImages;
                             final videoFile = s.newVideoFile;
                             final removeVideoFlag = s.videoRemoved;
 
-                            // Runs after this dialog is gone — same
-                            // reasoning as addProductScreen's background
-                            // handoff: let the seller keep working while a
-                            // large video keeps uploading.
-                            uploadManager.enqueue(
+                            // Hands the actual upload off to the OS-managed
+                            // background queue — same reasoning as
+                            // addProductScreen: it survives the seller
+                            // leaving this dialog, losing signal, or (on
+                            // Android) the app being killed outright, and
+                            // completion fires a native notification.
+                            final files = <(String, String)>[
+                              for (final img in validNewImages)
+                                ('images', img.path),
+                              if (videoFile != null) ('video', videoFile.path),
+                            ];
+
+                            final task = MultiUploadTask(
+                              url: Global.UpdateSingleProduct,
+                              httpRequestMethod: 'PUT',
+                              files: files,
+                              fields: {
+                                'productId': productId,
+                                'name': productName,
+                                'description': description,
+                                'afterDiscountPrice': price.toString(),
+                                'beforeDiscountPrice': price.toString(),
+                                'size': sizeList.join(','),
+                                'color': colorList.join(','),
+                                'quantity': quantityVal.toString(),
+                                'weightInGrams': weightVal.toString(),
+                                'keepImages': keepImages.join(','),
+                                'deleteImages': deleteImages.join(','),
+                                if (removeVideoFlag) 'removeVideo': 'true',
+                              },
+                              headers: {
+                                if (token.isNotEmpty)
+                                  'Authorization': 'Bearer $token',
+                              },
+                              group: UploadGroups.editProduct,
+                              displayName: 'Product "$productName"',
+                              updates: Updates.statusAndProgress,
+                              retries: 5,
+                            );
+
+                            await uploadManager.enqueueUpload(
+                              task,
                               title: 'Update: $productName',
-                              task: (reportProgress) async {
-                                await provider.updateProduct(
-                                  productId: productId,
-                                  token: token,
-                                  name: productName,
-                                  description: description,
-                                  afterDiscountPrice: price,
-                                  beforeDiscountPrice: price,
-                                  size: sizeList,
-                                  color: colorList,
-                                  quantity: quantityVal,
-                                  weightInGrams: weightVal,
-                                  images: validNewImages,
-                                  keepImages: keepImages,
-                                  deleteImages: deleteImages,
-                                  video: videoFile,
-                                  removeVideo: removeVideoFlag,
-                                  onProgress: reportProgress,
-                                );
-                                if (provider.updateProductModel?.product ==
-                                    null) {
-                                  throw Exception(
-                                    provider.updateProductModel?.message ??
-                                        "Update failed",
+                              onDone: (update) {
+                                if (update.status == TaskStatus.complete) {
+                                  getProvider.fetchSingleProducts(
+                                    token: token,
+                                    categoryId: categoryId,
+                                    productId: productId,
                                   );
                                 }
-                                await getProvider.fetchSingleProducts(
-                                  token: token,
-                                  categoryId: categoryId,
-                                  productId: productId,
-                                );
                               },
-                              successTitle: "Product updated",
-                              successBody:
-                                  '"$productName" was updated successfully.',
-                              failureTitle: "Product update failed",
                             );
 
                             if (context.mounted) Navigator.pop(context);

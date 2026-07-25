@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show DateTimeRange, ChangeNotifier;
 import 'package:new_brand/models/dashboard/companySaleChart_model.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/viewModel/repository/dashboardRepository/companySaleChart_repository.dart';
@@ -14,8 +14,13 @@ class CompanySalesChartProvider with ChangeNotifier {
   String _selectedType = "weekly";
   String get selectedType => _selectedType;
 
-  // ✅ cache per type
+  // ✅ cache per type — only used for the fixed (non-custom-range) windows
   final Map<String, CompanySalesChartModel> _cache = {};
+
+  // Seller-picked custom range, if any — cleared when they switch back to a
+  // plain type without a range.
+  DateTimeRange? _customRange;
+  DateTimeRange? get customRange => _customRange;
 
   // current data based on selectedType
   CompanySalesChartModel? _chartData;
@@ -24,16 +29,20 @@ class CompanySalesChartProvider with ChangeNotifier {
   final GetCompanySalesChartRepository repository =
       GetCompanySalesChartRepository();
 
-  /// ✅ Will NOT hit API again if already cached (unless refresh=true)
+  /// ✅ Will NOT hit API again if already cached (unless refresh=true) —
+  /// caching is skipped entirely for a custom [range] since it's a one-off
+  /// seller-picked window, not a stable trailing period.
   Future<void> getChartData({
     required String type,
     bool refresh = false,
+    DateTimeRange? range,
   }) async {
     final normalized = type.toLowerCase();
     _selectedType = normalized;
+    _customRange = range;
 
-    // ✅ serve from cache
-    if (!refresh && _cache.containsKey(normalized)) {
+    // ✅ serve from cache (fixed windows only)
+    if (range == null && !refresh && _cache.containsKey(normalized)) {
       _chartData = _cache[normalized];
       notifyListeners();
       return;
@@ -49,9 +58,11 @@ class CompanySalesChartProvider with ChangeNotifier {
       final res = await repository.getCompanySalesChart(
         type: normalized,
         token: token ?? '',
+        startDate: range?.start,
+        endDate: range?.end,
       );
 
-      _cache[normalized] = res;
+      if (range == null) _cache[normalized] = res;
       _chartData = res;
     } catch (e) {
       _error = "Failed to load chart";
@@ -66,6 +77,7 @@ class CompanySalesChartProvider with ChangeNotifier {
     _cache.clear();
     _chartData = null;
     _selectedType = "weekly";
+    _customRange = null;
     notifyListeners();
   }
 }

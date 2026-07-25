@@ -21,15 +21,20 @@ class CompanySalesChartModel {
 
 class Data {
   String? type;
-  List<String>? labels;
-  List<int>? values;
+  // Nullable entries — a `null` label/value is an unfilled placeholder slot
+  // (custom date range shorter than 7 periods): "no date assigned", not a
+  // zero-sales period.
+  List<String?>? labels;
+  List<int?>? values;
 
   Data({this.type, this.labels, this.values});
 
   Data.fromJson(Map<String, dynamic> json) {
     type = json['type'];
-    labels = json['labels'].cast<String>();
-    values = json['values'].cast<int>();
+    labels = (json['labels'] as List?)?.map((e) => e as String?).toList();
+    values = (json['values'] as List?)
+        ?.map((e) => (e as num?)?.toInt())
+        .toList();
   }
 
   Map<String, dynamic> toJson() {

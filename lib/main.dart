@@ -22,6 +22,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:new_brand/resources/localNotifications.dart';
 import 'package:new_brand/widgets/uploadProgressOverlay.dart';
+import 'package:background_downloader/background_downloader.dart';
+import 'package:new_brand/viewModel/providers/uploadProvider/backgroundUpload_provider.dart';
 
 // Downloads the notification's image (e.g. the ordered product's photo) so
 // it can be shown as a large icon + expandable big picture — Android's
@@ -111,6 +113,57 @@ Future<void> _setupTapHandling() async {
   }
 }
 
+// Native notification wording per upload flow — fires from the OS itself
+// (WorkManager on Android, background URLSession on iOS), so it shows up
+// even if this Dart isolate isn't running when the transfer finishes.
+// Deliberately no {progress} in the complete/error text — only the
+// "running" notification shows percentage.
+Future<void> _initBackgroundUploads() async {
+  final fd = FileDownloader();
+  fd.configureNotificationForGroup(
+    UploadGroups.addProduct,
+    running: const TaskNotification('Uploading', '{displayName} — {progress}'),
+    complete: const TaskNotification(
+      'Product uploaded',
+      '{displayName} was added successfully.',
+    ),
+    error: const TaskNotification(
+      'Product upload failed',
+      '{displayName} — tap to check and retry.',
+    ),
+    progressBar: true,
+  );
+  fd.configureNotificationForGroup(
+    UploadGroups.editProduct,
+    running: const TaskNotification('Updating', '{displayName} — {progress}'),
+    complete: const TaskNotification(
+      'Product updated',
+      '{displayName} was updated successfully.',
+    ),
+    error: const TaskNotification(
+      'Product update failed',
+      '{displayName} — tap to check and retry.',
+    ),
+    progressBar: true,
+  );
+  fd.configureNotificationForGroup(
+    UploadGroups.replyReview,
+    running: const TaskNotification('Sending reply', '{progress}'),
+    complete: const TaskNotification(
+      'Reply posted',
+      'Your reply to the review was posted successfully.',
+    ),
+    error: const TaskNotification(
+      'Reply failed to send',
+      '{displayName} — tap to check and retry.',
+    ),
+    progressBar: true,
+  );
+  // Registers this app to catch up on any uploads that completed while it
+  // wasn't running, and resumes tracking going forward.
+  await fd.start();
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
@@ -123,6 +176,7 @@ void main() async {
   }
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await initLocalNotifications();
+  await _initBackgroundUploads();
   await _setupFirebaseForegroundHandler();
   await _setupTapHandling();
 

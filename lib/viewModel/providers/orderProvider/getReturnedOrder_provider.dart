@@ -4,6 +4,7 @@ import 'package:new_brand/viewModel/repository/orderRepository/getReturnedOrder_
 
 class GetReturnedOrderProvider extends ChangeNotifier {
   final GetReturnedOrderRepository _repo = GetReturnedOrderRepository();
+  static const int _pageSize = 10;
 
   bool isLoading = false;
   List<Orders> orders = [];
@@ -23,14 +24,18 @@ class GetReturnedOrderProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final res = await _repo.getReturnedOrder(page: page);
+      final res = await _repo.getReturnedOrder(page: page, limit: _pageSize);
+      final fetched = res.orders ?? [];
 
-      if (res.orders != null && res.orders!.isNotEmpty) {
-        orders.addAll(res.orders!);
+      if (fetched.isNotEmpty) {
+        orders.addAll(fetched);
         page++;
-      } else {
-        hasMore = false;
       }
+      // A page shorter than the requested size means there's nothing left,
+      // even if it wasn't empty — otherwise the trailing spinner spins
+      // forever because a short list never scrolls far enough to trigger
+      // the next fetch.
+      hasMore = fetched.length == _pageSize;
     } catch (e) {
       debugPrint(e.toString());
     }

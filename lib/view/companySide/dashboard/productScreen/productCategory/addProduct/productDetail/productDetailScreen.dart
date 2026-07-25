@@ -1,5 +1,5 @@
-import 'dart:convert';
 import 'dart:io';
+import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -14,7 +14,6 @@ import 'package:new_brand/view/companySide/dashboard/productScreen/productCatego
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getRelatedProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getSingleProduct_provider.dart';
-import 'package:new_brand/viewModel/providers/reviewProvider/replyReview_provider.dart';
 import 'package:new_brand/viewModel/providers/uploadProvider/backgroundUpload_provider.dart';
 import 'package:new_brand/widgets/blinking_badge.dart';
 import 'package:new_brand/widgets/productCard.dart';
@@ -769,87 +768,75 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: const Text("Cancel"),
             ),
             // No isLoading-driven disable/spinner here on purpose: Save
-            // hands the reply off to the app-wide background upload queue
-            // and closes this dialog immediately (see below) — encoding +
-            // sending happens after the dialog is already gone, the same
-            // way addProductScreen/edit_product_dialog do it, so the
-            // seller isn't stuck waiting on a base64-encoded video.
-            Consumer<ReplyReviewProvider>(
-              builder: (_, replyProvider, __) => ElevatedButton(
-                onPressed: () {
-                  final reviewId = review.sId!;
-                  final replyText = controller.text;
-                  final imagesSnapshot = List<File>.from(replyImages);
-                  final videoSnapshot = replyVideo;
-                  final categoryId = widget.categoryId;
-                  final productId = widget.productId;
+            // hands the reply off to the OS-managed background upload
+            // queue and closes this dialog immediately — it survives the
+            // seller leaving this screen, losing signal, or (on Android)
+            // the app being killed outright.
+            ElevatedButton(
+              onPressed: () {
+                final reviewId = review.sId!;
+                final replyText = controller.text;
+                final imagesSnapshot = List<File>.from(replyImages);
+                final videoSnapshot = replyVideo;
+                final categoryId = widget.categoryId;
+                final productId = widget.productId;
 
-                  final uploadManager = Provider.of<BackgroundUploadManager>(
-                    context,
-                    listen: false,
+                final uploadManager = Provider.of<BackgroundUploadManager>(
+                  context,
+                  listen: false,
+                );
+
+                // Optimistic: hide the Reply button for this review right
+                // away — don't wait for the background send to finish.
+                // Rolled back below if it actually fails.
+                provider.markAsReplied(reviewId);
+
+                () async {
+                  final token = await LocalStorage.getToken() ?? "";
+
+                  final files = <(String, String)>[
+                    for (final img in imagesSnapshot) ('images', img.path),
+                    if (videoSnapshot != null) ('video', videoSnapshot.path),
+                  ];
+
+                  final task = MultiUploadTask(
+                    url: Global.ReplyReviews,
+                    files: files,
+                    fields: {'reviewId': reviewId, 'replyText': replyText},
+                    headers: {
+                      if (token.isNotEmpty) 'Authorization': 'Bearer $token',
+                    },
+                    group: UploadGroups.replyReview,
+                    displayName: 'Reply to review',
+                    updates: Updates.statusAndProgress,
+                    retries: 5,
                   );
 
-                  // Optimistic: hide the Reply button for this review right
-                  // away — don't wait for the background send to finish.
-                  // Rolled back below if it actually fails.
-                  provider.markAsReplied(reviewId);
-
-                  uploadManager.enqueue(
+                  await uploadManager.enqueueUpload(
+                    task,
                     title: 'Reply to review',
-                    task: (reportProgress) async {
-                      try {
-                        final b64Images = <String>[];
-                        for (final img in imagesSnapshot) {
-                          final bytes = await img.readAsBytes();
-                          b64Images.add(
-                            "data:image/jpg;base64,${base64Encode(bytes)}",
-                          );
-                        }
-                        String? b64Video;
-                        if (videoSnapshot != null) {
-                          final bytes = await videoSnapshot.readAsBytes();
-                          b64Video =
-                              "data:video/mp4;base64,${base64Encode(bytes)}";
-                        }
-
-                        final success = await replyProvider.replyOnReview(
-                          reviewId: reviewId,
-                          replyText: replyText,
-                          replyImages: b64Images,
-                          replyVideo: b64Video,
-                          onProgress: reportProgress,
-                        );
-
-                        if (!success) {
-                          throw Exception("Failed to post reply");
-                        }
-
-                        final token = await LocalStorage.getToken() ?? "";
-                        await provider.fetchSingleProducts(
+                    onDone: (update) {
+                      if (update.status == TaskStatus.complete) {
+                        provider.fetchSingleProducts(
                           token: token,
                           categoryId: categoryId,
                           productId: productId,
                         );
-                      } catch (e) {
+                      } else {
                         provider.unmarkAsReplied(reviewId);
-                        rethrow;
                       }
                     },
-                    successTitle: "Reply posted",
-                    successBody:
-                        "Your reply to the review was posted successfully.",
-                    failureTitle: "Reply failed to send",
                   );
+                }();
 
-                  Navigator.pop(dialogCtx);
-                  AppToast.show(
-                    videoSnapshot != null
-                        ? "Sending your reply in the background — you can keep browsing."
-                        : "Sending your reply...",
-                  );
-                },
-                child: const Text("Save"),
-              ),
+                Navigator.pop(dialogCtx);
+                AppToast.show(
+                  videoSnapshot != null
+                      ? "Sending your reply in the background — you can keep browsing."
+                      : "Sending your reply...",
+                );
+              },
+              child: const Text("Save"),
             ),
           ],
         ),

@@ -19,6 +19,7 @@ import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provid
 import 'package:new_brand/viewModel/providers/leaderboardProvider/getLeaderboard_provider.dart';
 import 'package:new_brand/viewModel/providers/sellerAnnouncementProvider/getSellerAnnouncement_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/acceptOrder_provider.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/getAllOrdersAnyStatus_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDeliveredOrder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
@@ -33,13 +34,11 @@ import 'package:new_brand/viewModel/providers/productProvider/deleteProduct_prov
 import 'package:new_brand/viewModel/providers/productProvider/getProductCategoryWise_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getRelatedProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getSingleProduct_provider.dart';
-import 'package:new_brand/viewModel/providers/productProvider/updateProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/AnalyzeStoreProvider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/profile_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/updateProfile_provider.dart';
 import 'package:new_brand/viewModel/providers/reviewProvider/getAllReview_provider.dart';
-import 'package:new_brand/viewModel/providers/reviewProvider/replyReview_provider.dart';
 import 'package:new_brand/viewModel/providers/commissionProvider/commission_provider.dart';
 import 'package:new_brand/viewModel/providers/uploadProvider/backgroundUpload_provider.dart';
 import 'package:new_brand/viewModel/providers/connectivity_provider.dart';
@@ -69,7 +68,6 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AddProductProvider()),
         ChangeNotifierProvider(create: (_) => GetProductCategoryWiseProvider()),
         ChangeNotifierProvider(create: (_) => GetSingleProductProvider()),
-        ChangeNotifierProvider(create: (_) => UpdateProductProvider()),
         ChangeNotifierProvider(create: (_) => DeleteProductProvider()),
         ChangeNotifierProvider(create: (_) => GetMyOrdersProvider()),
         ChangeNotifierProvider(create: (_) => EditProfileProvider()),
@@ -77,12 +75,14 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => GetReturnedOrderProvider()),
         ChangeNotifierProvider(create: (_) => PendingToDispatchedProvider()),
         ChangeNotifierProvider(create: (_) => GetDeliveredOrderProvider()),
+        ChangeNotifierProvider(
+          create: (_) => GetAllOrdersAnyStatusProvider(),
+        ),
         ChangeNotifierProvider(create: (_) => CompanyWalletProvider()),
         ChangeNotifierProvider(create: (_) => TransactionHistoryProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => CompanySalesChartProvider()),
         ChangeNotifierProvider(create: (_) => CompanyReviewProvider()),
-        ChangeNotifierProvider(create: (_) => ReplyReviewProvider()),
         ChangeNotifierProvider(create: (_) => GetRelatedProductProvider()),
         ChangeNotifierProvider(create: (_) => CompanyGoogleLoginProvider()),
         ChangeNotifierProvider(create: (_) => CompanyChatThreadsProvider()),
