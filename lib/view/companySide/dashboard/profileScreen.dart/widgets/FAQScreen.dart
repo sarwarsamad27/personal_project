@@ -138,7 +138,7 @@ class _FAQScreenState extends State<FAQScreen> {
       'category': 'Returns',
       'q': 'What is Shookoo\'s return policy?',
       'a':
-          'Customers can request returns or exchanges within 10 days of delivery for valid reasons such as defective products, wrong items, or significant mismatch from description.',
+          'Customers can request an exchange within 10 days of delivery, or a return/refund within 3 days of delivery, for valid reasons such as defective products, wrong items, or significant mismatch from description.',
     },
     {
       'category': 'Returns',

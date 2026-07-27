@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lottie/lottie.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/global.dart';
+import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/resources/socketServices.dart';
 import 'package:new_brand/view/companySide/dashboard/dashboardScreen/widget/statesScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/notificationScreen/company_notification_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/sellerAnnouncementCarousel.dart';
@@ -31,6 +36,20 @@ class _HomeDashboardState extends State<HomeDashboard>
 
   late final AnimationController _chartController;
   late final Animation<double> _chartScale;
+
+  // Debounced live-refresh: several socket events (new order, status
+  // change, product edit) can land within the same tick, so this coalesces
+  // them into a single dashboard re-fetch instead of hammering the API.
+  Timer? _liveRefreshDebounce;
+
+  // Kept so dispose() can remove exactly these callbacks — socket.off with
+  // no handler would wipe out every other screen's listener for the same
+  // broadcast event (e.g. order_status_updated is also heard by
+  // orderScreen.dart).
+  void Function(dynamic)? _onNewOrder;
+  void Function(dynamic)? _onOrderStatusUpdated;
+  void Function(dynamic)? _onProductUpdate;
+  void Function(dynamic)? _onProductDelete;
 
   @override
   void initState() {
@@ -63,6 +82,8 @@ class _HomeDashboardState extends State<HomeDashboard>
       context.read<CompanyNotificationProvider>().fetchNotifications();
     });
 
+    _setupLiveDashboardSocket();
+
     // run premium entry animation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _cardController.forward();
@@ -70,8 +91,49 @@ class _HomeDashboardState extends State<HomeDashboard>
     });
   }
 
+  // Live-updates the stat cards whenever something that changes them
+  // happens elsewhere — a new order, a status change, a product edit/delete
+  // — instead of the seller having to pull-to-refresh. The seller room
+  // (`seller:<profileId>`) is auto-joined server-side on socket connect
+  // (see socketIndex.js), so no explicit join call is needed here.
+  Future<void> _setupLiveDashboardSocket() async {
+    final token = await LocalStorage.getToken() ?? "";
+    if (token.isEmpty || !mounted) return;
+    final socket = await SocketService().ensureConnected(
+      baseUrl: Global.imageUrl,
+      token: token,
+    );
+    if (socket == null || !mounted) return;
+
+    _onNewOrder = (_) => _scheduleLiveDashboardRefresh();
+    _onOrderStatusUpdated = (_) => _scheduleLiveDashboardRefresh();
+    _onProductUpdate = (_) => _scheduleLiveDashboardRefresh();
+    _onProductDelete = (_) => _scheduleLiveDashboardRefresh();
+
+    socket.on("new_order", _onNewOrder!);
+    socket.on("order_status_updated", _onOrderStatusUpdated!);
+    socket.on("product:update", _onProductUpdate!);
+    socket.on("product:delete", _onProductDelete!);
+  }
+
+  void _scheduleLiveDashboardRefresh() {
+    _liveRefreshDebounce?.cancel();
+    _liveRefreshDebounce = Timer(const Duration(milliseconds: 600), () {
+      if (!mounted) return;
+      context.read<DashboardProvider>().getDashboardDataOnce(refresh: true);
+    });
+  }
+
   @override
   void dispose() {
+    _liveRefreshDebounce?.cancel();
+    final socket = SocketService().socket;
+    if (_onNewOrder != null) socket?.off("new_order", _onNewOrder);
+    if (_onOrderStatusUpdated != null) {
+      socket?.off("order_status_updated", _onOrderStatusUpdated);
+    }
+    if (_onProductUpdate != null) socket?.off("product:update", _onProductUpdate);
+    if (_onProductDelete != null) socket?.off("product:delete", _onProductDelete);
     _cardController.dispose();
     _chartController.dispose();
     super.dispose();

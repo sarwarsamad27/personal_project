@@ -343,6 +343,13 @@ class _WalletState extends State<Wallet> {
                                   return;
                                 }
 
+                                // Captured before the await + the setSheetState
+                                // rebuilds below — popping through a context
+                                // fetched again afterward risks targeting a
+                                // stale/rebuilt element and silently no-op'ing,
+                                // which left the sheet stuck open.
+                                final navigator = Navigator.of(context);
+
                                 setSheetState(() => isVerifying = true);
 
                                 final verified = await provider
@@ -361,7 +368,7 @@ class _WalletState extends State<Wallet> {
 
                                 otpClipboardTimer?.cancel();
                                 AppToast.show("Withdrawal request submitted");
-                                Navigator.pop(context, true);
+                                navigator.pop(true);
                               },
 
                               child: isVerifying

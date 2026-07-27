@@ -114,7 +114,7 @@ class TermAndConditionScreen extends StatelessWidget {
               number: '6',
               title: 'Returns, Refunds & Exchanges',
               content:
-                  'Sellers must honor Shookoo\'s return and exchange policy:\n\n• Customers may request returns/exchanges within 10 days of delivery\n• Valid reasons include: defective product, wrong item delivered, or significant mismatch from description\n• Sellers are responsible for the cost of return shipping in case of seller error\n• Refunds are processed after the returned product is inspected\n• Repeated return complaints may affect your seller rating',
+                  'Sellers must honor Shookoo\'s return and exchange policy:\n\n• Customers may request an exchange within 10 days of delivery\n• Customers may request a return/refund within 3 days of delivery\n• Valid reasons include: defective product, wrong item delivered, or significant mismatch from description\n• Sellers are responsible for the cost of return shipping in case of seller error\n• Refunds are processed after the returned product is inspected\n• Repeated return complaints may affect your seller rating',
             ),
 
             _Section(

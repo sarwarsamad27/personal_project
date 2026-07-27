@@ -112,10 +112,18 @@ class CompanyWalletProvider with ChangeNotifier {
         /// 🔥 refresh wallet balance
         await fetchCompanyWallet();
 
-        /// 🔥 refresh transaction history
-        await context.read<TransactionHistoryProvider>().fetchTransactions(
-          refresh: true,
-        );
+        /// 🔥 refresh transaction history — best-effort only. The backend
+        /// has already confirmed the withdrawal itself; a failure here
+        /// (e.g. a stale/unmounted context) must never flip a genuinely
+        /// successful verification back to "failed" and leave the caller's
+        /// bottom sheet stuck open.
+        try {
+          await context.read<TransactionHistoryProvider>().fetchTransactions(
+            refresh: true,
+          );
+        } catch (e) {
+          debugPrint("Post-withdraw transaction refresh failed: $e");
+        }
 
         return true;
       }

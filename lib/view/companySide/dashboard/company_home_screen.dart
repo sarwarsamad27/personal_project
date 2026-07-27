@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/chatThread_provider.dart';
+import 'package:new_brand/viewModel/providers/chatProvider/companyExchange_provider.dart';
+import 'package:new_brand/viewModel/providers/chatProvider/company_refund_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
 import 'package:new_brand/viewModel/providers/syncCoordinator_provider.dart';
@@ -10,12 +14,24 @@ import 'package:provider/provider.dart';
 
 import 'package:new_brand/resources/app_version_checker.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/global.dart';
+import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/resources/socketServices.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/view/companySide/dashboard/ChatListScreen/chatList_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/dashboardScreen/dashboardScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/orderScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/productCategoryScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/profileScreen.dart';
+
+// Requests that are still "live" — the seller still needs to look at them.
+// Terminal states (a finished exchange, a finalized refund) drop out of the
+// badge; everything else (including Denied/Rejected) stays visible, same as
+// the exchange/refund list screens' own tab vocabulary.
+int _activeExchangeCount(CompanyExchangeProvider p) =>
+    p.requests.where((r) => r.status != "Completed").length;
+int _activeRefundCount(CompanyRefundProvider p) =>
+    p.requests.where((r) => r.status != "Refunded").length;
 
 class CompanyHomeScreen extends StatefulWidget {
   const CompanyHomeScreen({super.key});
@@ -36,6 +52,21 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     ProfileScreen(),
   ];
 
+  // Debounced so a burst of events (e.g. a request created then immediately
+  // updated) only triggers one re-fetch each, not one per event.
+  Timer? _exchangeRefreshDebounce;
+  Timer? _refundRefreshDebounce;
+
+  // Kept so dispose() can remove exactly these callbacks — the socket is a
+  // shared singleton, and off() without a handler would also wipe out other
+  // screens' listeners for the same event name.
+  void Function(dynamic)? _onExchangeNew;
+  void Function(dynamic)? _onExchangeStatus;
+  void Function(dynamic)? _onExchangeReturnShipped;
+  void Function(dynamic)? _onRefundNew;
+  void Function(dynamic)? _onRefundStatus;
+  void Function(dynamic)? _onRefundReturnShipped;
+
   @override
   void initState() {
     super.initState();
@@ -44,6 +75,13 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       Provider.of<GetMyOrdersProvider>(context, listen: false).fetchOrders();
       Provider.of<GetDispatchedOrderProvider>(context, listen: false)
           .fetchDispatchedOrders();
+      // Same idea for the Exchange/Refund badges on the Profile tab — fetch
+      // once here so the count is correct even before the seller opens
+      // Profile, mirroring the orders prefetch above.
+      Provider.of<CompanyExchangeProvider>(context, listen: false)
+          .fetchRequests();
+      Provider.of<CompanyRefundProvider>(context, listen: false)
+          .fetchRequests();
       // This screen only mounts once a session is confirmed active (app
       // start with a valid token, or right after login) — the one place
       // guaranteed to run whether or not the offline→online connectivity
@@ -53,6 +91,73 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       Provider.of<SyncCoordinator>(context, listen: false).syncAll();
       checkAppVersion(context);
     });
+
+    // This shell (unlike the tab screens beneath it) stays mounted for the
+    // whole session, so it's the right place to own live exchange/refund
+    // updates — the badge then stays correct no matter which tab is open.
+    _setupExchangeRefundSocket();
+  }
+
+  Future<void> _setupExchangeRefundSocket() async {
+    final token = await LocalStorage.getToken() ?? "";
+    if (token.isEmpty || !mounted) return;
+    final socket = await SocketService().ensureConnected(
+      baseUrl: Global.imageUrl,
+      token: token,
+    );
+    if (socket == null || !mounted) return;
+
+    _onExchangeNew = (_) => _scheduleExchangeRefresh();
+    _onExchangeStatus = (_) => _scheduleExchangeRefresh();
+    _onExchangeReturnShipped = (_) => _scheduleExchangeRefresh();
+    _onRefundNew = (_) => _scheduleRefundRefresh();
+    _onRefundStatus = (_) => _scheduleRefundRefresh();
+    _onRefundReturnShipped = (_) => _scheduleRefundRefresh();
+
+    socket.on("exchange:new", _onExchangeNew!);
+    socket.on("exchange:status", _onExchangeStatus!);
+    socket.on("exchange:return_shipped", _onExchangeReturnShipped!);
+    socket.on("refund:new", _onRefundNew!);
+    socket.on("refund:status", _onRefundStatus!);
+    socket.on("refund:return_shipped", _onRefundReturnShipped!);
+  }
+
+  void _scheduleExchangeRefresh() {
+    _exchangeRefreshDebounce?.cancel();
+    _exchangeRefreshDebounce = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      context.read<CompanyExchangeProvider>().fetchRequests(
+        forceRefresh: true,
+      );
+    });
+  }
+
+  void _scheduleRefundRefresh() {
+    _refundRefreshDebounce?.cancel();
+    _refundRefreshDebounce = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      context.read<CompanyRefundProvider>().fetchRequests();
+    });
+  }
+
+  @override
+  void dispose() {
+    _exchangeRefreshDebounce?.cancel();
+    _refundRefreshDebounce?.cancel();
+    final socket = SocketService().socket;
+    if (_onExchangeNew != null) socket?.off("exchange:new", _onExchangeNew);
+    if (_onExchangeStatus != null) {
+      socket?.off("exchange:status", _onExchangeStatus);
+    }
+    if (_onExchangeReturnShipped != null) {
+      socket?.off("exchange:return_shipped", _onExchangeReturnShipped);
+    }
+    if (_onRefundNew != null) socket?.off("refund:new", _onRefundNew);
+    if (_onRefundStatus != null) socket?.off("refund:status", _onRefundStatus);
+    if (_onRefundReturnShipped != null) {
+      socket?.off("refund:return_shipped", _onRefundReturnShipped);
+    }
+    super.dispose();
   }
 
   @override
@@ -133,6 +238,13 @@ class _PremiumNavBar extends StatelessWidget {
             .where((o) => o.status == "Pending")
             .length);
 
+    final exchangeCount = context.select<CompanyExchangeProvider, int>(
+      _activeExchangeCount,
+    );
+    final refundCount = context.select<CompanyRefundProvider, int>(
+      _activeRefundCount,
+    );
+
     final barHeight = 76.h;
 
     return SizedBox(
@@ -195,6 +307,7 @@ class _PremiumNavBar extends StatelessWidget {
                     label: "Profile",
                     selected: currentIndex == 4,
                     onTap: () => onTap(4),
+                    badgeCount: exchangeCount + refundCount,
                   ),
                 ),
               ],

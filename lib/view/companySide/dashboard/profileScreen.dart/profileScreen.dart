@@ -12,6 +12,8 @@ import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/myWallet.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/profileUserReview.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/sellerLeaderboard.dart';
+import 'package:new_brand/viewModel/providers/chatProvider/companyExchange_provider.dart';
+import 'package:new_brand/viewModel/providers/chatProvider/company_refund_provider.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
@@ -36,6 +38,19 @@ class ProfileScreen extends StatelessWidget {
 
     final provider = context.watch<DashboardProvider>();
     final data = provider.dashboardData?.data;
+
+    // Still-live requests only — a finished exchange/refund drops off the
+    // badge, everything else (including Denied/Rejected) stays counted.
+    final exchangeCount = context
+        .watch<CompanyExchangeProvider>()
+        .requests
+        .where((r) => r.status != "Completed")
+        .length;
+    final refundCount = context
+        .watch<CompanyRefundProvider>()
+        .requests
+        .where((r) => r.status != "Refunded")
+        .length;
 
     return Scaffold(
       body: CustomBgContainer(
@@ -361,117 +376,150 @@ class ProfileScreen extends StatelessWidget {
 
                     SizedBox(height: 15.h),
 
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const CompanyExchangeListScreen(),
-                          ),
-                        );
-                      },
-                      child: CustomAppContainer(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 20.w,
-                          vertical: 18.h,
-                        ),
-                        border: Border.all(
-                          color: AppColor.appimagecolor,
-                          width: 1,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              LucideIcons.arrowLeftRight,
-                              color: AppColor.appimagecolor,
-                              size: 24,
-                            ),
-                            SizedBox(width: 15.w),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Exchange Requests",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16.sp,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    "View all exchange requests",
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 13.sp,
-                                    ),
-                                  ),
-                                ],
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const CompanyExchangeListScreen(),
                               ),
+                            );
+                          },
+                          child: CustomAppContainer(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 20.w,
+                              vertical: 18.h,
                             ),
-                            const Icon(
-                              LucideIcons.chevronRight,
-                              color: Colors.white,
+                            border: Border.all(
+                              color: AppColor.appimagecolor,
+                              width: 1,
                             ),
-                          ],
+                            child: Row(
+                              children: [
+                                Icon(
+                                  LucideIcons.arrowLeftRight,
+                                  color: AppColor.appimagecolor,
+                                  size: 24,
+                                ),
+                                SizedBox(width: 15.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Exchange Requests",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        "View all exchange requests",
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(
+                                            0.7,
+                                          ),
+                                          fontSize: 13.sp,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(
+                                  LucideIcons.chevronRight,
+                                  color: Colors.white,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                        if (exchangeCount > 0)
+                          Positioned(
+                            right: -6.w,
+                            top: -6.h,
+                            child: _RequestCountBadge(count: exchangeCount),
+                          ),
+                      ],
                     ),
 
                     SizedBox(height: 15.h),
 
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const CompanyRefundListScreen(),
-                          ),
-                        );
-                      },
-                      child: CustomAppContainer(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 20.w,
-                          vertical: 18.h,
-                        ),
-                        border: Border.all(color: Colors.redAccent, width: 1),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              LucideIcons.undo2,
-                              color: Colors.redAccent,
-                              size: 24,
-                            ),
-                            SizedBox(width: 15.w),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Refund Requests",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16.sp,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    "Manage your refund requests",
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 13.sp,
-                                    ),
-                                  ),
-                                ],
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const CompanyRefundListScreen(),
                               ),
+                            );
+                          },
+                          child: CustomAppContainer(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 20.w,
+                              vertical: 18.h,
                             ),
-                            const Icon(
-                              LucideIcons.chevronRight,
-                              color: Colors.white,
+                            border: Border.all(
+                              color: Colors.redAccent,
+                              width: 1,
                             ),
-                          ],
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  LucideIcons.undo2,
+                                  color: Colors.redAccent,
+                                  size: 24,
+                                ),
+                                SizedBox(width: 15.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Refund Requests",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        "Manage your refund requests",
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(
+                                            0.7,
+                                          ),
+                                          fontSize: 13.sp,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(
+                                  LucideIcons.chevronRight,
+                                  color: Colors.white,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                        if (refundCount > 0)
+                          Positioned(
+                            right: -6.w,
+                            top: -6.h,
+                            child: _RequestCountBadge(count: refundCount),
+                          ),
+                      ],
                     ),
 
                     SizedBox(height: 30.h),
@@ -513,5 +561,31 @@ class ProfileScreen extends StatelessWidget {
     } else {
       return count.toString();
     }
+  }
+}
+
+class _RequestCountBadge extends StatelessWidget {
+  final int count;
+  const _RequestCountBadge({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final text = count > 99 ? "99+" : "$count";
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: Colors.red,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white, width: 2),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
   }
 }
