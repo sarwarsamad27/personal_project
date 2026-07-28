@@ -19,6 +19,7 @@ import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provid
 import 'package:new_brand/viewModel/providers/leaderboardProvider/getLeaderboard_provider.dart';
 import 'package:new_brand/viewModel/providers/sellerAnnouncementProvider/getSellerAnnouncement_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/acceptOrder_provider.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/bulkAcceptOrders_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getAllOrdersAnyStatus_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDeliveredOrder_provider.dart';
@@ -92,6 +93,7 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CancelOrderProvider()),
         ChangeNotifierProvider(create: (_) => CompanyExchangeProvider()),
         ChangeNotifierProvider(create: (_) => AcceptOrderProvider()),
+        ChangeNotifierProvider(create: (_) => BulkAcceptOrdersProvider()),
         ChangeNotifierProvider(create: (_) => CompanyRefundProvider()),
         ChangeNotifierProvider(create: (_) => LeopardsTrackingProvider()),
         ChangeNotifierProvider(create: (_) => CommissionProvider()),

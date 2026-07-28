@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -10,6 +12,7 @@ import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/leopards_tracking_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/orderDetailScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/bulkAcceptOrders_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCancelledOrders_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
@@ -39,7 +42,11 @@ class _OrderScreenState extends State<OrderScreen>
   // ── Bulk selection state ──
   bool _selectionMode = false;
   final Set<String> _selectedIds = {};
-  bool _bulkDispatching = false;
+  // Actual bulk-operation progress lives in BulkAcceptOrdersProvider /
+  // PendingToDispatchedProvider (app-root providers) rather than here — see
+  // their doc comments. That's what lets a bulk action keep running (and
+  // still toast on completion) even if the seller switches tabs, which
+  // fully disposes this screen.
 
   @override
   void initState() {
@@ -212,12 +219,40 @@ class _OrderScreenState extends State<OrderScreen>
     });
   }
 
-  Future<void> _bulkDispatch() async {
-    if (_selectedIds.isEmpty || _bulkDispatching) return;
+  // Both bulk actions below hand the whole selected id list off to an
+  // app-root provider and clear the selection immediately — the operation
+  // itself (network call + list update + completion toast) runs inside
+  // that provider, so it keeps going and still reports success/failure
+  // even if the seller switches bottom-nav tabs right after tapping
+  // (which disposes this screen; see BulkAcceptOrdersProvider).
 
-    setState(() => _bulkDispatching = true);
+  void _bulkBookWithLeopards() {
+    if (_selectedIds.isEmpty) return;
+    final bulkAcceptProvider = Provider.of<BulkAcceptOrdersProvider>(
+      context,
+      listen: false,
+    );
+    final ordersProvider = Provider.of<GetMyOrdersProvider>(
+      context,
+      listen: false,
+    );
+    final ids = List<String>.from(_selectedIds);
 
-    // Capture providers before any await
+    setState(() {
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+
+    unawaited(
+      bulkAcceptProvider.runBulkAccept(
+        orderIds: ids,
+        ordersProvider: ordersProvider,
+      ),
+    );
+  }
+
+  void _bulkPlainDispatch() {
+    if (_selectedIds.isEmpty) return;
     final dispatchProvider = Provider.of<PendingToDispatchedProvider>(
       context,
       listen: false,
@@ -226,38 +261,19 @@ class _OrderScreenState extends State<OrderScreen>
       context,
       listen: false,
     );
-    final dispatchedProvider = Provider.of<GetDispatchedOrderProvider>(
-      context,
-      listen: false,
-    );
+    final ids = List<String>.from(_selectedIds);
 
-    int success = 0;
-    int failed = 0;
-
-    for (final id in List<String>.from(_selectedIds)) {
-      final ok = await dispatchProvider.updateOrderStatus(
-        orderId: id,
-        status: "dispatched",
-      );
-      if (ok) {
-        success++;
-        ordersProvider.updateOrderInList(id, status: "Dispatched");
-      } else {
-        failed++;
-      }
-    }
-
-    await dispatchedProvider.fetchDispatchedOrders(isRefresh: true);
-
-    if (!mounted) return;
     setState(() {
-      _bulkDispatching = false;
       _selectionMode = false;
       _selectedIds.clear();
     });
 
-    if (success > 0) AppToast.success("$success order(s) dispatched");
-    if (failed > 0) AppToast.error("$failed order(s) failed");
+    unawaited(
+      dispatchProvider.runBulkDispatch(
+        orderIds: ids,
+        ordersProvider: ordersProvider,
+      ),
+    );
   }
 
   @override
@@ -333,6 +349,17 @@ class _OrderScreenState extends State<OrderScreen>
 
     if (list.isEmpty) return listWidget;
 
+    // The app shell (CompanyHomeScreen) renders its Scaffold with
+    // extendBody: true, so this screen's body paints all the way to the
+    // real screen bottom — the pill bottom-nav bar just floats on top of
+    // it instead of reserving space. A Positioned bar at bottom: 0 here
+    // would sit *behind* that nav bar (and its floating center button),
+    // which is exactly the clipped/overlapping bar seen before this fix.
+    // 102.h mirrors _PremiumNavBar's own total height
+    // (barHeight 76.h + 26.h) in company_home_screen.dart, so the action
+    // bar clears it with a small gap to spare.
+    final navBarClearance = 102.h;
+
     // Wrap with Stack so bottom action bar floats above the list
     return Stack(
       children: [
@@ -389,15 +416,15 @@ class _OrderScreenState extends State<OrderScreen>
             ),
           ),
 
-        // ── Bottom Bulk Dispatch Bar ──
+        // ── Bottom Bulk Action Bar: plain Dispatch + Leopards booking ──
         if (_selectionMode)
           Positioned(
-            bottom: 0,
+            bottom: navBarClearance,
             left: 0,
             right: 0,
             child: Container(
-              margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              margin: EdgeInsets.symmetric(horizontal: 16.w),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
               decoration: BoxDecoration(
                 color: const Color(0xff2A1A0E),
                 borderRadius: BorderRadius.circular(18.r),
@@ -412,14 +439,12 @@ class _OrderScreenState extends State<OrderScreen>
               ),
               child: Row(
                 children: [
-                  // Cancel
+                  // Cancel — compact icon-only button, keeps room for two
+                  // full-width action buttons alongside it.
                   GestureDetector(
                     onTap: _cancelSelection,
                     child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 12.h,
-                      ),
+                      padding: EdgeInsets.all(11.w),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12.r),
@@ -427,79 +452,142 @@ class _OrderScreenState extends State<OrderScreen>
                           color: Colors.white.withValues(alpha: 0.2),
                         ),
                       ),
-                      child: Text(
-                        "Cancel",
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        color: Colors.white70,
+                        size: 16.sp,
                       ),
                     ),
                   ),
-                  SizedBox(width: 10.w),
-                  // Dispatch button
+                  SizedBox(width: 8.w),
+                  // Dispatch — plain status change, no courier booking
+                  // (seller handles delivery/pickup themselves).
                   Expanded(
-                    child: GestureDetector(
-                      onTap: _selectedIds.isEmpty || _bulkDispatching
-                          ? null
-                          : _bulkDispatch,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: EdgeInsets.symmetric(vertical: 13.h),
-                        decoration: BoxDecoration(
-                          color: _selectedIds.isEmpty
-                              ? Colors.white.withValues(alpha: 0.12)
-                              : AppColor.primaryColor,
-                          borderRadius: BorderRadius.circular(12.r),
-                          boxShadow: _selectedIds.isNotEmpty
-                              ? [
-                                  BoxShadow(
-                                    color: AppColor.primaryColor.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ]
-                              : [],
-                        ),
-                        child: Center(
-                          child: _bulkDispatching
-                              ? SpinKitThreeBounce(
-                                  color: Colors.white,
-                                  size: 18.sp,
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.local_shipping_rounded,
-                                      color: Colors.white,
-                                      size: 16.sp,
-                                    ),
-                                    SizedBox(width: 8.w),
-                                    Text(
-                                      _selectedIds.isEmpty
-                                          ? "Select orders"
-                                          : "Dispatch ${_selectedIds.length}",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 13.sp,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      ),
+                    child: _bulkActionButton(
+                      label: "Dispatch",
+                      icon: Icons.local_shipping_outlined,
+                      onTap: _bulkPlainDispatch,
+                      filled: false,
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  // Book with Leopards — actually books a courier packet.
+                  Expanded(
+                    child: _bulkActionButton(
+                      label: "Leopards",
+                      icon: Icons.local_shipping_rounded,
+                      onTap: _bulkBookWithLeopards,
+                      filled: true,
                     ),
                   ),
                 ],
               ),
             ),
           ),
+
+        // ── Background bulk-operation banner ──
+        // Shown outside selection mode too: the seller may have already
+        // tapped an action and switched tabs, or come back from another
+        // screen while a bulk operation kicked off elsewhere is still
+        // running — both providers survive this screen's disposal (see
+        // their doc comments), so this reflects live progress regardless.
+        if (!_selectionMode)
+          Consumer2<BulkAcceptOrdersProvider, PendingToDispatchedProvider>(
+            builder: (context, bulkAccept, bulkDispatch, _) {
+              final leopardsBusy = bulkAccept.isProcessing;
+              final dispatchBusy = bulkDispatch.isBulkProcessing;
+              if (!leopardsBusy && !dispatchBusy) return const SizedBox.shrink();
+
+              final label = leopardsBusy
+                  ? "Booking ${bulkAccept.totalCount} order(s) with Leopards…"
+                  : "Dispatching selected orders…";
+
+              return Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  margin: EdgeInsets.symmetric(horizontal: 16.w),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 10.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColor.primaryColor.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(
+                      color: AppColor.primaryColor.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      SpinKitThreeBounce(color: AppColor.primaryColor, size: 14.sp),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
       ],
+    );
+  }
+
+  Widget _bulkActionButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+    required bool filled,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 13.h),
+        decoration: BoxDecoration(
+          color: filled ? AppColor.primaryColor : Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12.r),
+          border: filled
+              ? null
+              : Border.all(color: Colors.white.withValues(alpha: 0.25)),
+          boxShadow: filled
+              ? [
+                  BoxShadow(
+                    color: AppColor.primaryColor.withValues(alpha: 0.4),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 15.sp),
+            SizedBox(width: 6.w),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -892,7 +980,10 @@ class _OrderScreenState extends State<OrderScreen>
           : ListView.separated(
               padding: EdgeInsets.only(
                 top: _selectionMode && isPendingTab ? 58.h : 4.h,
-                bottom: _selectionMode && isPendingTab ? 100.h : 60.h,
+                // Clears the repositioned bottom action bar (now sits
+                // above the floating pill nav bar — see navBarClearance
+                // in pendingTab()) plus its own height.
+                bottom: _selectionMode && isPendingTab ? 190.h : 60.h,
               ),
               controller: scrollController,
               itemCount: list.length + (loadMore ? 1 : 0),
