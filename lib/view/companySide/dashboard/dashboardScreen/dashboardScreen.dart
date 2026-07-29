@@ -50,6 +50,8 @@ class _HomeDashboardState extends State<HomeDashboard>
   void Function(dynamic)? _onOrderStatusUpdated;
   void Function(dynamic)? _onProductUpdate;
   void Function(dynamic)? _onProductDelete;
+  void Function(dynamic)? _onWithdrawNew;
+  void Function(dynamic)? _onWithdrawStatus;
 
   @override
   void initState() {
@@ -109,11 +111,17 @@ class _HomeDashboardState extends State<HomeDashboard>
     _onOrderStatusUpdated = (_) => _scheduleLiveDashboardRefresh();
     _onProductUpdate = (_) => _scheduleLiveDashboardRefresh();
     _onProductDelete = (_) => _scheduleLiveDashboardRefresh();
+    // A withdrawal was submitted, or admin approved/rejected one — the
+    // Pending/Completed Withdraw cards need the same debounced re-fetch.
+    _onWithdrawNew = (_) => _scheduleLiveDashboardRefresh();
+    _onWithdrawStatus = (_) => _scheduleLiveDashboardRefresh();
 
     socket.on("new_order", _onNewOrder!);
     socket.on("order_status_updated", _onOrderStatusUpdated!);
     socket.on("product:update", _onProductUpdate!);
     socket.on("product:delete", _onProductDelete!);
+    socket.on("wallet:withdraw_new", _onWithdrawNew!);
+    socket.on("wallet:withdraw_status", _onWithdrawStatus!);
   }
 
   void _scheduleLiveDashboardRefresh() {
@@ -134,6 +142,10 @@ class _HomeDashboardState extends State<HomeDashboard>
     }
     if (_onProductUpdate != null) socket?.off("product:update", _onProductUpdate);
     if (_onProductDelete != null) socket?.off("product:delete", _onProductDelete);
+    if (_onWithdrawNew != null) socket?.off("wallet:withdraw_new", _onWithdrawNew);
+    if (_onWithdrawStatus != null) {
+      socket?.off("wallet:withdraw_status", _onWithdrawStatus);
+    }
     _cardController.dispose();
     _chartController.dispose();
     super.dispose();

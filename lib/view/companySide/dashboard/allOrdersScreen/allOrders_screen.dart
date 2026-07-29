@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:new_brand/models/orders/allOrders_model.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/resources/socketServices.dart';
 import 'package:new_brand/resources/utiles.dart';
 import 'package:new_brand/view/companySide/dashboard/allOrdersScreen/allOrderDetail_screen.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getAllOrdersAnyStatus_provider.dart';
@@ -19,6 +23,14 @@ class AllOrdersScreen extends StatefulWidget {
 
 class _AllOrdersScreenState extends State<AllOrdersScreen> {
   final ScrollController _scrollController = ScrollController();
+
+  // Debounced live-refresh + dispose bookkeeping — same pattern as
+  // dashboardScreen.dart's _setupLiveDashboardSocket. This screen shows
+  // orders across every status, all of which can change from buyer/courier/
+  // admin actions elsewhere while it's open.
+  Timer? _liveRefreshDebounce;
+  void Function(dynamic)? _onNewOrder;
+  void Function(dynamic)? _onOrderStatusUpdated;
 
   @override
   void initState() {
@@ -38,10 +50,40 @@ class _AllOrdersScreenState extends State<AllOrdersScreen> {
         provider.fetchOrders();
       }
     });
+    _setupLiveSocket();
+  }
+
+  Future<void> _setupLiveSocket() async {
+    final token = await LocalStorage.getToken() ?? "";
+    if (token.isEmpty || !mounted) return;
+    final socket = await SocketService().ensureConnected(
+      baseUrl: Global.imageUrl,
+      token: token,
+    );
+    if (socket == null || !mounted) return;
+
+    _onNewOrder = (_) => _scheduleLiveRefresh();
+    _onOrderStatusUpdated = (_) => _scheduleLiveRefresh();
+    socket.on("new_order", _onNewOrder!);
+    socket.on("order_status_updated", _onOrderStatusUpdated!);
+  }
+
+  void _scheduleLiveRefresh() {
+    _liveRefreshDebounce?.cancel();
+    _liveRefreshDebounce = Timer(const Duration(milliseconds: 600), () {
+      if (!mounted) return;
+      context.read<GetAllOrdersAnyStatusProvider>().fetchOrders(refresh: true);
+    });
   }
 
   @override
   void dispose() {
+    _liveRefreshDebounce?.cancel();
+    final socket = SocketService().socket;
+    if (_onNewOrder != null) socket?.off("new_order", _onNewOrder);
+    if (_onOrderStatusUpdated != null) {
+      socket?.off("order_status_updated", _onOrderStatusUpdated);
+    }
     _scrollController.dispose();
     super.dispose();
   }

@@ -7,6 +7,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/chatThread_provider.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/companyExchange_provider.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/company_refund_provider.dart';
+import 'package:new_brand/viewModel/providers/notificationProvider/company_notification_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
 import 'package:new_brand/viewModel/providers/syncCoordinator_provider.dart';
@@ -18,6 +19,7 @@ import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/socketServices.dart';
 import 'package:new_brand/resources/toast.dart';
+import 'package:new_brand/view/companySide/auth/suspendedScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/ChatListScreen/chatList_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/dashboardScreen/dashboardScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/orderScreen/orderScreen.dart';
@@ -56,6 +58,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   // updated) only triggers one re-fetch each, not one per event.
   Timer? _exchangeRefreshDebounce;
   Timer? _refundRefreshDebounce;
+  Timer? _notificationRefreshDebounce;
 
   // Kept so dispose() can remove exactly these callbacks — the socket is a
   // shared singleton, and off() without a handler would also wipe out other
@@ -66,6 +69,16 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   void Function(dynamic)? _onRefundNew;
   void Function(dynamic)? _onRefundStatus;
   void Function(dynamic)? _onRefundReturnShipped;
+  // This shell is the only place that lives for the whole session (unlike
+  // dashboardScreen.dart, which only exists while the Home tab is active),
+  // so it's the right place to keep the notification bell badge correct no
+  // matter which tab the seller is on — every one of these events also
+  // creates a notification row server-side.
+  void Function(dynamic)? _onNewOrderForNotif;
+  void Function(dynamic)? _onOrderStatusForNotif;
+  void Function(dynamic)? _onWithdrawNewForNotif;
+  void Function(dynamic)? _onWithdrawStatusForNotif;
+  void Function(dynamic)? _onAccountSuspended;
 
   @override
   void initState() {
@@ -113,6 +126,10 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     _onRefundNew = (_) => _scheduleRefundRefresh();
     _onRefundStatus = (_) => _scheduleRefundRefresh();
     _onRefundReturnShipped = (_) => _scheduleRefundRefresh();
+    _onNewOrderForNotif = (_) => _scheduleNotificationRefresh();
+    _onOrderStatusForNotif = (_) => _scheduleNotificationRefresh();
+    _onWithdrawNewForNotif = (_) => _scheduleNotificationRefresh();
+    _onWithdrawStatusForNotif = (_) => _scheduleNotificationRefresh();
 
     socket.on("exchange:new", _onExchangeNew!);
     socket.on("exchange:status", _onExchangeStatus!);
@@ -120,6 +137,34 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     socket.on("refund:new", _onRefundNew!);
     socket.on("refund:status", _onRefundStatus!);
     socket.on("refund:return_shipped", _onRefundReturnShipped!);
+    socket.on("new_order", _onNewOrderForNotif!);
+    socket.on("order_status_updated", _onOrderStatusForNotif!);
+    socket.on("wallet:withdraw_new", _onWithdrawNewForNotif!);
+    socket.on("wallet:withdraw_status", _onWithdrawStatusForNotif!);
+
+    // Admin suspended this seller while they're already logged in — force
+    // them out immediately instead of leaving them with full access
+    // (orders, withdrawals, etc.) until they happen to log out on their
+    // own. Mirrors the same SuspendedScreen shown at login time
+    // (loginScreen.dart) when isSuspended is already true.
+    _onAccountSuspended = (data) => _handleAccountSuspended(data);
+    socket.on("account:suspended", _onAccountSuspended!);
+  }
+
+  Future<void> _handleAccountSuspended(dynamic data) async {
+    if (!mounted) return;
+    final reason = data is Map ? data['reason']?.toString() : null;
+    final until = data is Map ? data['suspendedUntil']?.toString() : null;
+
+    await LocalStorage.clearToken();
+    if (!mounted) return;
+
+    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => SuspendedScreen(reason: reason, until: until),
+      ),
+      (_) => false,
+    );
   }
 
   void _scheduleExchangeRefresh() {
@@ -130,6 +175,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
         forceRefresh: true,
       );
     });
+    _scheduleNotificationRefresh();
   }
 
   void _scheduleRefundRefresh() {
@@ -138,12 +184,25 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       if (!mounted) return;
       context.read<CompanyRefundProvider>().fetchRequests();
     });
+    _scheduleNotificationRefresh();
+  }
+
+  // Refreshes the notification bell badge (unread count + list) so it stays
+  // correct no matter which tab is open, instead of only updating the next
+  // time the seller happens to visit the dashboard/notification screen.
+  void _scheduleNotificationRefresh() {
+    _notificationRefreshDebounce?.cancel();
+    _notificationRefreshDebounce = Timer(const Duration(milliseconds: 700), () {
+      if (!mounted) return;
+      context.read<CompanyNotificationProvider>().fetchNotifications();
+    });
   }
 
   @override
   void dispose() {
     _exchangeRefreshDebounce?.cancel();
     _refundRefreshDebounce?.cancel();
+    _notificationRefreshDebounce?.cancel();
     final socket = SocketService().socket;
     if (_onExchangeNew != null) socket?.off("exchange:new", _onExchangeNew);
     if (_onExchangeStatus != null) {
@@ -156,6 +215,21 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     if (_onRefundStatus != null) socket?.off("refund:status", _onRefundStatus);
     if (_onRefundReturnShipped != null) {
       socket?.off("refund:return_shipped", _onRefundReturnShipped);
+    }
+    if (_onNewOrderForNotif != null) {
+      socket?.off("new_order", _onNewOrderForNotif);
+    }
+    if (_onOrderStatusForNotif != null) {
+      socket?.off("order_status_updated", _onOrderStatusForNotif);
+    }
+    if (_onWithdrawNewForNotif != null) {
+      socket?.off("wallet:withdraw_new", _onWithdrawNewForNotif);
+    }
+    if (_onWithdrawStatusForNotif != null) {
+      socket?.off("wallet:withdraw_status", _onWithdrawStatusForNotif);
+    }
+    if (_onAccountSuspended != null) {
+      socket?.off("account:suspended", _onAccountSuspended);
     }
     super.dispose();
   }
