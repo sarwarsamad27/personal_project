@@ -104,76 +104,139 @@ class StatsView extends StatelessWidget {
       },
     ];
 
-    return GridView.builder(
-      padding: EdgeInsets.zero,
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: stats.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 14.h,
-        crossAxisSpacing: 14.w,
-        childAspectRatio: 1.4,
-      ),
-      itemBuilder: (context, i) {
-        final item = stats[i];
-        final onTap = item['onTap'] as VoidCallback?;
-        final card = Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: item['gradient'] as List<Color>,
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    // A plain 2-column GridView leaves a lone last card stranded on the
+    // left with dead space beside it whenever the count is odd (11 cards
+    // here). Pairing rows manually lets that leftover card span the full
+    // width instead — in a wider "summary bar" layout, not just a stretched
+    // small card — so it reads as an intentional highlight, not a mistake.
+    final rows = <Widget>[];
+    for (int i = 0; i < stats.length; i += 2) {
+      final isLastOdd = i == stats.length - 1;
+      rows.add(
+        isLastOdd
+            ? _buildWideCard(stats[i], i)
+            : Row(
                 children: [
-                  Icon(
-                    item['icon'] as IconData,
-                    color: Colors.white,
-                    size: 24.sp,
-                  ),
-                  Text(
-                    item['title'] as String,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 13.sp,
-                    ),
-                  ),
-                  Text(
-                    item['value'] as String,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15.sp,
-                    ),
-                  ),
+                  Expanded(child: _buildCard(stats[i], i)),
+                  SizedBox(width: 14.w),
+                  Expanded(child: _buildCard(stats[i + 1], i + 1)),
                 ],
               ),
-            );
+      );
+      if (i + 2 < stats.length) rows.add(SizedBox(height: 14.h));
+    }
 
-        return (onTap != null
-                ? GestureDetector(onTap: onTap, child: card)
-                : card)
-            .animate()
-            .fadeIn(duration: 400.ms, delay: (i * 50).ms)
-            .slideY(
-              begin: 0.1,
-              end: 0,
-              duration: 400.ms,
-              curve: Curves.easeOutCubic,
-            );
-      },
+    return Column(children: rows);
+  }
+
+  Widget _buildCard(Map<String, dynamic> item, int index) {
+    final onTap = item['onTap'] as VoidCallback?;
+    final card = Container(
+      padding: EdgeInsets.all(16.w),
+      height: 118.h,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: item['gradient'] as List<Color>,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Icon(item['icon'] as IconData, color: Colors.white, size: 24.sp),
+          Text(
+            item['title'] as String,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 13.sp,
+            ),
+          ),
+          Text(
+            item['value'] as String,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 15.sp,
+            ),
+          ),
+        ],
+      ),
     );
+
+    return _animated(onTap != null ? GestureDetector(onTap: onTap, child: card) : card, index);
+  }
+
+  // Full-width variant for a lone trailing card — icon in a circular bubble
+  // beside the title/value instead of stacked, so the extra width reads as
+  // a deliberate summary row rather than an oversized version of the
+  // 2-column card.
+  Widget _buildWideCard(Map<String, dynamic> item, int index) {
+    final onTap = item['onTap'] as VoidCallback?;
+    final card = Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(18.w),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: item['gradient'] as List<Color>,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.18),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(item['icon'] as IconData, color: Colors.white, size: 24.sp),
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item['title'] as String,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 13.sp,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  item['value'] as String,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 19.sp,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return _animated(onTap != null ? GestureDetector(onTap: onTap, child: card) : card, index);
+  }
+
+  Widget _animated(Widget child, int index) {
+    return child
+        .animate()
+        .fadeIn(duration: 400.ms, delay: (index * 50).ms)
+        .slideY(begin: 0.1, end: 0, duration: 400.ms, curve: Curves.easeOutCubic);
   }
 }

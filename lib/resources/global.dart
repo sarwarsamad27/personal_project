@@ -48,6 +48,8 @@ class Global {
   static var SellerSafepayCheckout =
       "${BaseUrl}/seller/wallet/safepay/checkout";
   static var SellerSafepayStatus = "${BaseUrl}/seller/wallet/safepay/status";
+  static var SellerBankTransferSubmit =
+      "${BaseUrl}/seller/wallet/bank-transfer/submit";
   static var GetSellerLeaderboard = "${BaseUrl}/seller/leaderboard";
   static var GetSellerAnnouncements = "${BaseUrl}/seller/announcements";
   static var TransactionHistory = "${BaseUrl}/transactions";

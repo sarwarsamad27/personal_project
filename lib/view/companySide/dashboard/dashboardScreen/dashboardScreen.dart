@@ -140,9 +140,12 @@ class _HomeDashboardState extends State<HomeDashboard>
     if (_onOrderStatusUpdated != null) {
       socket?.off("order_status_updated", _onOrderStatusUpdated);
     }
-    if (_onProductUpdate != null) socket?.off("product:update", _onProductUpdate);
-    if (_onProductDelete != null) socket?.off("product:delete", _onProductDelete);
-    if (_onWithdrawNew != null) socket?.off("wallet:withdraw_new", _onWithdrawNew);
+    if (_onProductUpdate != null)
+      socket?.off("product:update", _onProductUpdate);
+    if (_onProductDelete != null)
+      socket?.off("product:delete", _onProductDelete);
+    if (_onWithdrawNew != null)
+      socket?.off("wallet:withdraw_new", _onWithdrawNew);
     if (_onWithdrawStatus != null) {
       socket?.off("wallet:withdraw_status", _onWithdrawStatus);
     }
@@ -904,9 +907,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                       // fully clear of the bottom nav's floating messages
                       // button (extendBody:true in CompanyHomeScreen paints
                       // that bar on top of this content, not behind it).
-                      SizedBox(
-                        height: 140.h + MediaQuery.of(context).padding.bottom,
-                      ),
+                      SizedBox(height: MediaQuery.of(context).padding.bottom),
                     ],
                   ),
                 ),

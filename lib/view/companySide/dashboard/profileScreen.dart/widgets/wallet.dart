@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 
 // 💤 Firebase Phone Auth is not the active OTP provider (see backend's
 // utiles/twilioVerify.js — currently Veevo Tech SMS). Kept commented for a
@@ -9,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/pakistaniBanks.dart';
@@ -490,6 +493,12 @@ class _WalletState extends State<Wallet> {
     // payment screen confirms) must not re-resolve the provider from it.
     final walletProvider = context.read<CompanyWalletProvider>();
 
+    // 'safepay' (instant, automatic) or 'bank_transfer' (manual, admin
+    // verifies a screenshot before crediting — see AccountDetail below).
+    String method = 'safepay';
+    XFile? screenshot;
+    bool submittingBankTransfer = false;
+
     showModalBottomSheet(
       backgroundColor: Colors.white,
       isScrollControlled: true,
@@ -497,145 +506,394 @@ class _WalletState extends State<Wallet> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       context: context,
-      builder: (context) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          20.w,
-          14.h,
-          20.w,
-          MediaQuery.of(context).viewInsets.bottom + 24.h,
-        ),
-        child: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              SizedBox(height: 16.h),
-
-              // Safepay header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
+          padding: EdgeInsets.fromLTRB(
+            20.w,
+            14.h,
+            20.w,
+            MediaQuery.of(context).viewInsets.bottom + 24.h,
+          ),
+          child: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.shield_outlined,
-                    color: AppColor.primaryColor,
-                    size: 28.sp,
+                  Container(
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
-                  SizedBox(width: 10.w),
+                  SizedBox(height: 16.h),
                   Text(
-                    'Add Money via Safepay',
+                    'Add Money',
                     style: TextStyle(
                       fontSize: 17.sp,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
-                ],
-              ),
-              SizedBox(height: 20.h),
+                  SizedBox(height: 18.h),
 
-              // Amount field
-              TextFormField(
-                controller: amountCtrl,
-                keyboardType: TextInputType.number,
-                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
-                decoration: InputDecoration(
-                  labelText: 'Amount (Rs)',
-                  prefixText: 'Rs  ',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(
-                      color: AppColor.primaryColor,
-                      width: 1.5,
-                    ),
-                  ),
-                ),
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Enter amount';
-                  final amt = double.tryParse(v) ?? 0;
-                  if (amt < 500) return 'Minimum Rs 500';
-                  if (amt > 50000) return 'Maximum Rs 50,000';
-                  return null;
-                },
-              ),
-              SizedBox(height: 8.h),
-              // Quick amounts
-              Wrap(
-                spacing: 8.w,
-                children: [500, 1000, 2000, 5000]
-                    .map(
-                      (a) => ActionChip(
-                        label: Text('Rs $a'),
-                        onPressed: () => amountCtrl.text = '$a',
-                        backgroundColor: AppColor.primaryColor.withValues(
-                          alpha: 0.08,
-                        ),
-                        labelStyle: TextStyle(
-                          color: AppColor.primaryColor,
-                          fontWeight: FontWeight.w600,
+                  // Method chooser
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _methodChip(
+                          label: 'Safepay',
+                          icon: Icons.shield_outlined,
+                          selected: method == 'safepay',
+                          onTap: () => setSheetState(() => method = 'safepay'),
                         ),
                       ),
-                    )
-                    .toList(),
-              ),
-              SizedBox(height: 20.h),
-
-              Consumer<CompanyWalletProvider>(
-                builder: (context, provider, _) => SizedBox(
-                  width: double.infinity,
-                  height: 50.h,
-                  child: CustomButton(
-                    text: "Continue to Payment",
-                    isLoading: provider.isLoading,
-                    onTap: provider.isLoading
-                        ? null
-                        : () async {
-                            if (!formKey.currentState!.validate()) return;
-                            final amount = double.parse(amountCtrl.text.trim());
-
-                            final checkout = await provider.initSafepayCheckout(
-                              amount: amount.toStringAsFixed(0),
-                            );
-
-                            if (!context.mounted) return;
-                            if (checkout == null) {
-                              AppToast.show(
-                                'Could not start payment. Try again.',
-                              );
-                              return;
-                            }
-
-                            Navigator.pop(context); // close sheet
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => SafepayPaymentScreen(
-                                  amount: amount,
-                                  checkoutUrl: checkout['url'] as String,
-                                  trackId: checkout['trackId'] as String,
-                                  onPaymentDone: () {
-                                    walletProvider.fetchCompanyWallet();
-                                  },
-                                ),
-                              ),
-                            );
-                          },
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: _methodChip(
+                          label: 'Bank Transfer',
+                          icon: Icons.account_balance_outlined,
+                          selected: method == 'bank_transfer',
+                          onTap: () =>
+                              setSheetState(() => method = 'bank_transfer'),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+                  SizedBox(height: 20.h),
+
+                  if (method == 'safepay') ...[
+                    // Amount field
+                    TextFormField(
+                      controller: amountCtrl,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Amount (Rs)',
+                        prefixText: 'Rs  ',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                          borderSide: BorderSide(
+                            color: AppColor.primaryColor,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      validator: (v) {
+                        if (method != 'safepay') return null;
+                        if (v == null || v.isEmpty) return 'Enter amount';
+                        final amt = double.tryParse(v) ?? 0;
+                        if (amt < 500) return 'Minimum Rs 500';
+                        if (amt > 50000) return 'Maximum Rs 50,000';
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 8.h),
+                    // Quick amounts
+                    Wrap(
+                      spacing: 8.w,
+                      children: [500, 1000, 2000, 5000]
+                          .map(
+                            (a) => ActionChip(
+                              label: Text('Rs $a'),
+                              onPressed: () => amountCtrl.text = '$a',
+                              backgroundColor: AppColor.primaryColor
+                                  .withValues(alpha: 0.08),
+                              labelStyle: TextStyle(
+                                color: AppColor.primaryColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    SizedBox(height: 20.h),
+
+                    Consumer<CompanyWalletProvider>(
+                      builder: (context, provider, _) => SizedBox(
+                        width: double.infinity,
+                        height: 50.h,
+                        child: CustomButton(
+                          text: "Continue to Payment",
+                          isLoading: provider.isLoading,
+                          onTap: provider.isLoading
+                              ? null
+                              : () async {
+                                  if (!formKey.currentState!.validate()) return;
+                                  final amount = double.parse(
+                                    amountCtrl.text.trim(),
+                                  );
+
+                                  final checkout = await provider
+                                      .initSafepayCheckout(
+                                        amount: amount.toStringAsFixed(0),
+                                      );
+
+                                  if (!context.mounted) return;
+                                  if (checkout == null) {
+                                    AppToast.show(
+                                      'Could not start payment. Try again.',
+                                    );
+                                    return;
+                                  }
+
+                                  Navigator.pop(context); // close sheet
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => SafepayPaymentScreen(
+                                        amount: amount,
+                                        checkoutUrl: checkout['url'] as String,
+                                        trackId: checkout['trackId'] as String,
+                                        onPaymentDone: () {
+                                          walletProvider.fetchCompanyWallet();
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                },
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    // ── Bank Transfer: pay into our account, upload proof ──
+                    Text(
+                      'Scan the QR or transfer to this account, then upload a screenshot as proof. An admin will verify it and credit your wallet.',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.white70,
+                      ),
+                    ),
+                    SizedBox(height: 14.h),
+                    Center(
+                      child: Container(
+                        padding: EdgeInsets.all(10.w),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
+                        child: Image.asset(
+                          'assets/images/QR_sarwar.jpeg',
+                          height: 170.h,
+                          width: 170.h,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 14.h),
+                    const BankAccountDetailCard(),
+                    SizedBox(height: 18.h),
+
+                    TextFormField(
+                      controller: amountCtrl,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Amount Sent (Rs)',
+                        prefixText: 'Rs  ',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                          borderSide: BorderSide(
+                            color: AppColor.primaryColor,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      validator: (v) {
+                        if (method != 'bank_transfer') return null;
+                        if (v == null || v.isEmpty) return 'Enter amount';
+                        final amt = double.tryParse(v) ?? 0;
+                        if (amt < 100) return 'Minimum Rs 100';
+                        if (amt > 100000) return 'Maximum Rs 100,000';
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 14.h),
+
+                    GestureDetector(
+                      onTap: () async {
+                        final picked = await ImagePicker().pickImage(
+                          source: ImageSource.gallery,
+                          imageQuality: 75,
+                        );
+                        if (picked != null) {
+                          setSheetState(() => screenshot = picked);
+                        }
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(14.w),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: screenshot == null
+                            ? Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.upload_outlined,
+                                    color: Colors.white70,
+                                    size: 18.sp,
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    'Upload Payment Screenshot',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Row(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    child: Image.file(
+                                      File(screenshot!.path),
+                                      width: 44.w,
+                                      height: 44.w,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  Expanded(
+                                    child: Text(
+                                      'Screenshot attached — tap to change',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12.sp,
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: Colors.greenAccent,
+                                    size: 18.sp,
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                    SizedBox(height: 20.h),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50.h,
+                      child: CustomButton(
+                        text: "Submit Deposit Request",
+                        isLoading: submittingBankTransfer,
+                        onTap: submittingBankTransfer
+                            ? null
+                            : () async {
+                                if (!formKey.currentState!.validate()) return;
+                                if (screenshot == null) {
+                                  AppToast.show(
+                                    'Please attach a payment screenshot',
+                                  );
+                                  return;
+                                }
+
+                                setSheetState(
+                                  () => submittingBankTransfer = true,
+                                );
+
+                                final bytes = await screenshot!.readAsBytes();
+                                final base64Image =
+                                    'data:image/jpeg;base64,${base64Encode(bytes)}';
+                                final amount = amountCtrl.text.trim();
+
+                                final ok = await walletProvider
+                                    .submitBankTransfer(
+                                      amount: amount,
+                                      screenshotBase64: base64Image,
+                                      context: context,
+                                    );
+
+                                if (!context.mounted) return;
+                                setSheetState(
+                                  () => submittingBankTransfer = false,
+                                );
+
+                                if (ok) {
+                                  Navigator.pop(context);
+                                  AppToast.show(
+                                    'Request submitted — awaiting admin verification',
+                                  );
+                                } else {
+                                  AppToast.show(
+                                    'Could not submit request. Try again.',
+                                  );
+                                }
+                              },
+                      ),
+                    ),
+                  ],
+                  SizedBox(height: 8.h),
+                ],
               ),
-              SizedBox(height: 8.h),
-            ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _methodChip({
+    required String label,
+    required IconData icon,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColor.primaryColor
+              : Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: selected
+                ? AppColor.primaryColor
+                : Colors.white.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 16.sp),
+            SizedBox(width: 6.w),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12.5.sp,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -788,6 +1046,80 @@ class _WalletState extends State<Wallet> {
           ),
         );
       },
+    );
+  }
+}
+
+/// Platform bank account shown for manual "Bank Transfer" deposits — see
+/// _openAddMoneyDialog above. Kept as its own widget so the exact same
+/// details render consistently anywhere they're needed.
+class BankAccountDetailCard extends StatelessWidget {
+  const BankAccountDetailCard({super.key});
+
+  static const _rows = [
+    ('Bank', 'Meezan Bank'),
+    ('Title', 'SARWAR'),
+    ('Account No.', '10380111659062'),
+    ('IBAN', 'PK57MEZN0010380111659062'),
+    ('Branch', 'SHABBIRABAD BRANCH'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final row in _rows) ...[
+            _detailRow(context, row.$1, row.$2),
+            if (row != _rows.last) SizedBox(height: 10.h),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow(BuildContext context, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 80.w,
+          child: Text(
+            label,
+            style: TextStyle(color: Colors.white60, fontSize: 12.sp),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12.5.sp,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        GestureDetector(
+          onTap: () {
+            Clipboard.setData(ClipboardData(text: value));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Copied: $value'),
+                duration: const Duration(seconds: 1),
+              ),
+            );
+          },
+          child: Icon(Icons.copy, size: 15.sp, color: Colors.white54),
+        ),
+      ],
     );
   }
 }

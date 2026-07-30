@@ -32,6 +32,7 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
   // orderScreen.dart/dashboardScreen.dart).
   void Function(dynamic)? _onWithdrawNew;
   void Function(dynamic)? _onWithdrawStatus;
+  void Function(dynamic)? _onDepositStatus;
   void Function(dynamic)? _onOrderStatusUpdated;
 
   @override
@@ -77,9 +78,13 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
 
     _onWithdrawNew = refreshWallet;
     _onWithdrawStatus = refreshWallet;
+    // A manual bank-transfer deposit was approved/rejected by admin — same
+    // debounced refresh (see bankTransferController.js / walletDeposit_controller.js).
+    _onDepositStatus = refreshWallet;
     _onOrderStatusUpdated = refreshOrderTabs;
     socket.on("wallet:withdraw_new", _onWithdrawNew!);
     socket.on("wallet:withdraw_status", _onWithdrawStatus!);
+    socket.on("wallet:deposit_status", _onDepositStatus!);
     socket.on("order_status_updated", _onOrderStatusUpdated!);
   }
 
@@ -87,6 +92,9 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
   void dispose() {
     final socket = SocketService().socket;
     if (_onWithdrawNew != null) socket?.off("wallet:withdraw_new", _onWithdrawNew);
+    if (_onDepositStatus != null) {
+      socket?.off("wallet:deposit_status", _onDepositStatus);
+    }
     if (_onWithdrawStatus != null) {
       socket?.off("wallet:withdraw_status", _onWithdrawStatus);
     }

@@ -196,4 +196,43 @@ class CompanyWalletProvider with ChangeNotifier {
     _cancelledTrackIds.remove(trackId);
     return {'status': 'pending', 'message': 'Payment confirmation timed out'};
   }
+
+  // ================= MANUAL BANK TRANSFER: SUBMIT DEPOSIT REQUEST =====
+  /// Unlike Safepay, nothing is credited here — this just files a pending
+  /// request with a screenshot for admin to manually verify. Returns true
+  /// if the request was accepted (status 200), regardless of what admin
+  /// later decides.
+  Future<bool> submitBankTransfer({
+    required String amount,
+    required String screenshotBase64,
+    BuildContext? context,
+  }) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      final res = await _addMoneyRepo.submitBankTransfer(
+        amount: amount,
+        screenshotBase64: screenshotBase64,
+      );
+
+      final ok = res['success'] == true;
+      if (ok) {
+        try {
+          if (context != null && context.mounted) {
+            context.read<TransactionHistoryProvider>().fetchTransactions(
+              refresh: true,
+            );
+          }
+        } catch (_) {}
+      }
+      return ok;
+    } catch (e) {
+      debugPrint("Bank Transfer Submit Error: $e");
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 }

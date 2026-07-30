@@ -27,4 +27,19 @@ class AddMoneyRepository {
     );
     return response;
   }
+
+  /// Submits a manual bank-transfer deposit request — nothing is credited
+  /// until an admin verifies the screenshot and approves it (see
+  /// getCompanyWalletAmount_controller.js's sibling admin review flow).
+  /// [screenshotBase64] is a `data:image/...;base64,...` data URI.
+  Future<Map<String, dynamic>> submitBankTransfer({
+    required String amount,
+    required String screenshotBase64,
+  }) async {
+    final response = await apiServices.postApi(
+      Global.SellerBankTransferSubmit,
+      {'amount': amount, 'screenshot': screenshotBase64},
+    );
+    return response;
+  }
 }
