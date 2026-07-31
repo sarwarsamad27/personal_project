@@ -13,9 +13,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/pakistaniBanks.dart';
 import 'package:new_brand/resources/toast.dart';
+import 'package:share_plus/share_plus.dart';
 // import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/firebasePhoneAuthTestScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/safepay_payment_screen.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
@@ -484,6 +486,18 @@ class _WalletState extends State<Wallet> {
     });
   }
 
+  Future<void> _downloadQr() async {
+    try {
+      final byteData = await rootBundle.load('assets/images/QR_sarwar.jpeg');
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/shookoo_payment_qr.jpeg');
+      await file.writeAsBytes(byteData.buffer.asUint8List());
+      await Share.shareXFiles([XFile(file.path)], text: 'Shookoo payment QR code');
+    } catch (_) {
+      if (mounted) AppToast.error('Could not download QR code');
+    }
+  }
+
   void _openAddMoneyDialog() {
     final amountCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -688,7 +702,20 @@ class _WalletState extends State<Wallet> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 14.h),
+                    SizedBox(height: 8.h),
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: _downloadQr,
+                        icon: Icon(Icons.download_outlined,
+                            size: 16.sp, color: Colors.white70),
+                        label: Text('Download QR',
+                            style: TextStyle(
+                                fontSize: 12.5.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white70)),
+                      ),
+                    ),
+                    SizedBox(height: 6.h),
                     const BankAccountDetailCard(),
                     SizedBox(height: 18.h),
 
