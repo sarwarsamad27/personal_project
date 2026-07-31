@@ -500,7 +500,7 @@ class _WalletState extends State<Wallet> {
     bool submittingBankTransfer = false;
 
     showModalBottomSheet(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColor.appimagecolor,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
