@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
@@ -67,7 +67,7 @@ class _TermsAgreementScreenState extends State<TermsAgreementScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
-                          LucideIcons.fileText,
+                          LucideIcons.file_text,
                           color: Colors.white,
                           size: 32.sp,
                         ),

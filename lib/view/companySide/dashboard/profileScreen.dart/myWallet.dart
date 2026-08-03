@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
@@ -63,16 +63,22 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
     void refreshWallet(dynamic _) {
       if (!mounted) return;
       context.read<CompanyWalletProvider>().fetchCompanyWallet();
-      context.read<TransactionHistoryProvider>().fetchTransactions(refresh: true);
+      context.read<TransactionHistoryProvider>().fetchTransactions(
+        refresh: true,
+      );
     }
 
     void refreshOrderTabs(dynamic data) {
       if (!mounted) return;
       final status = data is Map ? data['status'] : null;
       if (status == 'Delivered') {
-        context.read<GetDeliveredOrderProvider>().fetchDeliveredOrders(refresh: true);
+        context.read<GetDeliveredOrderProvider>().fetchDeliveredOrders(
+          refresh: true,
+        );
       } else if (status == 'Returned') {
-        context.read<GetReturnedOrderProvider>().fetchReturnedOrders(refresh: true);
+        context.read<GetReturnedOrderProvider>().fetchReturnedOrders(
+          refresh: true,
+        );
       }
     }
 
@@ -91,7 +97,8 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
   @override
   void dispose() {
     final socket = SocketService().socket;
-    if (_onWithdrawNew != null) socket?.off("wallet:withdraw_new", _onWithdrawNew);
+    if (_onWithdrawNew != null)
+      socket?.off("wallet:withdraw_new", _onWithdrawNew);
     if (_onDepositStatus != null) {
       socket?.off("wallet:deposit_status", _onDepositStatus);
     }
@@ -104,90 +111,90 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
     super.dispose();
   }
 
-  List<Map<String, dynamic>> transactions = [
-    {
-      'title': 'Order #1021 Received',
-      'amount': '+ Rs. 2,500',
-      'icon': LucideIcons.checkCircle,
-      'color': Colors.green,
-      'date': '5 Nov 2025',
-      'status': 'completed',
-    },
-    {
-      'title': 'Order #1019 Received',
-      'amount': '+ Rs. 1,200',
-      'icon': LucideIcons.checkCircle,
-      'color': Colors.green,
-      'date': '3 Nov 2025',
-      'status': 'completed',
-    },
-  ];
+  // List<Map<String, dynamic>> transactions = [
+  //   {
+  //     'title': 'Order #1021 Received',
+  //     'amount': '+ Rs. 2,500',
+  //     'icon': LucideIcons.circle_check,
+  //     'color': Colors.green,
+  //     'date': '5 Nov 2025',
+  //     'status': 'completed',
+  //   },
+  //   {
+  //     'title': 'Order #1019 Received',
+  //     'amount': '+ Rs. 1,200',
+  //     'icon': LucideIcons.circle_check,
+  //     'color': Colors.green,
+  //     'date': '3 Nov 2025',
+  //     'status': 'completed',
+  //   },
+  // ];
 
-  Widget buildTransactionTab() {
-    return ListView.separated(
-      itemCount: transactions.length,
-      separatorBuilder: (_, __) => Divider(color: Colors.white24, height: 20.h),
-      itemBuilder: (context, index) {
-        final tx = transactions[index];
-        return Row(
-          children: [
-            CustomAppContainer(
-              padding: EdgeInsets.all(10.w),
-              child: Icon(tx['icon'], color: tx['color']),
-            ),
-            SizedBox(width: 15.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    tx['title'],
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    tx['date'],
-                    style: TextStyle(color: Colors.white70, fontSize: 12.sp),
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  tx['amount'],
-                  style: TextStyle(
-                    color: tx['color'],
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  tx['status'] == 'pending' ? "Pending" : "Completed",
-                  style: TextStyle(
-                    color: tx['status'] == 'pending'
-                        ? Colors.yellow
-                        : Colors.green,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-  }
+  // Widget buildTransactionTab() {
+  //   return ListView.separated(
+  //     itemCount: transactions.length,
+  //     separatorBuilder: (_, __) => Divider(color: Colors.white24, height: 20.h),
+  //     itemBuilder: (context, index) {
+  //       final tx = transactions[index];
+  //       return Row(
+  //         children: [
+  //           CustomAppContainer(
+  //             padding: EdgeInsets.all(10.w),
+  //             child: Icon(tx['icon'], color: tx['color']),
+  //           ),
+  //           SizedBox(width: 15.w),
+  //           Expanded(
+  //             child: Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Text(
+  //                   tx['title'],
+  //                   style: TextStyle(
+  //                     color: Colors.white,
+  //                     fontSize: 15.sp,
+  //                     fontWeight: FontWeight.w500,
+  //                   ),
+  //                 ),
+  //                 Text(
+  //                   tx['date'],
+  //                   style: TextStyle(color: Colors.white70, fontSize: 12.sp),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //           Column(
+  //             crossAxisAlignment: CrossAxisAlignment.end,
+  //             children: [
+  //               Text(
+  //                 tx['amount'],
+  //                 style: TextStyle(
+  //                   color: tx['color'],
+  //                   fontSize: 15.sp,
+  //                   fontWeight: FontWeight.bold,
+  //                 ),
+  //               ),
+  //               Text(
+  //                 tx['status'] == 'pending' ? "Pending" : "Completed",
+  //                 style: TextStyle(
+  //                   color: tx['status'] == 'pending'
+  //                       ? Colors.yellow
+  //                       : Colors.green,
+  //                   fontSize: 12,
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        
+        iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: AppColor.primaryColor,
         centerTitle: true,
         title: Text(

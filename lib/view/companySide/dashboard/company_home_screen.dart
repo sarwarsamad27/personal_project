@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/chatThread_provider.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/companyExchange_provider.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/company_refund_provider.dart';
@@ -348,7 +348,7 @@ class _PremiumNavBar extends StatelessWidget {
               children: [
                 _slot(
                   child: _NavItem(
-                    icon: LucideIcons.home,
+                    icon: LucideIcons.house,
                     label: "Home",
                     selected: currentIndex == 0,
                     onTap: () => onTap(0),
@@ -517,7 +517,7 @@ class _CenterMessagesButton extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             Icon(
-              LucideIcons.messageCircle,
+              LucideIcons.message_circle,
               size: 26.sp,
               color: selected ? Colors.white : AppColor.primaryColor,
             ),

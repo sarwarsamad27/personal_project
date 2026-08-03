@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/models/categoryModel/getCategory_model.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
@@ -517,7 +517,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                   ],
                                                 ),
                                                 child: Icon(
-                                                  LucideIcons.edit,
+                                                  LucideIcons.square_pen,
                                                   color: AppColor.primaryColor,
                                                   size: 20,
                                                 ),
@@ -546,7 +546,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                   ],
                                                 ),
                                                 child: const Icon(
-                                                  LucideIcons.trash2,
+                                                  LucideIcons.trash_2,
                                                   color: Colors.redAccent,
                                                   size: 20,
                                                 ),

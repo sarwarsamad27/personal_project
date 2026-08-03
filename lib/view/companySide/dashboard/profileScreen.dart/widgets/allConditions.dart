@@ -1,11 +1,12 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/restartWidget.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/ContactUs.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/changePasswordScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/FAQScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/TermAndCondition.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/aboutScreen.dart';
@@ -61,7 +62,7 @@ class AllCondition extends StatelessWidget {
                     ),
                   ),
                   child: Icon(
-                    LucideIcons.logOut,
+                    LucideIcons.log_out,
                     color: Colors.white,
                     size: 22.sp,
                   ),
@@ -146,11 +147,12 @@ class AllCondition extends StatelessWidget {
 
   AllCondition({super.key});
   final List<Map<String, dynamic>> profileOptions = [
-    {"icon": LucideIcons.fileText, "label": "Terms & Conditions"},
-    {"icon": LucideIcons.phoneCall, "label": "Contact Us"},
+    {"icon": LucideIcons.file_text, "label": "Terms & Conditions"},
+    {"icon": LucideIcons.phone_call, "label": "Contact Us"},
     {"icon": LucideIcons.info, "label": "About"},
-    {"icon": LucideIcons.helpCircle, "label": "FAQ"},
-    {"icon": LucideIcons.logOut, "label": "Logout"},
+    {"icon": LucideIcons.circle_question_mark, "label": "FAQ"},
+    {"icon": LucideIcons.key_round, "label": "Change Password"},
+    {"icon": LucideIcons.log_out, "label": "Logout"},
   ];
 
   @override
@@ -158,7 +160,9 @@ class AllCondition extends StatelessWidget {
     return CustomAppContainer(
       padding: EdgeInsets.all(15.w),
 
-      child: Column(
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(
         children: profileOptions.map((option) {
           return ListTile(
             contentPadding: EdgeInsets.zero,
@@ -171,7 +175,7 @@ class AllCondition extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            trailing: const Icon(LucideIcons.chevronRight, color: Colors.white),
+            trailing: const Icon(LucideIcons.chevron_right, color: Colors.white),
             onTap: () {
               switch (option["label"]) {
                 case "Terms & Conditions":
@@ -210,6 +214,14 @@ class AllCondition extends StatelessWidget {
                     ),
                   );
                   break;
+                case "Change Password":
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ChangePasswordScreen(),
+                    ),
+                  );
+                  break;
                 case "Logout":
                   _showLogoutDialog(context);
                   break;
@@ -217,6 +229,7 @@ class AllCondition extends StatelessWidget {
             },
           );
         }).toList(),
+        ),
       ),
     );
   }

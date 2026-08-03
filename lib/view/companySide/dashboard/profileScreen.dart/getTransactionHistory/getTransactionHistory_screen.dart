@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/getTransactionHistory/transactionDetail_screen.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/transactionHIstory_provider.dart';
@@ -88,15 +88,15 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   IconData _statusIcon(dynamic tx) {
-    if (_isReversal(tx)) return LucideIcons.refreshCcw; // reversal icon
-    if (_isFailed(tx)) return LucideIcons.xCircle;
-    if (_isPending(tx)) return LucideIcons.clock3;
-    if (_isCompleted(tx)) return LucideIcons.checkCircle2;
+    if (_isReversal(tx)) return LucideIcons.refresh_ccw; // reversal icon
+    if (_isFailed(tx)) return LucideIcons.circle_x;
+    if (_isPending(tx)) return LucideIcons.clock_3;
+    if (_isCompleted(tx)) return LucideIcons.circle_check_big;
 
     // fallback: debit/credit style
     return _isDebit(tx)
-        ? LucideIcons.arrowDownCircle
-        : LucideIcons.arrowUpCircle;
+        ? LucideIcons.circle_arrow_down
+        : LucideIcons.circle_arrow_up;
   }
 
   Color _statusColor(dynamic tx) {

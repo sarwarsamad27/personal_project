@@ -37,6 +37,40 @@ class _HomeDashboardState extends State<HomeDashboard>
   late final AnimationController _chartController;
   late final Animation<double> _chartScale;
 
+  // Horizontal scroll for the chart plot itself (bar/line share this) — the
+  // chart opens scrolled to the newest (rightmost) point, like a price
+  // chart, and the seller scrolls left for older history.
+  final ScrollController _chartScrollController = ScrollController();
+  // Guards the auto-scroll-to-end so it only fires when the underlying data
+  // actually changes (new type/range/point-count) — not on every rebuild,
+  // e.g. toggling bar/line shouldn't yank the seller back to the end if
+  // they've scrolled to look at older history.
+  String? _lastAutoScrolledSignature;
+
+  void _scrollChartToEndIfNeeded(String signature) {
+    if (signature == _lastAutoScrolledSignature) return;
+    _lastAutoScrolledSignature = signature;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_chartScrollController.hasClients) return;
+      _chartScrollController.jumpTo(
+        _chartScrollController.position.maxScrollExtent,
+      );
+    });
+  }
+
+  // Wider spacing for weekly/monthly (two-line date labels) than daily
+  // (short single labels, and often many more points).
+  double _perPointWidthFor(String type) {
+    switch (type) {
+      case "daily":
+        return 36.w;
+      case "monthly":
+        return 48.w;
+      default:
+        return 54.w;
+    }
+  }
+
   // Debounced live-refresh: several socket events (new order, status
   // change, product edit) can land within the same tick, so this coalesces
   // them into a single dashboard re-fetch instead of hammering the API.
@@ -151,6 +185,7 @@ class _HomeDashboardState extends State<HomeDashboard>
     }
     _cardController.dispose();
     _chartController.dispose();
+    _chartScrollController.dispose();
     super.dispose();
   }
 
@@ -181,27 +216,6 @@ class _HomeDashboardState extends State<HomeDashboard>
     return ["$left -", right];
   }
 
-  // How many `type`-sized periods does [range] span? Mirrors the backend's
-  // own counting exactly (Monday-aligned ISO weeks, calendar months, plain
-  // days) so the "max 7" rule is enforced client-side before it's ever sent.
-  int _periodCountFor(String type, DateTimeRange range) {
-    DateTime day(DateTime d) => DateTime(d.year, d.month, d.day);
-    final start = day(range.start);
-    final end = day(range.end);
-
-    if (type == "daily") {
-      return end.difference(start).inDays + 1;
-    }
-    if (type == "monthly") {
-      return (end.year - start.year) * 12 + (end.month - start.month) + 1;
-    }
-    // weekly — Monday-aligned
-    DateTime mondayOf(DateTime d) =>
-        d.subtract(Duration(days: d.weekday - DateTime.monday));
-    final weeks = mondayOf(end).difference(mondayOf(start)).inDays ~/ 7;
-    return weeks + 1;
-  }
-
   Future<void> _pickCustomRange(BuildContext context) async {
     final chartProvider = context.read<CompanySalesChartProvider>();
     final now = DateTime.now();
@@ -214,27 +228,8 @@ class _HomeDashboardState extends State<HomeDashboard>
     );
     if (picked == null) return;
 
-    final type = chartProvider.selectedType;
-    final periods = _periodCountFor(type, picked);
-    if (periods > 7) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "That range covers $periods ${type == 'daily'
-                ? 'days'
-                : type == 'monthly'
-                ? 'months'
-                : 'weeks'} — please pick at most 7.",
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
     _chartController.forward(from: 0);
-    chartProvider.getChartData(type: type, range: picked);
+    chartProvider.getChartData(type: chartProvider.selectedType, range: picked);
   }
 
   @override
@@ -520,6 +515,10 @@ class _HomeDashboardState extends State<HomeDashboard>
                                   final rawValues = chart.values ?? <int?>[];
                                   final count = rawValues.length;
 
+                                  _scrollChartToEndIfNeeded(
+                                    '${chartProvider.selectedType}-${chartProvider.customRange}-$count',
+                                  );
+
                                   final realValues = rawValues.whereType<int>();
                                   final rawMax = realValues.isEmpty
                                       ? 0
@@ -542,6 +541,14 @@ class _HomeDashboardState extends State<HomeDashboard>
                                           ?.toDouble() ??
                                       0;
 
+                                  // Keep each label narrower than its
+                                  // point's own column so neighbouring
+                                  // labels don't crowd each other when many
+                                  // points are packed in (daily especially).
+                                  final labelWidth =
+                                      _perPointWidthFor(chartProvider.selectedType) -
+                                      8.w;
+
                                   Widget bottomTitle(
                                     double value,
                                     TitleMeta meta,
@@ -556,7 +563,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                                         axisSide: meta.axisSide,
                                         space: 12.h,
                                         child: SizedBox(
-                                          width: 52.w,
+                                          width: labelWidth,
                                           child: Text(
                                             "—",
                                             textAlign: TextAlign.center,
@@ -570,6 +577,77 @@ class _HomeDashboardState extends State<HomeDashboard>
                                       );
                                     }
 
+                                    // Daily: day number packed tight on
+                                    // every point (matches the point
+                                    // spacing), with "Mon YY" surfaced only
+                                    // where the month/year actually changes
+                                    // — repeating it on every single day
+                                    // over a long scrollable history would
+                                    // just be noise, and the transition
+                                    // label needs more room than a single
+                                    // point's column to stay readable.
+                                    if (chartProvider.selectedType ==
+                                        "daily") {
+                                      final full = labels[i] ?? "";
+                                      final parts = full.split(' ');
+                                      final day = parts.isNotEmpty
+                                          ? parts[0]
+                                          : full;
+                                      final monthYear = parts.length >= 3
+                                          ? '${parts[1]} ${parts[2]}'
+                                          : '';
+
+                                      final prevParts =
+                                          (i > 0 ? (labels[i - 1] ?? "") : "")
+                                              .split(' ');
+                                      final prevMonthYear =
+                                          prevParts.length >= 3
+                                          ? '${prevParts[1]} ${prevParts[2]}'
+                                          : '';
+                                      final showMonthYear =
+                                          i == 0 || monthYear != prevMonthYear;
+
+                                      return SideTitleWidget(
+                                        axisSide: meta.axisSide,
+                                        space: 12.h,
+                                        child: SizedBox(
+                                          width: 60.w,
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                day,
+                                                maxLines: 1,
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  fontSize: 10.sp,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Colors.black87,
+                                                  height: 1.1,
+                                                ),
+                                              ),
+                                              if (showMonthYear) ...[
+                                                SizedBox(height: 2.h),
+                                                Text(
+                                                  monthYear,
+                                                  maxLines: 1,
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                    fontSize: 9.sp,
+                                                    fontWeight:
+                                                        FontWeight.w800,
+                                                    color:
+                                                        AppColor.primaryColor,
+                                                    height: 1.1,
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }
+
                                     final full = labels[i] ?? "";
                                     final lines = _twoLineWeekLabel(full);
 
@@ -577,7 +655,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                                       axisSide: meta.axisSide,
                                       space: 12.h,
                                       child: SizedBox(
-                                        width: 52.w,
+                                        width: labelWidth,
                                         child: Column(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
@@ -663,7 +741,24 @@ class _HomeDashboardState extends State<HomeDashboard>
                                       right: 3.w,
                                       bottom: 1.h,
                                     ),
-                                    child: _showLineChart
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        final perPoint = _perPointWidthFor(
+                                          chartProvider.selectedType,
+                                        );
+                                        // Points sit at their natural width,
+                                        // packed close together — the chart
+                                        // is only ever as wide as the data
+                                        // needs, never stretched to fill the
+                                        // card when there are few points.
+                                        final chartWidth = perPoint * count;
+                                        return SingleChildScrollView(
+                                          controller: _chartScrollController,
+                                          scrollDirection: Axis.horizontal,
+                                          physics: const BouncingScrollPhysics(),
+                                          child: SizedBox(
+                                            width: chartWidth,
+                                            child: _showLineChart
                                         ? LineChart(
                                             LineChartData(
                                               maxY: maxValue.toDouble(),
@@ -679,6 +774,8 @@ class _HomeDashboardState extends State<HomeDashboard>
                                                   getTooltipColor: (_) =>
                                                       Colors.black87,
                                                   tooltipRoundedRadius: 10.r,
+                                                  fitInsideHorizontally: true,
+                                                  fitInsideVertically: true,
                                                   getTooltipItems: (spots) =>
                                                       spots.map((s) {
                                                         final idx = s.x.toInt();
@@ -770,8 +867,8 @@ class _HomeDashboardState extends State<HomeDashboard>
                                             BarChartData(
                                               maxY: maxValue.toDouble(),
                                               alignment:
-                                                  BarChartAlignment.spaceAround,
-                                              groupsSpace: 10.w,
+                                                  BarChartAlignment.spaceBetween,
+                                              groupsSpace: 6.w,
                                               barTouchData: BarTouchData(
                                                 enabled: true,
                                                 touchTooltipData: BarTouchTooltipData(
@@ -877,6 +974,10 @@ class _HomeDashboardState extends State<HomeDashboard>
                                             swapAnimationCurve:
                                                 Curves.easeOutCubic,
                                           ),
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   );
                                 },
                               ),

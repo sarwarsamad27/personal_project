@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/userReviews.dart';
 import 'package:new_brand/viewModel/providers/reviewProvider/getAllReview_provider.dart';
@@ -70,7 +70,7 @@ class _UserReviewState extends State<UserReview> {
               ),
             ),
             Spacer(),
-            Icon(LucideIcons.chevronRight, color: Colors.white),
+            Icon(LucideIcons.chevron_right, color: Colors.white),
           ],
         ),
       ),

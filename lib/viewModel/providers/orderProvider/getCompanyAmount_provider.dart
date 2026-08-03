@@ -23,6 +23,11 @@ class CompanyWalletProvider with ChangeNotifier {
   // OTP to, kept around for display/reference during the verify step.
   String? pendingWithdrawPhone;
 
+  // Set by sendWithdrawCode() on failure — the backend's raw message (e.g.
+  // a bad mobile-number format), suppressed as a global toast so the caller
+  // can decide how to surface it (inline under a field, etc).
+  String? lastSendCodeError;
+
   // trackIds whose checkout screen was closed before the poll resolved —
   // without this, the loop below keeps hitting the backend every few
   // seconds for up to ~2 minutes after the user has already left the screen.
@@ -80,10 +85,16 @@ class CompanyWalletProvider with ChangeNotifier {
       );
 
       final ok = res.message == "Verification code sent via SMS";
-      if (ok) pendingWithdrawPhone = res.phone;
+      if (ok) {
+        pendingWithdrawPhone = res.phone;
+        lastSendCodeError = null;
+      } else {
+        lastSendCodeError = res.message;
+      }
       return ok;
     } catch (e) {
       debugPrint("Send OTP Error: $e");
+      lastSendCodeError = null;
       return false;
     } finally {
       isLoading = false;

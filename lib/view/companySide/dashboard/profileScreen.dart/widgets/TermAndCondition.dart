@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
 
 class TermAndConditionScreen extends StatelessWidget {
@@ -16,7 +16,7 @@ class TermAndConditionScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft),
+          icon: const Icon(LucideIcons.arrow_left),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -44,7 +44,7 @@ class TermAndConditionScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(LucideIcons.fileText, color: Colors.white, size: 32.sp),
+                  Icon(LucideIcons.file_text, color: Colors.white, size: 32.sp),
                   SizedBox(height: 10.h),
                   Text(
                     'Terms & Conditions',

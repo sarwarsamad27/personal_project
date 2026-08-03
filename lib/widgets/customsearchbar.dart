@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
 
 class CustomSearchBar extends StatelessWidget {
@@ -63,7 +63,7 @@ class CustomSearchBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: Icon(
-                LucideIcons.slidersHorizontal,
+                LucideIcons.sliders_horizontal,
                 color: Colors.white,
                 size: 20.sp,
               ),

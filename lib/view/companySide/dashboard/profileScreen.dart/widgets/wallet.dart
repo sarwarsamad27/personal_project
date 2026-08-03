@@ -12,7 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/pakistaniBanks.dart';
@@ -64,38 +64,7 @@ class Wallet extends StatefulWidget {
 
 class _WalletState extends State<Wallet> {
   double currentBalance = 12450;
-  List<Map<String, dynamic>> transactions = [
-    {
-      'title': 'Order #1021 Received',
-      'amount': '+ Rs. 2,500',
-      'icon': LucideIcons.checkCircle,
-      'color': Colors.green,
-      'date': '5 Nov 2025',
-      'status': 'completed',
-      'details': {
-        'productPrice': 'Rs. 2,500',
-        'orderDate': '2 Nov 2025, 2:15 PM',
-        'deliveredDate': '5 Nov 2025, 6:30 PM',
-        'transactionDate': '5 Nov 2025, 6:45 PM',
-        'method': 'Internal Wallet Transfer',
-      },
-    },
-    {
-      'title': 'Order #1019 Received',
-      'amount': '+ Rs. 1,200',
-      'icon': LucideIcons.checkCircle,
-      'color': Colors.green,
-      'date': '3 Nov 2025',
-      'status': 'completed',
-      'details': {
-        'productPrice': 'Rs. 1,200',
-        'orderDate': '1 Nov 2025, 12:45 PM',
-        'deliveredDate': '3 Nov 2025, 5:10 PM',
-        'transactionDate': '3 Nov 2025, 5:30 PM',
-        'method': 'Internal Wallet Transfer',
-      },
-    },
-  ];
+
 
   @override
   void initState() {
@@ -114,8 +83,13 @@ class _WalletState extends State<Wallet> {
     final codeController = TextEditingController();
     String? selectedMethod = 'JazzCash';
     String? selectedBank;
+    // Backend field-specific errors (e.g. bad mobile number format) are
+    // surfaced under the offending field instead of a generic toast — see
+    // sendWithdrawCode's onPressed below.
+    String? phoneErrorText;
     bool showCodeField = false;
     bool isVerifying = false;
+    bool isSendingCode = false;
     Timer? otpClipboardTimer;
     // The bottom sheet's StatefulBuilder can be gone by the time the
     // clipboard timer fires — every setSheetState call below is guarded by
@@ -308,6 +282,12 @@ class _WalletState extends State<Wallet> {
                           hintText: "Enter mobile number",
                           controller: phoneController,
                           keyboardType: TextInputType.phone,
+                          errorText: phoneErrorText,
+                          onChanged: (_) {
+                            if (phoneErrorText != null) {
+                              setSheetState(() => phoneErrorText = null);
+                            }
+                          },
                         ),
                       ],
                       SizedBox(height: 15.h),
@@ -339,42 +319,52 @@ class _WalletState extends State<Wallet> {
                                   horizontal: 40.w,
                                 ),
                               ),
-                              onPressed: () async {
-                                final provider = context
-                                    .read<CompanyWalletProvider>();
+                              onPressed: isVerifying
+                                  ? null
+                                  : () async {
+                                      final provider = context
+                                          .read<CompanyWalletProvider>();
 
-                                if (codeController.text.length < 4) {
-                                  AppToast.show("Invalid verification code");
-                                  return;
-                                }
+                                      if (codeController.text.length < 4) {
+                                        AppToast.show(
+                                          "Invalid verification code",
+                                        );
+                                        return;
+                                      }
 
-                                // Captured before the await + the setSheetState
-                                // rebuilds below — popping through a context
-                                // fetched again afterward risks targeting a
-                                // stale/rebuilt element and silently no-op'ing,
-                                // which left the sheet stuck open.
-                                final navigator = Navigator.of(context);
+                                      // Captured before the await + the
+                                      // setSheetState rebuilds below —
+                                      // popping through a context fetched
+                                      // again afterward risks targeting a
+                                      // stale/rebuilt element and silently
+                                      // no-op'ing, which left the sheet
+                                      // stuck open.
+                                      final navigator = Navigator.of(context);
 
-                                setSheetState(() => isVerifying = true);
+                                      setSheetState(() => isVerifying = true);
 
-                                final verified = await provider
-                                    .verifyWithdrawCode(
-                                      code: codeController.text,
-                                      context: context,
-                                    );
+                                      final verified = await provider
+                                          .verifyWithdrawCode(
+                                            code: codeController.text,
+                                            context: context,
+                                          );
 
-                                if (sheetDisposed) return;
-                                setSheetState(() => isVerifying = false);
+                                      if (sheetDisposed) return;
+                                      setSheetState(() => isVerifying = false);
 
-                                if (!verified) {
-                                  AppToast.show("Invalid or expired code");
-                                  return;
-                                }
+                                      if (!verified) {
+                                        AppToast.show(
+                                          "Invalid or expired code",
+                                        );
+                                        return;
+                                      }
 
-                                otpClipboardTimer?.cancel();
-                                AppToast.show("Withdrawal request submitted");
-                                navigator.pop(true);
-                              },
+                                      otpClipboardTimer?.cancel();
+                                      AppToast.show(
+                                        "Withdrawal request submitted",
+                                      );
+                                      navigator.pop(true);
+                                    },
 
                               child: isVerifying
                                   ? SpinKitThreeBounce(
@@ -403,74 +393,138 @@ class _WalletState extends State<Wallet> {
                               horizontal: 40.w,
                             ),
                           ),
-                          onPressed: () async {
-                            final provider = context
-                                .read<CompanyWalletProvider>();
+                          onPressed: isSendingCode
+                              ? null
+                              : () async {
+                                  final provider = context
+                                      .read<CompanyWalletProvider>();
 
-                            final amount = double.tryParse(
-                              amountController.text,
-                            );
+                                  final amount = double.tryParse(
+                                    amountController.text,
+                                  );
 
-                            if (selectedMethod == null ||
-                                nameController.text.isEmpty ||
-                                amount == null ||
-                                amount <= 0) {
-                              AppToast.show("Please fill all fields correctly");
-                              return;
-                            }
+                                  if (selectedMethod == null ||
+                                      nameController.text.isEmpty ||
+                                      amount == null ||
+                                      amount <= 0) {
+                                    AppToast.show(
+                                      "Please fill all fields correctly",
+                                    );
+                                    return;
+                                  }
 
-                            if (isBank) {
-                              if (selectedBank == null ||
-                                  (accountNumberController.text.isEmpty &&
-                                      ibanController.text.isEmpty)) {
-                                AppToast.show(
-                                  "Select a bank and enter account number or IBAN",
-                                );
-                                return;
-                              }
-                            } else if (phoneController.text.isEmpty) {
-                              AppToast.show("Please fill all fields correctly");
-                              return;
-                            }
+                                  if (isBank) {
+                                    if (selectedBank == null ||
+                                        (accountNumberController
+                                                .text
+                                                .isEmpty &&
+                                            ibanController.text.isEmpty)) {
+                                      AppToast.show(
+                                        "Select a bank and enter account number or IBAN",
+                                      );
+                                      return;
+                                    }
+                                  } else if (phoneController.text.isEmpty) {
+                                    AppToast.show(
+                                      "Please fill all fields correctly",
+                                    );
+                                    return;
+                                  }
 
-                            if (amount < 300) {
-                              AppToast.show("Minimum withdrawal is Rs 300");
-                              return;
-                            }
+                                  if (amount < 300) {
+                                    AppToast.show(
+                                      "Minimum withdrawal is Rs 300",
+                                    );
+                                    return;
+                                  }
 
-                            if (amount > provider.currentBalance) {
-                              AppToast.show("Insufficient wallet balance");
-                              return;
-                            }
+                                  if (amount > provider.currentBalance) {
+                                    AppToast.show("Insufficient wallet balance");
+                                    return;
+                                  }
 
-                            final success = await provider.sendWithdrawCode(
-                              name: nameController.text,
-                              phone: phoneController.text,
-                              amount: amountController.text,
-                              method: isBank ? 'bank' : selectedMethod!,
-                              bankName: isBank ? selectedBank : null,
-                              accountNumber: isBank
-                                  ? accountNumberController.text
-                                  : null,
-                              iban: isBank ? ibanController.text : null,
-                            );
+                                  setSheetState(() => isSendingCode = true);
 
-                            if (success) {
-                              AppToast.show("Verification code sent");
-                              setSheetState(() => showCodeField = true);
-                              startOtpClipboardWatch(setSheetState);
-                            } else {
-                              AppToast.show("Failed to send verification code");
-                            }
-                          },
+                                  final success = await provider
+                                      .sendWithdrawCode(
+                                        name: nameController.text,
+                                        phone: phoneController.text,
+                                        amount: amountController.text,
+                                        method: isBank
+                                            ? 'bank'
+                                            : selectedMethod!,
+                                        bankName: isBank ? selectedBank : null,
+                                        accountNumber: isBank
+                                            ? accountNumberController.text
+                                            : null,
+                                        iban: isBank
+                                            ? ibanController.text
+                                            : null,
+                                      );
 
-                          child: const Text(
-                            "Confirm Withdrawal",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                                  if (sheetDisposed) return;
+                                  setSheetState(() => isSendingCode = false);
+
+                                  if (success) {
+                                    setSheetState(() {
+                                      phoneErrorText = null;
+                                      showCodeField = true;
+                                    });
+                                    AppToast.show("Verification code sent");
+                                    startOtpClipboardWatch(setSheetState);
+                                  } else {
+                                    final err = provider.lastSendCodeError;
+                                    final isPhoneError =
+                                        !isBank &&
+                                        err != null &&
+                                        RegExp(
+                                          r'mobile number|phone number|international format',
+                                          caseSensitive: false,
+                                        ).hasMatch(err);
+
+                                    // "Veevo Tech send failed: Required
+                                    // balance is not available..." is OUR SMS
+                                    // gateway account running low, not the
+                                    // seller's wallet — showing it verbatim
+                                    // reads as if their own balance is the
+                                    // problem, so mask it with a generic
+                                    // message instead.
+                                    final isProviderError =
+                                        err != null &&
+                                        RegExp(
+                                          r'veevo|sms gateway|send failed',
+                                          caseSensitive: false,
+                                        ).hasMatch(err);
+
+                                    if (isPhoneError) {
+                                      setSheetState(
+                                        () => phoneErrorText =
+                                            "Enter a valid number, e.g. +923001234567",
+                                      );
+                                    } else if (isProviderError) {
+                                      AppToast.show(
+                                        "Unable to send verification code right now. Please try again later.",
+                                      );
+                                    } else {
+                                      AppToast.show(
+                                        err ?? "Failed to send verification code",
+                                      );
+                                    }
+                                  }
+                                },
+
+                          child: isSendingCode
+                              ? SpinKitThreeBounce(
+                                  color: AppColor.whiteColor,
+                                  size: 30.0,
+                                )
+                              : const Text(
+                                  "Confirm Withdrawal",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                     ],
                   ),
@@ -492,7 +546,9 @@ class _WalletState extends State<Wallet> {
       final tempDir = await getTemporaryDirectory();
       final file = File('${tempDir.path}/shookoo_payment_qr.jpeg');
       await file.writeAsBytes(byteData.buffer.asUint8List());
-      await Share.shareXFiles([XFile(file.path)], text: 'Shookoo payment QR code');
+      await Share.shareXFiles([
+        XFile(file.path),
+      ], text: 'Shookoo payment QR code');
     } catch (_) {
       if (mounted) AppToast.error('Could not download QR code');
     }
@@ -554,327 +610,230 @@ class _WalletState extends State<Wallet> {
                   SizedBox(height: 18.h),
 
                   // Method chooser
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _methodChip(
-                          label: 'Safepay',
-                          icon: Icons.shield_outlined,
-                          selected: method == 'safepay',
-                          onTap: () => setSheetState(() => method = 'safepay'),
+                  // Row(
+                  //   children: [
+                  //     // Expanded(
+                  //     //   child: _methodChip(
+                  //     //     label: 'Safepay',
+                  //     //     icon: Icons.shield_outlined,
+                  //     //     selected: method == 'safepay',
+                  //     //     onTap: () => setSheetState(() => method = 'safepay'),
+                  //     //   ),
+                  //     // ),
+                  //     // SizedBox(width: 10.w),
+                  //     Expanded(
+                  //       child: _methodChip(
+                  //         label: 'Bank Transfer',
+                  //         icon: Icons.account_balance_outlined,
+                  //         selected: method == 'bank_transfer',
+                  //         onTap: () =>
+                  //             setSheetState(() => method = 'bank_transfer'),
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
+                  // SizedBox(height: 20.h),
+
+                  // ── Bank Transfer: pay into our account, upload proof ──
+                  Text(
+                    'Scan the QR or transfer to this account, then upload a screenshot as proof. An admin will verify it and credit your wallet within 24 hours.',
+                    style: TextStyle(fontSize: 12.sp, color: Colors.white70),
+                  ),
+                  SizedBox(height: 14.h),
+                  Center(
+                    child: Container(
+                      padding: EdgeInsets.all(10.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                      child: Image.asset(
+                        'assets/images/QR_sarwar.jpeg',
+                        height: 170.h,
+                        width: 170.h,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: _downloadQr,
+                      icon: Icon(
+                        Icons.download_outlined,
+                        size: 16.sp,
+                        color: Colors.white70,
+                      ),
+                      label: Text(
+                        'Download QR',
+                        style: TextStyle(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white70,
                         ),
                       ),
-                      SizedBox(width: 10.w),
-                      Expanded(
-                        child: _methodChip(
-                          label: 'Bank Transfer',
-                          icon: Icons.account_balance_outlined,
-                          selected: method == 'bank_transfer',
-                          onTap: () =>
-                              setSheetState(() => method = 'bank_transfer'),
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+                  const BankAccountDetailCard(),
+                  SizedBox(height: 18.h),
+
+                  TextFormField(
+                    controller: amountCtrl,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'Amount Sent (Rs)',
+                      prefixText: 'Rs  ',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(
+                          color: AppColor.primaryColor,
+                          width: 1.5,
                         ),
                       ),
-                    ],
+                    ),
+                    validator: (v) {
+                      if (method != 'bank_transfer') return null;
+                      if (v == null || v.isEmpty) return 'Enter amount';
+                      final amt = double.tryParse(v) ?? 0;
+                      if (amt < 100) return 'Minimum Rs 100';
+                      if (amt > 100000) return 'Maximum Rs 100,000';
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 14.h),
+
+                  GestureDetector(
+                    onTap: () async {
+                      final picked = await ImagePicker().pickImage(
+                        source: ImageSource.gallery,
+                        imageQuality: 75,
+                      );
+                      if (picked != null) {
+                        setSheetState(() => screenshot = picked);
+                      }
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(14.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: screenshot == null
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.upload_outlined,
+                                  color: Colors.white70,
+                                  size: 18.sp,
+                                ),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  'Upload Payment Screenshot',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                  child: Image.file(
+                                    File(screenshot!.path),
+                                    width: 44.w,
+                                    height: 44.w,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                SizedBox(width: 10.w),
+                                Expanded(
+                                  child: Text(
+                                    'Screenshot attached — tap to change',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12.sp,
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.check_circle,
+                                  color: Colors.greenAccent,
+                                  size: 18.sp,
+                                ),
+                              ],
+                            ),
+                    ),
                   ),
                   SizedBox(height: 20.h),
 
-                  if (method == 'safepay') ...[
-                    // Amount field
-                    TextFormField(
-                      controller: amountCtrl,
-                      keyboardType: TextInputType.number,
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Amount (Rs)',
-                        prefixText: 'Rs  ',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                          borderSide: BorderSide(
-                            color: AppColor.primaryColor,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      validator: (v) {
-                        if (method != 'safepay') return null;
-                        if (v == null || v.isEmpty) return 'Enter amount';
-                        final amt = double.tryParse(v) ?? 0;
-                        if (amt < 500) return 'Minimum Rs 500';
-                        if (amt > 50000) return 'Maximum Rs 50,000';
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 8.h),
-                    // Quick amounts
-                    Wrap(
-                      spacing: 8.w,
-                      children: [500, 1000, 2000, 5000]
-                          .map(
-                            (a) => ActionChip(
-                              label: Text('Rs $a'),
-                              onPressed: () => amountCtrl.text = '$a',
-                              backgroundColor: AppColor.primaryColor
-                                  .withValues(alpha: 0.08),
-                              labelStyle: TextStyle(
-                                color: AppColor.primaryColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                    SizedBox(height: 20.h),
-
-                    Consumer<CompanyWalletProvider>(
-                      builder: (context, provider, _) => SizedBox(
-                        width: double.infinity,
-                        height: 50.h,
-                        child: CustomButton(
-                          text: "Continue to Payment",
-                          isLoading: provider.isLoading,
-                          onTap: provider.isLoading
-                              ? null
-                              : () async {
-                                  if (!formKey.currentState!.validate()) return;
-                                  final amount = double.parse(
-                                    amountCtrl.text.trim(),
-                                  );
-
-                                  final checkout = await provider
-                                      .initSafepayCheckout(
-                                        amount: amount.toStringAsFixed(0),
-                                      );
-
-                                  if (!context.mounted) return;
-                                  if (checkout == null) {
-                                    AppToast.show(
-                                      'Could not start payment. Try again.',
-                                    );
-                                    return;
-                                  }
-
-                                  Navigator.pop(context); // close sheet
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => SafepayPaymentScreen(
-                                        amount: amount,
-                                        checkoutUrl: checkout['url'] as String,
-                                        trackId: checkout['trackId'] as String,
-                                        onPaymentDone: () {
-                                          walletProvider.fetchCompanyWallet();
-                                        },
-                                      ),
-                                    ),
-                                  );
-                                },
-                        ),
-                      ),
-                    ),
-                  ] else ...[
-                    // ── Bank Transfer: pay into our account, upload proof ──
-                    Text(
-                      'Scan the QR or transfer to this account, then upload a screenshot as proof. An admin will verify it and credit your wallet.',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: Colors.white70,
-                      ),
-                    ),
-                    SizedBox(height: 14.h),
-                    Center(
-                      child: Container(
-                        padding: EdgeInsets.all(10.w),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14.r),
-                        ),
-                        child: Image.asset(
-                          'assets/images/QR_sarwar.jpeg',
-                          height: 170.h,
-                          width: 170.h,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    Center(
-                      child: TextButton.icon(
-                        onPressed: _downloadQr,
-                        icon: Icon(Icons.download_outlined,
-                            size: 16.sp, color: Colors.white70),
-                        label: Text('Download QR',
-                            style: TextStyle(
-                                fontSize: 12.5.sp,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white70)),
-                      ),
-                    ),
-                    SizedBox(height: 6.h),
-                    const BankAccountDetailCard(),
-                    SizedBox(height: 18.h),
-
-                    TextFormField(
-                      controller: amountCtrl,
-                      keyboardType: TextInputType.number,
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Amount Sent (Rs)',
-                        prefixText: 'Rs  ',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                          borderSide: BorderSide(
-                            color: AppColor.primaryColor,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      validator: (v) {
-                        if (method != 'bank_transfer') return null;
-                        if (v == null || v.isEmpty) return 'Enter amount';
-                        final amt = double.tryParse(v) ?? 0;
-                        if (amt < 100) return 'Minimum Rs 100';
-                        if (amt > 100000) return 'Maximum Rs 100,000';
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 14.h),
-
-                    GestureDetector(
-                      onTap: () async {
-                        final picked = await ImagePicker().pickImage(
-                          source: ImageSource.gallery,
-                          imageQuality: 75,
-                        );
-                        if (picked != null) {
-                          setSheetState(() => screenshot = picked);
-                        }
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(14.w),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.25),
-                          ),
-                        ),
-                        child: screenshot == null
-                            ? Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.upload_outlined,
-                                    color: Colors.white70,
-                                    size: 18.sp,
-                                  ),
-                                  SizedBox(width: 8.w),
-                                  Text(
-                                    'Upload Payment Screenshot',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 13.sp,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : Row(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(8.r),
-                                    child: Image.file(
-                                      File(screenshot!.path),
-                                      width: 44.w,
-                                      height: 44.w,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  SizedBox(width: 10.w),
-                                  Expanded(
-                                    child: Text(
-                                      'Screenshot attached — tap to change',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12.sp,
-                                      ),
-                                    ),
-                                  ),
-                                  Icon(
-                                    Icons.check_circle,
-                                    color: Colors.greenAccent,
-                                    size: 18.sp,
-                                  ),
-                                ],
-                              ),
-                      ),
-                    ),
-                    SizedBox(height: 20.h),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50.h,
-                      child: CustomButton(
-                        text: "Submit Deposit Request",
-                        isLoading: submittingBankTransfer,
-                        onTap: submittingBankTransfer
-                            ? null
-                            : () async {
-                                if (!formKey.currentState!.validate()) return;
-                                if (screenshot == null) {
-                                  AppToast.show(
-                                    'Please attach a payment screenshot',
-                                  );
-                                  return;
-                                }
-
-                                setSheetState(
-                                  () => submittingBankTransfer = true,
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50.h,
+                    child: CustomButton(
+                      text: "Submit Deposit Request",
+                      isLoading: submittingBankTransfer,
+                      onTap: submittingBankTransfer
+                          ? null
+                          : () async {
+                              if (!formKey.currentState!.validate()) return;
+                              if (screenshot == null) {
+                                AppToast.show(
+                                  'Please attach a payment screenshot',
                                 );
+                                return;
+                              }
 
-                                final bytes = await screenshot!.readAsBytes();
-                                final base64Image =
-                                    'data:image/jpeg;base64,${base64Encode(bytes)}';
-                                final amount = amountCtrl.text.trim();
+                              setSheetState(
+                                () => submittingBankTransfer = true,
+                              );
 
-                                final ok = await walletProvider
-                                    .submitBankTransfer(
-                                      amount: amount,
-                                      screenshotBase64: base64Image,
-                                      context: context,
-                                    );
+                              final bytes = await screenshot!.readAsBytes();
+                              final base64Image =
+                                  'data:image/jpeg;base64,${base64Encode(bytes)}';
+                              final amount = amountCtrl.text.trim();
 
-                                if (!context.mounted) return;
-                                setSheetState(
-                                  () => submittingBankTransfer = false,
+                              final ok = await walletProvider
+                                  .submitBankTransfer(
+                                    amount: amount,
+                                    screenshotBase64: base64Image,
+                                    context: context,
+                                  );
+
+                              if (!context.mounted) return;
+                              setSheetState(
+                                () => submittingBankTransfer = false,
+                              );
+
+                              if (ok) {
+                                Navigator.pop(context);
+                                AppToast.show(
+                                  'Request submitted — awaiting admin verification',
                                 );
-
-                                if (ok) {
-                                  Navigator.pop(context);
-                                  AppToast.show(
-                                    'Request submitted — awaiting admin verification',
-                                  );
-                                } else {
-                                  AppToast.show(
-                                    'Could not submit request. Try again.',
-                                  );
-                                }
-                              },
-                      ),
+                              } else {
+                                AppToast.show(
+                                  'Could not submit request. Try again.',
+                                );
+                              }
+                            },
                     ),
-                  ],
+                  ),
+
                   SizedBox(height: 8.h),
                 ],
               ),
@@ -885,46 +844,46 @@ class _WalletState extends State<Wallet> {
     );
   }
 
-  Widget _methodChip({
-    required String label,
-    required IconData icon,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: EdgeInsets.symmetric(vertical: 12.h),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColor.primaryColor
-              : Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: selected
-                ? AppColor.primaryColor
-                : Colors.white.withValues(alpha: 0.2),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 16.sp),
-            SizedBox(width: 6.w),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12.5.sp,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _methodChip({
+  //   required String label,
+  //   required IconData icon,
+  //   required bool selected,
+  //   required VoidCallback onTap,
+  // }) {
+  //   return GestureDetector(
+  //     onTap: onTap,
+  //     child: AnimatedContainer(
+  //       duration: const Duration(milliseconds: 150),
+  //       padding: EdgeInsets.symmetric(vertical: 12.h),
+  //       decoration: BoxDecoration(
+  //         color: selected
+  //             ? AppColor.primaryColor
+  //             : Colors.white.withValues(alpha: 0.08),
+  //         borderRadius: BorderRadius.circular(12.r),
+  //         border: Border.all(
+  //           color: selected
+  //               ? AppColor.primaryColor
+  //               : Colors.white.withValues(alpha: 0.2),
+  //         ),
+  //       ),
+  //       child: Row(
+  //         mainAxisAlignment: MainAxisAlignment.center,
+  //         children: [
+  //           Icon(icon, color: Colors.white, size: 16.sp),
+  //           SizedBox(width: 6.w),
+  //           Text(
+  //             label,
+  //             style: TextStyle(
+  //               color: Colors.white,
+  //               fontSize: 12.5.sp,
+  //               fontWeight: FontWeight.w700,
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -1011,7 +970,7 @@ class _WalletState extends State<Wallet> {
                           ),
                         ),
                         icon: const Icon(
-                          LucideIcons.arrowDownCircle,
+                          LucideIcons.circle_arrow_down,
                           color: Colors.white,
                           size: 18,
                         ),
@@ -1036,7 +995,7 @@ class _WalletState extends State<Wallet> {
                           ),
                         ),
                         icon: const Icon(
-                          LucideIcons.plusCircle,
+                          LucideIcons.circle_plus,
                           color: Colors.white,
                           size: 18,
                         ),

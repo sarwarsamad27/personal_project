@@ -3,8 +3,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps
 
 class Global {
-  static String BaseUrl = dotenv.env['BASE_URL'] ?? '';
-  static String imageUrl = dotenv.env['IMAGE_URL'] ?? "";
+  // static String BaseUrl = dotenv.env['BASE_URL'] ?? '';
+  // static String imageUrl = dotenv.env['IMAGE_URL'] ?? "";
 
   // Bump this with every release. Checked against the backend's stored
   // value (PUT /app-version/seller, e.g. via Postman) on app startup.
@@ -12,8 +12,8 @@ class Global {
   static var AppVersionCheck = "${BaseUrl}/app-version/seller";
   // static var imageUrl = "http://192.168.30.124:5000";
   // static var BaseUrl = "http://192.168.30.124:5000/api/auth";
-  // static var BaseUrl = "http://10.0.2.2:5000/api/auth";
-  // static var imageUrl = "http://10.0.2.2:5000";
+  static var BaseUrl = "http://10.0.2.2:5000/api/auth";
+  static var imageUrl = "http://10.0.2.2:5000";
   static var SignUp = "${BaseUrl}/signup";
   static var Login = "${BaseUrl}/login";
   static var GoogleLogin = "${BaseUrl}/google/login";
@@ -25,6 +25,7 @@ class Global {
   static var ForgotPassword = "${BaseUrl}/forgot-password";
   static var VerifyCode = "${BaseUrl}/verifycode";
   static var UpdatePassword = "${BaseUrl}/reset/password";
+  static var ChangeLoggedInPassword = "${BaseUrl}/change-password";
   static var CreateCategory = "${BaseUrl}/create/category";
   static var GetCategory = "${BaseUrl}/category";
   static var EditCategory = "${BaseUrl}/edit/category";

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/view/companySide/dashboard/allOrdersScreen/allOrders_screen.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
@@ -37,7 +37,7 @@ class StatsView extends StatelessWidget {
       {
         'title': 'Total Orders',
         'value': '${data.totalOrders}',
-        'icon': LucideIcons.shoppingBag,
+        'icon': LucideIcons.shopping_bag,
         'gradient': [const Color(0xFF8E2DE2), const Color(0xFF4A00E0)],
         'onTap': () => Navigator.push(
           context,
@@ -67,13 +67,13 @@ class StatsView extends StatelessWidget {
       {
         'title': 'Low Stock Products',
         'value': '${data.lowStockProducts ?? 0}',
-        'icon': LucideIcons.alertTriangle,
+        'icon': LucideIcons.triangle_alert,
         'gradient': [const Color(0xFFF59E0B), const Color(0xFFD97706)],
       },
       {
         'title': 'Out of Stock Products',
         'value': '${data.outOfStockProducts ?? 0}',
-        'icon': LucideIcons.alertOctagon,
+        'icon': LucideIcons.octagon_alert,
         'gradient': [const Color(0xFFEF4444), const Color(0xFFB91C1C)],
       },
 
@@ -87,7 +87,7 @@ class StatsView extends StatelessWidget {
       {
         'title': 'Delivered Amount',
         'value': 'Rs. ${data.wallet?.totalDelivered ?? 0}',
-        'icon': LucideIcons.checkCircle,
+        'icon': LucideIcons.circle_check,
         'gradient': [const Color(0xFF22C55E), const Color(0xFF16A34A)],
       },
       {
@@ -99,7 +99,7 @@ class StatsView extends StatelessWidget {
       {
         'title': 'Completed Withdraw',
         'value': 'Rs. ${data.wallet?.completedWithdraw ?? 0}',
-        'icon': LucideIcons.badgeCheck,
+        'icon': LucideIcons.badge_check,
         'gradient': [const Color(0xFFF59E0B), const Color(0xFFFBBF24)],
       },
     ];

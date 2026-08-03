@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
 
 class FAQScreen extends StatefulWidget {
@@ -177,7 +177,7 @@ class _FAQScreenState extends State<FAQScreen> {
             backgroundColor: AppColor.appimagecolor,
             foregroundColor: Colors.white,
             leading: IconButton(
-              icon: const Icon(LucideIcons.arrowLeft),
+              icon: const Icon(LucideIcons.arrow_left),
               onPressed: () => Navigator.pop(context),
             ),
             flexibleSpace: FlexibleSpaceBar(
@@ -206,7 +206,7 @@ class _FAQScreenState extends State<FAQScreen> {
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Icon(
-                            LucideIcons.helpCircle,
+                            LucideIcons.circle_question_mark,
                             color: Colors.white,
                             size: 24.sp,
                           ),
@@ -388,7 +388,7 @@ class _FAQScreenState extends State<FAQScreen> {
                                 turns: isOpen ? 0.5 : 0,
                                 duration: const Duration(milliseconds: 250),
                                 child: Icon(
-                                  LucideIcons.chevronDown,
+                                  LucideIcons.chevron_down,
                                   size: 18.sp,
                                   color: isOpen
                                       ? AppColor.appimagecolor
@@ -476,15 +476,15 @@ class _FAQScreenState extends State<FAQScreen> {
       case 'Account':
         return LucideIcons.user;
       case 'Orders':
-        return LucideIcons.shoppingBag;
+        return LucideIcons.shopping_bag;
       case 'Payments':
         return LucideIcons.wallet;
       case 'Shipping':
         return LucideIcons.truck;
       case 'Returns':
-        return LucideIcons.arrowLeftRight;
+        return LucideIcons.arrow_left_right;
       default:
-        return LucideIcons.helpCircle;
+        return LucideIcons.circle_question_mark;
     }
   }
 }

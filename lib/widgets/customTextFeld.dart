@@ -17,6 +17,10 @@ class CustomTextField extends StatefulWidget {
   final int? minLines;
   final String? Function(String?)? validator;
   final Function(String)? onChanged;
+  // Shown under the field (and switches the border to the error color)
+  // without needing to wrap this field in a Form — set/clear it directly
+  // from the parent's state, e.g. after a backend field-specific error.
+  final String? errorText;
 
   const CustomTextField({
     super.key,
@@ -33,6 +37,7 @@ class CustomTextField extends StatefulWidget {
     this.height,
     this.validator,
     this.onChanged,
+    this.errorText,
   });
 
   @override
@@ -80,6 +85,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
                 filled: true,
                 fillColor: Colors.white,
                 hintText: widget.hintText,
+                errorText: widget.errorText,
                 hintStyle: TextStyle(
                   color: AppColor.textSecondaryColor.withOpacity(0.7),
                   fontSize: 14.sp,

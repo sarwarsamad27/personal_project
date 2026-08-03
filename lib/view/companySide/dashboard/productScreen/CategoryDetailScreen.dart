@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/models/categoryModel/getCategory_model.dart';
 import 'package:new_brand/models/productModel/getProductCategoryWise_model.dart';
 import 'package:new_brand/resources/appColor.dart';
@@ -145,7 +145,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
         title: Row(
           children: [
             Icon(
-              LucideIcons.alertCircle,
+              LucideIcons.circle_alert,
               color: AppColor.primaryColor,
               size: 24.sp,
             ),

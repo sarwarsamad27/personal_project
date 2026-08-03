@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
@@ -90,7 +91,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
             backgroundColor: AppColor.appimagecolor,
             foregroundColor: Colors.white,
             leading: IconButton(
-              icon: const Icon(LucideIcons.arrowLeft),
+              icon: const Icon(LucideIcons.arrow_left),
               onPressed: () => Navigator.pop(context),
             ),
             flexibleSpace: FlexibleSpaceBar(
@@ -206,7 +207,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                               borderRadius: BorderRadius.circular(14.r),
                             ),
                             child: Icon(
-                              LucideIcons.messageCircle,
+                              LucideIcons.message_circle,
                               color: Colors.white,
                               size: 26.sp,
                             ),
@@ -262,7 +263,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                             ),
                           ),
                           Icon(
-                            LucideIcons.arrowRight,
+                            LucideIcons.arrow_right,
                             color: Colors.white,
                             size: 18.sp,
                           ),
@@ -318,7 +319,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                   ),
                   SizedBox(height: 10.h),
                   _EmailCard(
-                    icon: LucideIcons.alertCircle,
+                    icon: LucideIcons.circle_alert,
                     color: Colors.red,
                     label: 'Complaints',
                     email: 'complaint@shookoo.pk',
@@ -329,7 +330,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                   // ── Social Media ───────────────────────────────────
                   _InfoCard(
-                    icon: LucideIcons.share2,
+                    icon: LucideIcons.share_2,
                     title: 'Follow Us',
                     children: [
                       Row(
@@ -337,7 +338,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                           _SocialButton(
                             label: 'Facebook',
                             color: const Color(0xFF1877F2),
-                            icon: LucideIcons.facebook,
+                            icon: FontAwesomeIcons.facebook.data,
                             onTap: () =>
                                 _launch('https://facebook.com/shookoo.pk'),
                           ),
@@ -345,7 +346,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                           _SocialButton(
                             label: 'Instagram',
                             color: const Color(0xFFE1306C),
-                            icon: LucideIcons.instagram,
+                            icon: FontAwesomeIcons.instagram.data,
                             onTap: () =>
                                 _launch('https://instagram.com/shookoo.pk'),
                           ),
@@ -353,7 +354,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                           _SocialButton(
                             label: 'TikTok',
                             color: Colors.black87,
-                            icon: LucideIcons.music2,
+                            icon: LucideIcons.music_2,
                             onTap: () => _launch('https://tiktok.com/@shookoo'),
                           ),
                         ],
@@ -424,7 +425,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                             _FormField(
                               controller: _messageController,
                               hint: 'Your Message...',
-                              icon: LucideIcons.messageSquare,
+                              icon: LucideIcons.message_square,
                               maxLines: 4,
                               validator: (v) => v == null || v.length < 10
                                   ? 'Message too short'
@@ -494,7 +495,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              LucideIcons.checkCircle2,
+                              LucideIcons.circle_check_big,
                               color: Colors.green,
                               size: 32.sp,
                             ),
@@ -659,7 +660,7 @@ class _EmailCard extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  LucideIcons.arrowUpRight,
+                  LucideIcons.arrow_up_right,
                   size: 14.sp,
                   color: color,
                 ),

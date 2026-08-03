@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
 
 class AboutScreen extends StatelessWidget {
@@ -19,7 +19,7 @@ class AboutScreen extends StatelessWidget {
             backgroundColor: AppColor.appimagecolor,
             foregroundColor: Colors.white,
             leading: IconButton(
-              icon: const Icon(LucideIcons.arrowLeft),
+              icon: const Icon(LucideIcons.arrow_left),
               onPressed: () => Navigator.pop(context),
             ),
             flexibleSpace: FlexibleSpaceBar(
@@ -219,7 +219,7 @@ class AboutScreen extends StatelessWidget {
                         ),
                         SizedBox(height: 12.h),
                         _FeatureRow(
-                          icon: LucideIcons.shoppingBag,
+                          icon: LucideIcons.shopping_bag,
                           text:
                               'Multi-vendor marketplace — multiple stores, one platform',
                         ),
@@ -234,11 +234,11 @@ class AboutScreen extends StatelessWidget {
                               'Seller wallet with JazzCash & EasyPaisa support',
                         ),
                         _FeatureRow(
-                          icon: LucideIcons.arrowLeftRight,
+                          icon: LucideIcons.arrow_left_right,
                           text: 'Easy exchange & refund management',
                         ),
                         _FeatureRow(
-                          icon: LucideIcons.barChart2,
+                          icon: LucideIcons.chart_column,
                           text: 'Real-time sales analytics & dashboard',
                         ),
                         _FeatureRow(
@@ -277,7 +277,7 @@ class AboutScreen extends StatelessWidget {
                   //     crossAxisAlignment: CrossAxisAlignment.start,
                   //     children: [
                   //       _CardTitle(
-                  //         icon: LucideIcons.code2,
+                  //         icon: LucideIcons.code,
                   //         title: 'Built With',
                   //       ),
                   //       SizedBox(height: 12.h),
@@ -305,7 +305,7 @@ class AboutScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _CardTitle(icon: LucideIcons.fileText, title: 'Legal'),
+                        _CardTitle(icon: LucideIcons.file_text, title: 'Legal'),
                         SizedBox(height: 10.h),
                         _LegalRow(label: 'Business Name', value: 'Shookoo'),
                         _LegalRow(label: 'Type', value: 'Sole Proprietorship'),

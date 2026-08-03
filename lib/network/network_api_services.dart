@@ -113,8 +113,9 @@ class NetworkApiServices extends BaseApiServices {
   @override
   Future<Map<String, dynamic>> postApi(
     String url,
-    Map<String, dynamic> body,
-  ) async {
+    Map<String, dynamic> body, {
+    bool suppressErrorToast = false,
+  }) async {
     try {
       final response = await http
           .post(
@@ -123,9 +124,15 @@ class NetworkApiServices extends BaseApiServices {
             body: jsonEncode(body),
           )
           .timeout(Duration(seconds: _timeoutDuration));
-      return _handleResponse(url, response, body: body, method: 'POST');
+      return _handleResponse(
+        url,
+        response,
+        body: body,
+        method: 'POST',
+        suppressErrorToast: suppressErrorToast,
+      );
     } catch (e) {
-      return _handleError(e);
+      return _handleError(e, suppressErrorToast: suppressErrorToast);
     }
   }
 
@@ -483,24 +490,30 @@ class NetworkApiServices extends BaseApiServices {
     return {'code_status': false, 'message': errorMessage};
   }
 
-  Map<String, dynamic> _handleError(e) {
+  Map<String, dynamic> _handleError(e, {bool suppressErrorToast = false}) {
     if (e is TimeoutException) {
-      AppToast.error("Request Timeout. Please try again.");
+      if (!suppressErrorToast) AppToast.error("Request Timeout. Please try again.");
       return {'code_status': false, 'message': 'Request Timeout'};
     }
 
     if (e is SocketException) {
-      AppToast.error("No Internet Connection. Please check your network.");
+      if (!suppressErrorToast) {
+        AppToast.error("No Internet Connection. Please check your network.");
+      }
       return {'code_status': false, 'message': 'No Internet Connection'};
     }
 
     if (e is HandshakeException) {
-      AppToast.error("Security certificate error. Please try again later.");
+      if (!suppressErrorToast) {
+        AppToast.error("Security certificate error. Please try again later.");
+      }
       return {'code_status': false, 'message': 'Handshake Exception'};
     }
 
     if (e is InternetException) {
-      AppToast.error("No Internet Connection. Please check your network.");
+      if (!suppressErrorToast) {
+        AppToast.error("No Internet Connection. Please check your network.");
+      }
       return {'code_status': false, 'message': 'No Internet Connection'};
     }
 
@@ -511,7 +524,7 @@ class NetworkApiServices extends BaseApiServices {
     if (msg.length > 200) {
       msg = '${msg.substring(0, 200)}...';
     }
-    AppToast.error(msg);
+    if (!suppressErrorToast) AppToast.error(msg);
     return {'code_status': false, 'message': 'Exception: $e'};
   }
 }

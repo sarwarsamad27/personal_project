@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/view/companySide/dashboard/ChatListScreen/company_refund_list_screen.dart';
@@ -338,7 +338,7 @@ class ProfileScreen extends StatelessWidget {
                         child: Row(
                           children: [
                             const Icon(
-                              LucideIcons.wallet2,
+                              LucideIcons.wallet_minimal,
                               color: Colors.white,
                               size: 24,
                             ),
@@ -366,7 +366,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                             ),
                             const Icon(
-                              LucideIcons.chevronRight,
+                              LucideIcons.chevron_right,
                               color: Colors.white,
                             ),
                           ],
@@ -401,7 +401,7 @@ class ProfileScreen extends StatelessWidget {
                             child: Row(
                               children: [
                                 Icon(
-                                  LucideIcons.arrowLeftRight,
+                                  LucideIcons.arrow_left_right,
                                   color: AppColor.appimagecolor,
                                   size: 24,
                                 ),
@@ -432,7 +432,7 @@ class ProfileScreen extends StatelessWidget {
                                   ),
                                 ),
                                 const Icon(
-                                  LucideIcons.chevronRight,
+                                  LucideIcons.chevron_right,
                                   color: Colors.white,
                                 ),
                               ],
@@ -475,7 +475,7 @@ class ProfileScreen extends StatelessWidget {
                             child: Row(
                               children: [
                                 const Icon(
-                                  LucideIcons.undo2,
+                                  LucideIcons.undo_2,
                                   color: Colors.redAccent,
                                   size: 24,
                                 ),
@@ -506,7 +506,7 @@ class ProfileScreen extends StatelessWidget {
                                   ),
                                 ),
                                 const Icon(
-                                  LucideIcons.chevronRight,
+                                  LucideIcons.chevron_right,
                                   color: Colors.white,
                                 ),
                               ],

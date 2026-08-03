@@ -1,9 +1,9 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
@@ -144,7 +144,7 @@ class _SellerAdminMessagesScreenState extends State<SellerAdminMessagesScreen> {
                 height: 32.w,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Icon(
-                  LucideIcons.shieldCheck,
+                  LucideIcons.shield_check,
                   color: Colors.white,
                   size: 22.sp,
                 ),
@@ -228,7 +228,7 @@ class _SellerAdminMessagesScreenState extends State<SellerAdminMessagesScreen> {
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Icon(
-                    LucideIcons.shieldCheck,
+                    LucideIcons.shield_check,
                     size: 14.sp,
                     color: AppColor.appimagecolor,
                   ),
@@ -256,7 +256,7 @@ class _SellerAdminMessagesScreenState extends State<SellerAdminMessagesScreen> {
                         borderRadius: BorderRadius.circular(6.r),
                       ),
                       child: Text(
-                        '📢 Broadcast',
+                        'ðŸ“¢ Broadcast',
                         style: TextStyle(
                           fontSize: 10.sp,
                           color: Colors.blue.shade700,
@@ -396,7 +396,7 @@ class _SellerAdminMessagesScreenState extends State<SellerAdminMessagesScreen> {
             height: 70.w,
             fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => Icon(
-              LucideIcons.shieldCheck,
+              LucideIcons.shield_check,
               size: 60.sp,
               color: Colors.grey[300],
             ),
