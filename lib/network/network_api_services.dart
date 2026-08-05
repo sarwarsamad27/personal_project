@@ -448,8 +448,12 @@ class NetworkApiServices extends BaseApiServices {
             message = decoded['message'].toString();
           }
 
-          // Show success toast for mutations
-          if (method != null &&
+          // Show success toast for mutations — suppressErrorToast also
+          // covers this despite the name, so a caller that wants to own all
+          // messaging itself (e.g. to key the toast off a business-logic
+          // flag inside a 200 response) can opt all the way out.
+          if (!suppressErrorToast &&
+              method != null &&
               (method == 'POST' || method == 'PUT' || method == 'DELETE')) {
             AppToast.success(message);
           }
@@ -457,7 +461,8 @@ class NetworkApiServices extends BaseApiServices {
           return decoded;
         }
 
-        if (method != null &&
+        if (!suppressErrorToast &&
+            method != null &&
             (method == 'POST' || method == 'PUT' || method == 'DELETE')) {
           AppToast.success(message);
         }

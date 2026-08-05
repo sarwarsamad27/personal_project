@@ -31,23 +31,70 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     super.dispose();
   }
 
+  // Any of these mean the request failed — 'code_status' is set by the
+  // network layer itself on a transport/HTTP-level failure (bad status,
+  // timeout, no internet, ...); 'success'/'status'/'error' are how this
+  // backend reports a business-logic failure (e.g. wrong current password)
+  // inside an otherwise-200 response. Checking only one of these was the
+  // bug: a wrong current password came back as a 200 with success:false,
+  // which fell through to the "success" branch and silently popped the
+  // screen with no error shown.
+  bool _isFailure(Map<String, dynamic> response) {
+    if (response['code_status'] == false) return true;
+    if (response['success'] == false) return true;
+    if (response['status'] == false) return true;
+    final error = response['error'];
+    if (error != null && error.toString().trim().isNotEmpty) return true;
+    return false;
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
-    final response = await _api.postApi(Global.ChangeLoggedInPassword, {
-      'currentPassword': _currentCtrl.text,
-      'newPassword': _newCtrl.text,
-    });
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (response['code_status'] == false) {
-      AppToast.error(response['message']?.toString() ?? 'Could not change password');
+    if (_newCtrl.text == _currentCtrl.text) {
+      AppToast.error('New password must be different from the current password');
       return;
     }
 
-    AppToast.success('Password changed successfully');
+    setState(() => _isLoading = true);
+
+    late final Map<String, dynamic> response;
+    try {
+      // This screen owns its own toast messaging end-to-end (see
+      // _isFailure) instead of relying on the network layer's automatic
+      // toast, since that layer can't tell a business-logic failure
+      // reported inside a 200 response from a real success.
+      response = await _api.postApi(
+        Global.ChangeLoggedInPassword,
+        {
+          'currentPassword': _currentCtrl.text,
+          'newPassword': _newCtrl.text,
+        },
+        suppressErrorToast: true,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      AppToast.error('Something went wrong. Please try again.');
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (_isFailure(response)) {
+      final message = response['message']?.toString().trim();
+      AppToast.error(
+        (message != null && message.isNotEmpty)
+            ? message
+            : 'Could not change password. Please try again.',
+      );
+      return;
+    }
+
+    AppToast.success(
+      response['message']?.toString() ?? 'Password changed successfully',
+    );
     Navigator.pop(context);
   }
 
