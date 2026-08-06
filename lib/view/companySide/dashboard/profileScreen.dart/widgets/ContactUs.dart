@@ -179,7 +179,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                   // ── WhatsApp Hero Card ──────────────────────────────
                   GestureDetector(
-                    onTap: () => _launch('https://wa.me/923220270729'),
+                    onTap: () => _launch('https://wa.me/923272382139'),
                     child: Container(
                       width: double.infinity,
                       padding: EdgeInsets.all(18.r),
@@ -252,7 +252,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                                 ),
                                 SizedBox(height: 4.h),
                                 Text(
-                                  '+92 322-0270729',
+                                  '+92 327-2382139',
                                   style: TextStyle(
                                     color: Colors.white70,
                                     fontSize: 12.5.sp,

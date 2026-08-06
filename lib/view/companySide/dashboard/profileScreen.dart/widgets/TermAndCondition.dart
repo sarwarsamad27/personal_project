@@ -107,7 +107,7 @@ class TermAndConditionScreen extends StatelessWidget {
               number: '5',
               title: 'Payments & Commission',
               content:
-                  'Shookoo operates on a commission-based model:\n\n• Commission rates are communicated at the time of onboarding\n• Payments are processed after successful order delivery\n• Funds are credited to your Shookoo wallet within 2-5 business days after delivery confirmation\n• Minimum withdrawal amount: Rs. 500\n• Withdrawals are processed within 1-3 business days\n• Shookoo reserves the right to withhold payments in case of disputes or policy violations',
+                  'Shookoo operates on a commission-based model:\n\n• Commission rates are communicated at the time of onboarding\n• Payments are processed after successful order delivery\n• Funds are credited to your Shookoo wallet after delivery confirmation\n• Minimum withdrawal amount: Rs. 500\n• Withdrawals are processed within 7-10 business days\n• Shookoo reserves the right to withhold payments in case of disputes or policy violations',
             ),
 
             _Section(
@@ -208,7 +208,7 @@ class TermAndConditionScreen extends StatelessWidget {
                     text: 'support@shookoo.pk',
                   ),
                   SizedBox(height: 6.h),
-                  _ContactRow(icon: LucideIcons.phone, text: '+92 322-0270729'),
+                  _ContactRow(icon: LucideIcons.phone, text: '+92 327-2382139'),
                   SizedBox(height: 6.h),
                   _ContactRow(icon: LucideIcons.globe, text: 'www.shookoo.pk'),
                 ],
