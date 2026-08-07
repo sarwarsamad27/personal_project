@@ -340,7 +340,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                             color: const Color(0xFF1877F2),
                             icon: FontAwesomeIcons.facebook.data,
                             onTap: () =>
-                                _launch('https://facebook.com/shookoo.pk'),
+                                _launch('https://www.facebook.com/share/1C4AZgF3Ea/'),
                           ),
                           SizedBox(width: 10.w),
                           _SocialButton(
