@@ -18,10 +18,11 @@ class AppNav {
 
     await LocalStorage.clearToken();
 
-    // Full provider-tree restart (not just a nav push) — otherwise the
-    // previous seller's in-memory data (categories, orders, dashboard,
-    // chat...) stays cached for whoever logs in next on this device.
-    restartApp(toLogin: true);
+    // Use post-frame callback so logout can complete cleanly even if called
+    // while a dialog or route is being dismissed.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      restartApp(toLogin: true);
+    });
 
     _busy = false;
   }

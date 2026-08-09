@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
+import 'package:new_brand/resources/appNav.dart';
 import 'package:new_brand/resources/local_storage.dart';
-import 'package:new_brand/resources/restartWidget.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/ContactUs.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/changePasswordScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/FAQScreen.dart';
@@ -137,12 +137,7 @@ class AllCondition extends StatelessWidget {
       await FirebaseMessaging.instance.deleteToken();
     } catch (_) {}
 
-    await LocalStorage.clearToken();
-
-    // Full provider-tree restart (not just a nav push) — otherwise the
-    // previous seller's in-memory data (categories, orders, dashboard,
-    // chat...) stays cached for whoever logs in next on this device.
-    restartApp(toLogin: true);
+    await AppNav.forceLogoutToLogin();
   }
 
   AllCondition({super.key});

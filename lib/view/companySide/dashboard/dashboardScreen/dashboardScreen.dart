@@ -513,13 +513,27 @@ class _HomeDashboardState extends State<HomeDashboard>
 
                                   final labels = chart.labels ?? <String?>[];
                                   final rawValues = chart.values ?? <int?>[];
-                                  final count = rawValues.length;
+                                  const minChartPoints = 7;
+                                  final paddedLabels = List<String?>.from(labels);
+                                  final paddedValues = List<int?>.from(rawValues);
+
+                                  while (paddedLabels.length < minChartPoints) {
+                                    paddedLabels.add(null);
+                                  }
+                                  while (paddedValues.length < minChartPoints) {
+                                    paddedValues.add(null);
+                                  }
+
+                                  final count = paddedValues.length;
+                                  final hasSales = paddedValues.whereType<int>().any(
+                                        (value) => value > 0,
+                                      );
 
                                   _scrollChartToEndIfNeeded(
                                     '${chartProvider.selectedType}-${chartProvider.customRange}-$count',
                                   );
 
-                                  final realValues = rawValues.whereType<int>();
+                                  final realValues = paddedValues.whereType<int>();
                                   final rawMax = realValues.isEmpty
                                       ? 0
                                       : realValues.reduce(
@@ -533,10 +547,11 @@ class _HomeDashboardState extends State<HomeDashboard>
                                   // placeholder slot ("no date assigned") —
                                   // a custom range shorter than 7 periods.
                                   bool isEmptySlot(int i) =>
-                                      i >= labels.length || labels[i] == null;
+                                      i >= paddedLabels.length ||
+                                      paddedLabels[i] == null;
                                   double valueAt(int i) =>
-                                      (i < rawValues.length
-                                              ? rawValues[i]
+                                      (i < paddedValues.length
+                                              ? paddedValues[i]
                                               : null)
                                           ?.toDouble() ??
                                       0;
@@ -588,7 +603,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                                     // point's column to stay readable.
                                     if (chartProvider.selectedType ==
                                         "daily") {
-                                      final full = labels[i] ?? "";
+                                      final full = paddedLabels[i] ?? "";
                                       final parts = full.split(' ');
                                       final day = parts.isNotEmpty
                                           ? parts[0]
@@ -598,9 +613,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                                           : '';
 
                                       final prevParts =
-                                          (i > 0 ? (labels[i - 1] ?? "") : "")
-                                              .split(' ');
-                                      final prevMonthYear =
+                                          (i > 0 ? (paddedLabels[i - 1] ?? "") : "")
                                           prevParts.length >= 3
                                           ? '${prevParts[1]} ${prevParts[2]}'
                                           : '';
@@ -648,7 +661,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                                       );
                                     }
 
-                                    final full = labels[i] ?? "";
+                                    final full = paddedLabels[i] ?? "";
                                     final lines = _twoLineWeekLabel(full);
 
                                     return SideTitleWidget(
@@ -793,7 +806,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                                                           );
                                                         }
                                                         return LineTooltipItem(
-                                                          "${labels[idx]}\nPKR ${s.y.toInt()}",
+                                                          "${paddedLabels[idx] ?? ''}\nPKR ${s.y.toInt()}",
                                                           TextStyle(
                                                             color: Colors.white,
                                                             fontWeight:
@@ -895,7 +908,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                                                           );
                                                         }
                                                         final fullLabel =
-                                                            labels[idx] ?? "";
+                                                            paddedLabels[idx] ?? "";
                                                         return BarTooltipItem(
                                                           "${fullLabel.isNotEmpty ? "$fullLabel\n" : ""}PKR ${rod.toY.toInt()}",
                                                           TextStyle(
