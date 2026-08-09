@@ -430,6 +430,7 @@ class _AiStoreDescriptionChatState extends State<AiStoreDescriptionChat> {
   }
 
   Widget _aiErrorBubble(String error) {
+    final displayError = _simplifyErrorMessage(error);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -447,13 +448,33 @@ class _AiStoreDescriptionChatState extends State<AiStoreDescriptionChat> {
               ),
             ),
             child: Text(
-              "Sorry, I couldn't generate a description right now.\n$error",
+              "Sorry, I couldn't generate a description right now.\n$displayError",
               style: TextStyle(fontSize: 12.sp, color: AppColor.errorColor),
             ),
           ),
         ),
       ],
     );
+  }
+
+  String _simplifyErrorMessage(String error) {
+    final lower = error.toLowerCase();
+    if (lower.contains('no internet') ||
+        lower.contains('socketexception') ||
+        lower.contains('failed host lookup') ||
+        lower.contains('network is unreachable')) {
+      return 'No internet connection';
+    }
+    if (lower.contains('timeout')) {
+      return 'Request timed out. Please check your internet connection.';
+    }
+    if (lower.contains('formatexception')) {
+      return 'Invalid response from server';
+    }
+    if (error.length > 80) {
+      return error.split('\n').first;
+    }
+    return error;
   }
 
   Widget _buildBottomActions(bool isAnalyzing) {

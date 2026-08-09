@@ -49,11 +49,28 @@ class AnalyzeStoreRepository {
         return AnalyzeStoreModel.fromJson(data);
       } else {
         return AnalyzeStoreModel(
-          message: data['message'] ?? 'Failed to generate description',
+          message: data['message'] ?? 'Could not generate description. Please try again.',
         );
       }
     } catch (e) {
-      return AnalyzeStoreModel(message: 'Error: $e');
+      return AnalyzeStoreModel(message: _friendlyErrorMessage(e));
     }
+  }
+
+  String _friendlyErrorMessage(Object error) {
+    final message = error.toString().toLowerCase();
+    if (message.contains('socketexception') ||
+        message.contains('failed host lookup') ||
+        message.contains('network is unreachable') ||
+        message.contains('internet')) {
+      return 'No internet connection';
+    }
+    if (message.contains('timeout')) {
+      return 'Request timed out. Please check your internet connection.';
+    }
+    if (message.contains('formatexception')) {
+      return 'Invalid response from server';
+    }
+    return 'Could not generate description. Please try again.';
   }
 }

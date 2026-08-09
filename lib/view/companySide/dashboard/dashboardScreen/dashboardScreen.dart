@@ -605,16 +605,14 @@ class _HomeDashboardState extends State<HomeDashboard>
                                         "daily") {
                                       final full = paddedLabels[i] ?? "";
                                       final parts = full.split(' ');
-                                      final day = parts.isNotEmpty
-                                          ? parts[0]
-                                          : full;
+                                      final day = parts.isNotEmpty ? parts[0] : full;
                                       final monthYear = parts.length >= 3
                                           ? '${parts[1]} ${parts[2]}'
                                           : '';
 
-                                      final prevParts =
-                                          (i > 0 ? (paddedLabels[i - 1] ?? "") : "")
-                                          prevParts.length >= 3
+                                      final prevLabel = i > 0 ? (paddedLabels[i - 1] ?? "") : "";
+                                      final prevParts = prevLabel.split(' ');
+                                      final prevMonthYear = prevParts.length >= 3
                                           ? '${prevParts[1]} ${prevParts[2]}'
                                           : '';
                                       final showMonthYear =
