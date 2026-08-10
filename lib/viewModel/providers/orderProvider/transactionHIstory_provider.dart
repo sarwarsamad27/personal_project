@@ -18,7 +18,6 @@ class TransactionHistoryProvider with ChangeNotifier {
 
     if (refresh) {
       page = 1;
-      transactions.clear();
       hasMore = true;
     }
 
@@ -30,14 +29,13 @@ class TransactionHistoryProvider with ChangeNotifier {
       final res = await _repo.getTransaction(page: page, limit: _pageSize);
       final fetched = res.transactions ?? [];
 
-      if (fetched.isNotEmpty) {
+      if (refresh) {
+        transactions = List.from(fetched);
+        page = fetched.length == _pageSize ? 2 : 1;
+      } else if (fetched.isNotEmpty) {
         transactions.addAll(fetched);
         page++;
       }
-      // A page shorter than the requested size means there's nothing left,
-      // even if it wasn't empty — otherwise the trailing spinner spins
-      // forever because a short list never scrolls far enough to trigger
-      // the next fetch.
       hasMore = fetched.length == _pageSize;
     } catch (e) {
       error = e.toString();

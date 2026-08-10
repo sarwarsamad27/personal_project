@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -799,24 +801,50 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     if (videoSnapshot != null) ('video', videoSnapshot.path),
                   ];
 
-                  final task = MultiUploadTask(
-                    url: Global.ReplyReviews,
-                    files: files,
-                    fields: {'reviewId': reviewId, 'replyText': replyText},
-                    headers: {
-                      if (token.isNotEmpty) 'Authorization': 'Bearer $token',
-                    },
-                    group: UploadGroups.replyReview,
-                    displayName: 'Reply to review',
-                    updates: Updates.statusAndProgress,
-                    retries: 5,
-                  );
+                  if (files.isNotEmpty) {
+                    final task = MultiUploadTask(
+                      url: Global.ReplyReviews,
+                      files: files,
+                      fields: {'reviewId': reviewId, 'replyText': replyText},
+                      headers: {
+                        if (token.isNotEmpty) 'Authorization': 'Bearer $token',
+                      },
+                      group: UploadGroups.replyReview,
+                      displayName: 'Reply to review',
+                      updates: Updates.statusAndProgress,
+                      retries: 5,
+                    );
 
-                  await uploadManager.enqueueUpload(
-                    task,
-                    title: 'Reply to review',
-                    onDone: (update) {
-                      if (update.status == TaskStatus.complete) {
+                    await uploadManager.enqueueUpload(
+                      task,
+                      title: 'Reply to review',
+                      onDone: (update) {
+                        if (update.status == TaskStatus.complete) {
+                          provider.fetchSingleProducts(
+                            token: token,
+                            categoryId: categoryId,
+                            productId: productId,
+                          );
+                        } else {
+                          provider.unmarkAsReplied(reviewId);
+                        }
+                      },
+                    );
+                  } else {
+                    try {
+                      final response = await http.post(
+                        Uri.parse(Global.ReplyReviews),
+                        headers: {
+                          if (token.isNotEmpty) 'Authorization': 'Bearer $token',
+                          'Content-Type': 'application/json',
+                        },
+                        body: jsonEncode({
+                          'reviewId': reviewId,
+                          'replyText': replyText,
+                        }),
+                      );
+
+                      if (response.statusCode == 200 || response.statusCode == 201) {
                         provider.fetchSingleProducts(
                           token: token,
                           categoryId: categoryId,
@@ -824,9 +852,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         );
                       } else {
                         provider.unmarkAsReplied(reviewId);
+                        AppToast.show("Failed to reply to review");
                       }
-                    },
-                  );
+                    } catch (e) {
+                      provider.unmarkAsReplied(reviewId);
+                      AppToast.show("Failed to reply to review");
+                    }
+                  }
                 }();
 
                 Navigator.pop(dialogCtx);

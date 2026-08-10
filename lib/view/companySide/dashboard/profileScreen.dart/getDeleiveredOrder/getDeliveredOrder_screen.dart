@@ -4,6 +4,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/getDeleiveredOrder/deliveredDetail_screen.dart';
 import 'package:new_brand/viewModel/providers/commissionProvider/commission_provider.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDeliveredOrder_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:new_brand/widgets/customContainer.dart';
@@ -86,19 +87,29 @@ class _GetdeliveredorderScreenState extends State<GetdeliveredorderScreen> {
           return SpinKitThreeBounce(color: AppColor.whiteColor, size: 30);
         }
 
-        if (provider.orders.isEmpty) {
-          return const Center(child: Text("No Delivered Orders"));
-        }
-
         return RefreshIndicator(
           onRefresh: () async {
+            await context.read<CompanyWalletProvider>().fetchCompanyWallet();
             await provider.fetchDeliveredOrders(refresh: true);
             await commissionProvider.fetchCommission();
           },
           color: AppColor.primaryColor,
-          child: ListView.separated(
-            controller: _scrollController,
-            itemCount: provider.orders.length + (provider.hasMore ? 1 : 0),
+          child: provider.orders.isEmpty
+              ? SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * 0.35,
+                    alignment: Alignment.center,
+                    child: const Text(
+                      "No Delivered Orders",
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: provider.orders.length + (provider.hasMore ? 1 : 0),
             separatorBuilder: (_, __) =>
                 Divider(color: Colors.white24, height: 15.h),
             itemBuilder: (context, index) {

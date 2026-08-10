@@ -4,13 +4,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart' as http;
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:new_brand/resources/local_storage.dart';
 import 'package:new_brand/resources/utiles.dart';
 import 'package:new_brand/view/companySide/dashboard/productScreen/productCategory/addProduct/productDetail/productDetailScreen.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/customImageContainer.dart';
-import 'package:new_brand/resources/local_storage.dart';
+import 'package:new_brand/resources/toast.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/acceptOrder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
 import 'package:open_filex/open_filex.dart';
@@ -30,6 +31,32 @@ class OrderDetailScreen extends StatefulWidget {
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
   bool _downloadingSlip = false;
 
+  String _cleanLeopardsError(String? rawError) {
+    if (rawError == null || rawError.trim().isEmpty) {
+      return "Shipping slip could not be generated at this time.";
+    }
+    final lower = rawError.toLowerCase();
+    if (lower.contains("block") || lower.contains("account")) {
+      return "Courier service issue: Shipping slip not generated. Please retry or contact support.";
+    }
+    if (lower.contains("address") ||
+        lower.contains("city") ||
+        lower.contains("phone")) {
+      return "Invalid delivery details. Shipping slip could not be generated.";
+    }
+    if (lower.contains("timeout") ||
+        lower.contains("connection") ||
+        lower.contains("network")) {
+      return "Network timeout while connecting to courier service. Please retry.";
+    }
+    if (rawError.length < 80 &&
+        !rawError.contains("{") &&
+        !rawError.contains("<")) {
+      return rawError;
+    }
+    return "Shipping slip not generated. Tap retry below to try again.";
+  }
+
   Future<void> _downloadSlip(String url) async {
     if (_downloadingSlip) return;
     setState(() => _downloadingSlip = true);
@@ -40,18 +67,35 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           ? Global.downloadSlip(orderTrackNo)
           : Global.getImageUrl(url.trim());
 
-      final response = await http.get(
-        Uri.parse(downloadUrl),
-        headers: {"Accept": "application/pdf"},
-      );
+      final response = await http
+          .get(Uri.parse(downloadUrl), headers: {"Accept": "application/pdf"})
+          .timeout(const Duration(seconds: 15));
+
       if (response.statusCode != 200) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Download failed (${response.statusCode})")),
+          AppToast.error(
+            "Shipping slip not generated or currently unavailable",
           );
         }
         return;
       }
+
+      final bytes = response.bodyBytes;
+      // Validate PDF Magic Header (%PDF -> [0x25, 0x50, 0x44, 0x46])
+      final isPdf =
+          bytes.length >= 4 &&
+          bytes[0] == 0x25 &&
+          bytes[1] == 0x50 &&
+          bytes[2] == 0x44 &&
+          bytes[3] == 0x46;
+
+      if (!isPdf) {
+        if (mounted) {
+          AppToast.error("Shipping slip not generated yet");
+        }
+        return;
+      }
+
       final dir = await getApplicationDocumentsDirectory();
       final trackNo = orderTrackNo.isNotEmpty
           ? orderTrackNo
@@ -60,15 +104,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       await file.writeAsBytes(response.bodyBytes, flush: true);
       final result = await OpenFilex.open(file.path);
       if (result.type != ResultType.done && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Saved to Documents folder")),
-        );
+        AppToast.show("Saved to Documents folder");
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Download error: $e")));
+        AppToast.error("Unable to download shipping slip");
       }
     } finally {
       if (mounted) setState(() => _downloadingSlip = false);
@@ -194,12 +234,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           currentStatus == "Dispatched" ||
                           (order.status != null && order.status != "Pending");
 
+                      // 1. Valid Slip Link Exists -> Download Slip Button
                       if (slip != null && slip.isNotEmpty) {
                         return Column(
                           children: [
                             _statusBadge(currentStatus),
                             SizedBox(height: 12.h),
-                            if (track != null) ...[
+                            if (track != null && track.isNotEmpty) ...[
                               _trackBadge(track),
                               SizedBox(height: 12.h),
                             ],
@@ -215,125 +256,105 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         );
                       }
 
+                      // 2. Order Accepted / Dispatched, but Slip missing or generation failed
                       if (accepted) {
-                        // Leopards failed — show error + retry button
-                        if (provider.leopardsError != null) {
-                          return Column(
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(12.w),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  border: Border.all(color: Colors.orange),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.warning_amber_rounded,
-                                      color: Colors.orange,
-                                    ),
-                                    SizedBox(width: 8.w),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            "Order accepted but Leopards booking failed",
-                                            style: TextStyle(
-                                              color: Colors.orange.shade800,
-                                              fontSize: 13.sp,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          SizedBox(height: 4.h),
-                                          Text(
-                                            provider.leopardsError!,
-                                            style: TextStyle(
-                                              color: Colors.orange.shade700,
-                                              fontSize: 11.sp,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 10.h),
-                              CustomButton(
-                                text: provider.isRetrying
-                                    ? "Retrying..."
-                                    : "🔄 Retry Leopards Booking",
-                                onTap: provider.isRetrying
-                                    ? null
-                                    : () async {
-                                        final messenger = ScaffoldMessenger.of(
-                                          context,
-                                        );
-                                        final ordersProvider = context
-                                            .read<GetMyOrdersProvider>();
-                                        final ok = await provider
-                                            .retryLeopardsBooking(
-                                              orderId: order.sId!,
-                                            );
-                                        if (!ok) {
-                                          messenger.showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                provider.leopardsError ??
-                                                    "Retry failed",
-                                              ),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                        } else {
-                                          order.trackNumber =
-                                              provider.trackNumber;
-                                          order.slipLink = provider.slipLink;
-                                          ordersProvider.updateOrderInList(
-                                            order.sId!,
-                                            trackNumber: provider.trackNumber,
-                                            slipLink: provider.slipLink,
-                                          );
-                                        }
-                                      },
-                              ),
-                            ],
-                          );
-                        }
+                        final errorMsg = _cleanLeopardsError(
+                          provider.leopardsError,
+                        );
 
-                        // Accepted, no slip yet (booking in progress)
-                        return Container(
-                          padding: EdgeInsets.all(14.w),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: Colors.green),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.check_circle,
-                                color: Colors.green,
-                              ),
-                              SizedBox(width: 8.w),
-                              Expanded(
-                                child: Text(
-                                  "✅ Order Accepted! Slip generating...",
-                                  style: TextStyle(
-                                    color: Colors.green,
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                        return Column(
+                          children: [
+                            _statusBadge(currentStatus),
+                            SizedBox(height: 12.h),
+                            if (track != null && track.isNotEmpty) ...[
+                              _trackBadge(track),
+                              SizedBox(height: 12.h),
+                            ],
+                            Container(
+                              padding: EdgeInsets.all(14.w),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(14.r),
+                                border: Border.all(
+                                  color: Colors.amber.withValues(alpha: 0.6),
                                 ),
                               ),
-                            ],
-                          ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: Colors.amber.shade400,
+                                    size: 22.sp,
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Shipping Slip Not Generated",
+                                          style: TextStyle(
+                                            color: Colors.amber.shade300,
+                                            fontSize: 13.5.sp,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(height: 4.h),
+                                        Text(
+                                          errorMsg,
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 11.5.sp,
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 14.h),
+                            CustomButton(
+                              text: provider.isRetrying
+                                  ? "Retrying..."
+                                  : "🔄 Retry Shipping Slip Generation",
+                              onTap: provider.isRetrying
+                                  ? null
+                                  : () async {
+                                      final ordersProvider = context
+                                          .read<GetMyOrdersProvider>();
+                                      final ok = await provider
+                                          .retryLeopardsBooking(
+                                            orderId: order.sId!,
+                                          );
+                                      if (!ok) {
+                                        AppToast.error(
+                                          _cleanLeopardsError(
+                                            provider.leopardsError,
+                                          ),
+                                        );
+                                      } else {
+                                        order.trackNumber =
+                                            provider.trackNumber;
+                                        order.slipLink = provider.slipLink;
+                                        ordersProvider.updateOrderInList(
+                                          order.sId!,
+                                          trackNumber: provider.trackNumber,
+                                          slipLink: provider.slipLink,
+                                        );
+                                        AppToast.show(
+                                          "Shipping slip generated successfully!",
+                                        );
+                                      }
+                                    },
+                            ),
+                          ],
                         );
                       }
 
+                      // 3. Pending Order -> Accept Order & Book Shipment
                       return CustomButton(
                         text: provider.isLoading
                             ? "Processing..."
@@ -341,7 +362,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         onTap: provider.isLoading
                             ? null
                             : () async {
-                                final messenger = ScaffoldMessenger.of(context);
                                 final ordersProvider = context
                                     .read<GetMyOrdersProvider>();
                                 final token =
@@ -365,15 +385,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                     trackNumber: order.trackNumber,
                                     slipLink: order.slipLink,
                                   );
+                                  if (order.slipLink != null &&
+                                      order.slipLink!.isNotEmpty) {
+                                    AppToast.show(
+                                      "Order accepted & slip generated!",
+                                    );
+                                  }
                                 } else {
-                                  messenger.showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        provider.errorMessage ??
-                                            "Something went wrong",
-                                      ),
-                                      backgroundColor: Colors.red,
-                                    ),
+                                  AppToast.error(
+                                    provider.errorMessage ??
+                                        "Something went wrong while accepting order",
                                   );
                                 }
                               },

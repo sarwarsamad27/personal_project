@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/appNav.dart';
 import 'package:new_brand/resources/local_storage.dart';
@@ -116,25 +117,54 @@ class AllCondition extends StatelessWidget {
       },
     );
 
-    if (shouldLogout == true) {
-      await _logout();
+    if (shouldLogout == true && context.mounted) {
+      await _logout(context);
     }
   }
 
-  Future<void> _logout() async {
+  Future<void> _logout(BuildContext context) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: Dialog(
+          backgroundColor: AppColor.appimagecolor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 20.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SpinKitThreeBounce(color: AppColor.whiteColor, size: 28.0),
+                SizedBox(height: 16.h),
+                Text(
+                  "Logging out...",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
     try {
-      // Tell the backend to stop sending this device notifications for this
-      // account — otherwise a shared/reused device keeps getting this
-      // seller's pushes even after logging out.
       final jwtToken = await LocalStorage.getToken();
       final fcmToken = await FirebaseMessaging.instance.getToken();
       if (jwtToken != null && jwtToken.isNotEmpty && fcmToken != null && fcmToken.isNotEmpty) {
         await LocalStorage.removeFcmTokenFromServer(
           jwtToken: jwtToken,
           fcmToken: fcmToken,
-        );
+        ).timeout(const Duration(seconds: 3));
       }
-      await FirebaseMessaging.instance.deleteToken();
+      await FirebaseMessaging.instance.deleteToken().timeout(const Duration(seconds: 3));
     } catch (_) {}
 
     await AppNav.forceLogoutToLogin();

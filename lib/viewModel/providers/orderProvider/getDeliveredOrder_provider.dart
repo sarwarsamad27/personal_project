@@ -16,7 +16,6 @@ class GetDeliveredOrderProvider extends ChangeNotifier {
 
     if (refresh) {
       page = 1;
-      orders.clear();
       hasMore = true;
     }
 
@@ -27,14 +26,13 @@ class GetDeliveredOrderProvider extends ChangeNotifier {
       final res = await _repo.getDeliveredOrder(page: page, limit: _pageSize);
       final fetched = res.orders ?? [];
 
-      if (fetched.isNotEmpty) {
+      if (refresh) {
+        orders = List.from(fetched);
+        page = fetched.length == _pageSize ? 2 : 1;
+      } else if (fetched.isNotEmpty) {
         orders.addAll(fetched);
         page++;
       }
-      // A page shorter than the requested size means there's nothing left,
-      // even if it wasn't empty — otherwise the trailing spinner spins
-      // forever because a short list never scrolls far enough to trigger
-      // the next fetch.
       hasMore = fetched.length == _pageSize;
     } catch (e) {
       debugPrint(e.toString());

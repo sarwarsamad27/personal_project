@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -291,59 +293,92 @@ class EditProductDialog extends StatelessWidget {
                             final videoFile = s.newVideoFile;
                             final removeVideoFlag = s.videoRemoved;
 
-                            // Hands the actual upload off to the OS-managed
-                            // background queue — same reasoning as
-                            // addProductScreen: it survives the seller
-                            // leaving this dialog, losing signal, or (on
-                            // Android) the app being killed outright, and
-                            // completion fires a native notification.
                             final files = <(String, String)>[
                               for (final img in validNewImages)
                                 ('images', img.path),
                               if (videoFile != null) ('video', videoFile.path),
                             ];
 
-                            final task = MultiUploadTask(
-                              url: Global.UpdateSingleProduct,
-                              httpRequestMethod: 'PUT',
-                              files: files,
-                              fields: {
-                                'productId': productId,
-                                'name': productName,
-                                'description': description,
-                                'afterDiscountPrice': price.toString(),
-                                'beforeDiscountPrice': price.toString(),
-                                'size': sizeList.join(','),
-                                'color': colorList.join(','),
-                                'quantity': quantityVal.toString(),
-                                'weightInGrams': weightVal.toString(),
-                                'keepImages': keepImages.join(','),
-                                'deleteImages': deleteImages.join(','),
-                                if (removeVideoFlag) 'removeVideo': 'true',
-                              },
-                              headers: {
-                                if (token.isNotEmpty)
-                                  'Authorization': 'Bearer $token',
-                              },
-                              group: UploadGroups.editProduct,
-                              displayName: 'Product "$productName"',
-                              updates: Updates.statusAndProgress,
-                              retries: 5,
-                            );
+                            if (files.isNotEmpty) {
+                              final task = MultiUploadTask(
+                                url: Global.UpdateSingleProduct,
+                                httpRequestMethod: 'PUT',
+                                files: files,
+                                fields: {
+                                  'productId': productId,
+                                  'name': productName,
+                                  'description': description,
+                                  'afterDiscountPrice': price.toString(),
+                                  'beforeDiscountPrice': price.toString(),
+                                  'size': sizeList.join(','),
+                                  'color': colorList.join(','),
+                                  'quantity': quantityVal.toString(),
+                                  'weightInGrams': weightVal.toString(),
+                                  'keepImages': keepImages.join(','),
+                                  'deleteImages': deleteImages.join(','),
+                                  if (removeVideoFlag) 'removeVideo': 'true',
+                                },
+                                headers: {
+                                  if (token.isNotEmpty)
+                                    'Authorization': 'Bearer $token',
+                                },
+                                group: UploadGroups.editProduct,
+                                displayName: 'Product "$productName"',
+                                updates: Updates.statusAndProgress,
+                                retries: 5,
+                              );
 
-                            await uploadManager.enqueueUpload(
-                              task,
-                              title: 'Update: $productName',
-                              onDone: (update) {
-                                if (update.status == TaskStatus.complete) {
+                              await uploadManager.enqueueUpload(
+                                task,
+                                title: 'Update: $productName',
+                                onDone: (update) {
+                                  if (update.status == TaskStatus.complete) {
+                                    getProvider.fetchSingleProducts(
+                                      token: token,
+                                      categoryId: categoryId,
+                                      productId: productId,
+                                    );
+                                  }
+                                },
+                              );
+                            } else {
+                              try {
+                                final response = await http.put(
+                                  Uri.parse(Global.UpdateSingleProduct),
+                                  headers: {
+                                    if (token.isNotEmpty)
+                                      'Authorization': 'Bearer $token',
+                                    'Content-Type': 'application/json',
+                                  },
+                                  body: jsonEncode({
+                                    'productId': productId,
+                                    'name': productName,
+                                    'description': description,
+                                    'afterDiscountPrice': price.toString(),
+                                    'beforeDiscountPrice': price.toString(),
+                                    'size': sizeList.join(','),
+                                    'color': colorList.join(','),
+                                    'quantity': quantityVal.toString(),
+                                    'weightInGrams': weightVal.toString(),
+                                    'keepImages': keepImages.join(','),
+                                    'deleteImages': deleteImages.join(','),
+                                    if (removeVideoFlag) 'removeVideo': 'true',
+                                  }),
+                                );
+
+                                if (response.statusCode == 200 || response.statusCode == 201) {
                                   getProvider.fetchSingleProducts(
                                     token: token,
                                     categoryId: categoryId,
                                     productId: productId,
                                   );
+                                } else {
+                                  AppToast.show("Failed to update product");
                                 }
-                              },
-                            );
+                              } catch (e) {
+                                AppToast.show("Failed to update product");
+                              }
+                            }
 
                             if (context.mounted) Navigator.pop(context);
                             AppToast.show(

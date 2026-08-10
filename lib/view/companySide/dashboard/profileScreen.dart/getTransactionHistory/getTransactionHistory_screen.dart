@@ -4,6 +4,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/getTransactionHistory/transactionDetail_screen.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/transactionHIstory_provider.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 import 'package:provider/provider.dart';
@@ -195,33 +196,33 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           );
         }
 
-        if (provider.error != null && provider.transactions.isEmpty) {
-          return Center(
-            child: Text(
-              "Failed to load transactions\n${provider.error}",
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white70),
-            ),
-          );
-        }
-
-        if (provider.transactions.isEmpty) {
-          return const Center(
-            child: Text(
-              "No transactions found",
-              style: TextStyle(color: Colors.white70),
-            ),
-          );
-        }
-
         return RefreshIndicator(
-          onRefresh: () => provider.fetchTransactions(refresh: true),
+          onRefresh: () async {
+            await context.read<CompanyWalletProvider>().fetchCompanyWallet();
+            await provider.fetchTransactions(refresh: true);
+          },
           color: AppColor.primaryColor,
-          child: ListView.separated(
-            controller: _scrollController,
-            padding: EdgeInsets.symmetric(vertical: 10.h),
-            itemCount:
-                provider.transactions.length + (provider.hasMore ? 1 : 0),
+          child: provider.transactions.isEmpty
+              ? SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * 0.35,
+                    alignment: Alignment.center,
+                    child: Text(
+                      provider.error != null && provider.error!.isNotEmpty
+                          ? "Failed to load transactions\n${provider.error}"
+                          : "No transactions found",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.symmetric(vertical: 10.h),
+                  itemCount:
+                      provider.transactions.length + (provider.hasMore ? 1 : 0),
             separatorBuilder: (_, __) =>
                 Divider(color: Colors.white24, height: 18.h),
             itemBuilder: (context, index) {

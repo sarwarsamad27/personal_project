@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/getReturnOrder/returnOrderDetail_screen.dart';
+import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getReturnedOrder_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:new_brand/widgets/customContainer.dart';
@@ -80,16 +81,28 @@ class _GetReturnedorderScreenState extends State<GetReturnedorderScreen> {
           return SpinKitThreeBounce(color: AppColor.whiteColor, size: 30);
         }
 
-        if (provider.orders.isEmpty) {
-          return const Center(child: Text("No Returned Orders"));
-        }
-
         return RefreshIndicator(
-          onRefresh: () => provider.fetchReturnedOrders(refresh: true),
+          onRefresh: () async {
+            await context.read<CompanyWalletProvider>().fetchCompanyWallet();
+            await provider.fetchReturnedOrders(refresh: true);
+          },
           color: AppColor.primaryColor,
-          child: ListView.separated(
-            controller: _scrollController,
-            itemCount: provider.orders.length + (provider.hasMore ? 1 : 0),
+          child: provider.orders.isEmpty
+              ? SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * 0.35,
+                    alignment: Alignment.center,
+                    child: const Text(
+                      "No Returned Orders",
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: provider.orders.length + (provider.hasMore ? 1 : 0),
             separatorBuilder: (_, __) =>
                 Divider(color: Colors.white24, height: 15.h),
             itemBuilder: (context, index) {
