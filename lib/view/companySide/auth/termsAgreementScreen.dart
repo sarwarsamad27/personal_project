@@ -226,11 +226,6 @@ class _TermsAgreementScreenState extends State<TermsAgreementScreen> {
                           icon: LucideIcons.phone,
                           text: '+92 327-2382139',
                         ),
-                        SizedBox(height: 6.h),
-                        _ContactRow(
-                          icon: LucideIcons.globe,
-                          text: 'www.shookoo.pk',
-                        ),
                       ],
                     ),
                   ),

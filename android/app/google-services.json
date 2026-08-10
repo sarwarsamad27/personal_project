@@ -146,6 +146,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "900853727644-7vntk1gttmh1tcdtn20f7iinqh53uqtf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sarwar.shookoostore",
+            "certificate_hash": "9b189e53a14c1a5c66edd2b1a31184c7e436c31b"
+          }
+        },
+        {
           "client_id": "900853727644-a6m3k2sf0bdumpfkvm7h2hhlal4ct76i.apps.googleusercontent.com",
           "client_type": 3
         }
