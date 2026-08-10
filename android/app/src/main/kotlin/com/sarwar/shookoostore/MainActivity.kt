@@ -1,4 +1,4 @@
-package pk.shookoo.store
+package com.sarwar.shookoostore
 
 import io.flutter.embedding.android.FlutterActivity
 
