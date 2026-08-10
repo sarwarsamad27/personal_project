@@ -30,7 +30,7 @@ class ForgotProvider with ChangeNotifier {
 
     _loading = false;
 
-    if (response != null && response.message != null) {
+    if (response.message != null) {
       _forgotData = response;
     } else {
       _errorMessage = "Something went wrong";

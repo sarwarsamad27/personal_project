@@ -42,7 +42,7 @@ class ProfileRepository {
         fileFieldName: "image", 
       );
       
-      print('+ ${response}');
+      print('+ $response');
       return CreateProfileModel.fromJson(response);
     } catch (e) {
       return CreateProfileModel(message: "Error: $e");

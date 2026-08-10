@@ -14,7 +14,7 @@ class CategoryTile extends StatelessWidget {
   final bool? hasOutOfStock;
   final bool isPendingSync;
 
-  const CategoryTile({
+  const CategoryTile({super.key, 
     required this.name,
     required this.image,
     required this.onTap,
@@ -38,7 +38,7 @@ class CategoryTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(18.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -99,8 +99,8 @@ class CategoryTile extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Colors.black.withOpacity(0.0),
-                            Colors.black.withOpacity(0.15),
+                            Colors.black.withValues(alpha: 0.0),
+                            Colors.black.withValues(alpha: 0.15),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -130,7 +130,7 @@ class CategoryTile extends StatelessWidget {
                     right: 10,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.white.withValues(alpha: 0.85),
                         shape: BoxShape.circle,
                       ),
                       padding: const EdgeInsets.all(6),
@@ -178,13 +178,13 @@ class CategoryTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(14.r),
               boxShadow: [
                 BoxShadow(
-                  color: AppColor.primaryColor.withOpacity(0.1),
+                  color: AppColor.primaryColor.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
               ],
               border: Border.all(
-                color: AppColor.primaryColor.withOpacity(0.15),
+                color: AppColor.primaryColor.withValues(alpha: 0.15),
                 width: 1,
               ),
             ),

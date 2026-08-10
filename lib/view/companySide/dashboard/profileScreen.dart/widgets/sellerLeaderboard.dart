@@ -86,7 +86,7 @@ class SellerLeaderboard extends StatelessWidget {
             Text(
               "Ranked by delivered orders • cross $threshold+ to earn a crown",
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 fontSize: 11.sp,
               ),
             ),
@@ -150,11 +150,11 @@ class _LeaderboardRow extends StatelessWidget {
     return CustomAppContainer(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       color: isMe
-          ? AppColor.primaryColor.withOpacity(0.22)
-          : Colors.white.withOpacity(0.12),
+          ? AppColor.primaryColor.withValues(alpha: 0.22)
+          : Colors.white.withValues(alpha: 0.12),
       borderColor: isMe
           ? AppColor.primaryColor
-          : Colors.white.withOpacity(0.15),
+          : Colors.white.withValues(alpha: 0.15),
       child: Row(
         children: [
           // ── Rank indicator (plain number, or crown for badge holders) ──
@@ -171,7 +171,7 @@ class _LeaderboardRow extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: badgeStyle.gradient.last.withOpacity(0.5),
+                        color: badgeStyle.gradient.last.withValues(alpha: 0.5),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       ),
@@ -189,7 +189,7 @@ class _LeaderboardRow extends StatelessWidget {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withValues(alpha: 0.15),
                   ),
                   child: Text(
                     "${seller.rank}",
@@ -206,7 +206,7 @@ class _LeaderboardRow extends StatelessWidget {
           // ── Avatar ──
           CircleAvatar(
             radius: 18.r,
-            backgroundColor: Colors.white.withOpacity(0.15),
+            backgroundColor: Colors.white.withValues(alpha: 0.15),
             backgroundImage: seller.image != null
                 ? NetworkImage(Global.getImageUrl(seller.image))
                 : const NetworkImage("https://i.pravatar.cc/300"),
@@ -259,7 +259,7 @@ class _LeaderboardRow extends StatelessWidget {
                 Text(
                   "${seller.deliveredOrders ?? 0} orders delivered",
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.65),
+                    color: Colors.white.withValues(alpha: 0.65),
                     fontSize: 11.sp,
                   ),
                 ),

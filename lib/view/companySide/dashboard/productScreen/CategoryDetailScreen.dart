@@ -18,8 +18,7 @@ import 'package:provider/provider.dart';
 
 class CategoryProductsScreen extends StatefulWidget {
   final Categories category;
-  const CategoryProductsScreen({Key? key, required this.category})
-    : super(key: key);
+  const CategoryProductsScreen({super.key, required this.category});
 
   @override
   State<CategoryProductsScreen> createState() => _CategoryProductsScreenState();
@@ -27,7 +26,13 @@ class CategoryProductsScreen extends StatefulWidget {
 
 class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   final ScrollController _scrollController = ScrollController();
-  double _scrollOffset = 0;
+  // ValueNotifier instead of setState: the listener fires on every scroll
+  // pixel, so routing it through setState was rebuilding this entire
+  // screen (search bar, product grid, FAB, sync banner) on every scroll
+  // frame just to reposition the parallax hero image. Scoping it to a
+  // ValueListenableBuilder around only the hero image confines the
+  // rebuild to that small subtree.
+  final ValueNotifier<double> _scrollOffsetNotifier = ValueNotifier<double>(0);
   String _searchQuery = "";
   int _lastSeenSyncVersion = -1;
 
@@ -42,9 +47,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     _effectiveCategoryId = widget.category.sId!;
 
     _scrollController.addListener(() {
-      setState(() {
-        _scrollOffset = _scrollController.offset;
-      });
+      _scrollOffsetNotifier.value = _scrollController.offset;
     });
 
     Future.microtask(() async {
@@ -120,6 +123,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _scrollOffsetNotifier.dispose();
     super.dispose();
   }
 
@@ -266,12 +270,6 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     final media = MediaQuery.of(context).size;
     final imageHeight = media.height * 0.48.h;
 
-    final double overScroll = _scrollOffset < 0 ? -_scrollOffset : 0;
-    double imageParallax = 0;
-    if (_scrollOffset > 0) {
-      imageParallax = (_scrollOffset * 0.45).clamp(0, 110.h);
-    }
-
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -285,7 +283,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                 left: 0,
                 right: 0,
                 child: Container(
-                  color: AppColor.primaryColor.withOpacity(0.92),
+                  color: AppColor.primaryColor.withValues(alpha: 0.92),
                   padding: EdgeInsets.symmetric(
                     horizontal: 16.w,
                     vertical: 8.h,
@@ -325,7 +323,19 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                   child: SizedBox(
                     height: imageHeight,
                     width: double.infinity,
-                    child: Stack(
+                    child: ValueListenableBuilder<double>(
+                      valueListenable: _scrollOffsetNotifier,
+                      builder: (context, scrollOffset, _) {
+                        final double overScroll =
+                            scrollOffset < 0 ? -scrollOffset : 0;
+                        double imageParallax = 0;
+                        if (scrollOffset > 0) {
+                          imageParallax = (scrollOffset * 0.45).clamp(
+                            0,
+                            110.h,
+                          );
+                        }
+                        return Stack(
                       clipBehavior: Clip.none,
                       children: [
                         Positioned(
@@ -381,10 +391,10 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                                       end: Alignment.bottomCenter,
                                       stops: const [0.0, 0.45, 0.75, 1.0],
                                       colors: [
-                                        Colors.black.withOpacity(0.15),
+                                        Colors.black.withValues(alpha: 0.15),
                                         Colors.transparent,
-                                        Colors.black.withOpacity(0.55),
-                                        Colors.black.withOpacity(0.88),
+                                        Colors.black.withValues(alpha: 0.55),
+                                        Colors.black.withValues(alpha: 0.88),
                                       ],
                                     ),
                                   ),
@@ -399,7 +409,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                                     child: Container(
                                       padding: EdgeInsets.all(8.w),
                                       decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.35),
+                                        color: Colors.black.withValues(alpha: 0.35),
                                         shape: BoxShape.circle,
                                         border: Border.all(
                                           color: Colors.white24,
@@ -429,7 +439,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                                       height: 1.1,
                                       shadows: [
                                         Shadow(
-                                          color: Colors.black.withOpacity(0.6),
+                                          color: Colors.black.withValues(alpha: 0.6),
                                           blurRadius: 12,
                                           offset: const Offset(0, 2),
                                         ),
@@ -442,6 +452,8 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                           ),
                         ),
                       ],
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -479,7 +491,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16.r),
                           borderSide: BorderSide(
-                            color: AppColor.primaryColor.withOpacity(0.5),
+                            color: AppColor.primaryColor.withValues(alpha: 0.5),
                           ),
                         ),
                       ),
@@ -606,14 +618,14 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                   gradient: LinearGradient(
                     colors: [
                       AppColor.primaryColor,
-                      AppColor.primaryColor.withOpacity(0.8),
+                      AppColor.primaryColor.withValues(alpha: 0.8),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColor.primaryColor.withOpacity(0.4),
+                      color: AppColor.primaryColor.withValues(alpha: 0.4),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),

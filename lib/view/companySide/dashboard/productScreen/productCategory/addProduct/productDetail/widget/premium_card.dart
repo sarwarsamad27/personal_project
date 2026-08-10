@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class PremiumCard extends StatelessWidget {
   final Widget child;
-  const PremiumCard({required this.child});
+  const PremiumCard({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {

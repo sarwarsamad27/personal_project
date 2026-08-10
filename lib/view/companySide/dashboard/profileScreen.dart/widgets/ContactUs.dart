@@ -102,7 +102,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                     end: Alignment.bottomRight,
                     colors: [
                       AppColor.appimagecolor,
-                      AppColor.appimagecolor.withOpacity(0.75),
+                      AppColor.appimagecolor.withValues(alpha: 0.75),
                     ],
                   ),
                 ),
@@ -116,7 +116,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                         Container(
                           padding: EdgeInsets.all(10.r),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Icon(
@@ -192,7 +192,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                         borderRadius: BorderRadius.circular(18.r),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF25D366).withOpacity(0.3),
+                            color: const Color(0xFF25D366).withValues(alpha: 0.3),
                             blurRadius: 16,
                             offset: const Offset(0, 6),
                           ),
@@ -203,7 +203,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                           Container(
                             padding: EdgeInsets.all(12.r),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(14.r),
                             ),
                             child: Icon(
@@ -234,7 +234,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                                         vertical: 2.h,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.25),
+                                        color: Colors.white.withValues(alpha: 0.25),
                                         borderRadius: BorderRadius.circular(
                                           20.r,
                                         ),
@@ -373,7 +373,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                         borderRadius: BorderRadius.circular(16.r),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -441,7 +441,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                                   backgroundColor: AppColor.appimagecolor,
                                   disabledBackgroundColor: AppColor
                                       .appimagecolor
-                                      .withOpacity(0.5),
+                                      .withValues(alpha: 0.5),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12.r),
                                   ),
@@ -480,7 +480,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                         borderRadius: BorderRadius.circular(16.r),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 12,
                           ),
                         ],
@@ -605,10 +605,10 @@ class _EmailCard extends StatelessWidget {
           padding: EdgeInsets.all(14.r),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(color: color.withOpacity(0.15)),
+            border: Border.all(color: color.withValues(alpha: 0.15)),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -622,7 +622,7 @@ class _EmailCard extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [color, color.withOpacity(0.7)],
+                    colors: [color, color.withValues(alpha: 0.7)],
                   ),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
@@ -656,7 +656,7 @@ class _EmailCard extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(6.r),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -695,7 +695,7 @@ class _InfoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -748,9 +748,9 @@ class _SocialButton extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 10.h),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(color: color.withOpacity(0.2)),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
           ),
           child: Column(
             children: [

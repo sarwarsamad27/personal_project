@@ -28,7 +28,12 @@ class HomeDashboard extends StatefulWidget {
 class _HomeDashboardState extends State<HomeDashboard>
     with TickerProviderStateMixin {
   String selectedFilter = "Weekly";
-  bool _showLineChart = false;
+  // ValueNotifier instead of a plain field + setState: toggling bar/line
+  // only needs to rebuild the small toggle chip and the chart widget
+  // itself, not this whole (very large) dashboard build() — the chart's
+  // surrounding tree (gradient header, animations, stats list, etc.)
+  // would otherwise re-run on every tap for no reason.
+  final ValueNotifier<bool> _showLineChart = ValueNotifier<bool>(false);
 
   late final AnimationController _cardController;
   late final Animation<double> _cardFade;
@@ -174,18 +179,22 @@ class _HomeDashboardState extends State<HomeDashboard>
     if (_onOrderStatusUpdated != null) {
       socket?.off("order_status_updated", _onOrderStatusUpdated);
     }
-    if (_onProductUpdate != null)
+    if (_onProductUpdate != null) {
       socket?.off("product:update", _onProductUpdate);
-    if (_onProductDelete != null)
+    }
+    if (_onProductDelete != null) {
       socket?.off("product:delete", _onProductDelete);
-    if (_onWithdrawNew != null)
+    }
+    if (_onWithdrawNew != null) {
       socket?.off("wallet:withdraw_new", _onWithdrawNew);
+    }
     if (_onWithdrawStatus != null) {
       socket?.off("wallet:withdraw_status", _onWithdrawStatus);
     }
     _cardController.dispose();
     _chartController.dispose();
     _chartScrollController.dispose();
+    _showLineChart.dispose();
     super.dispose();
   }
 
@@ -370,10 +379,13 @@ class _HomeDashboardState extends State<HomeDashboard>
                         /// ---------- Chart type toggle + custom date range ----------
                         Row(
                           children: [
-                            _ChartTypeToggle(
-                              showLine: _showLineChart,
-                              onChanged: (v) =>
-                                  setState(() => _showLineChart = v),
+                            ValueListenableBuilder<bool>(
+                              valueListenable: _showLineChart,
+                              builder: (context, showLine, _) =>
+                                  _ChartTypeToggle(
+                                showLine: showLine,
+                                onChanged: (v) => _showLineChart.value = v,
+                              ),
                             ),
                             const Spacer(),
                             Selector<CompanySalesChartProvider, DateTimeRange?>(
@@ -402,7 +414,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                                   );
                                 }
 
-                                final fmt = (DateTime d) =>
+                                String fmt(DateTime d) =>
                                     "${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}";
                                 return GestureDetector(
                                   onTap: () => _pickCustomRange(context),
@@ -726,7 +738,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                                         ? 1
                                         : maxValue / 4,
                                     getDrawingHorizontalLine: (value) => FlLine(
-                                      color: Colors.grey.withOpacity(0.15),
+                                      color: Colors.grey.withValues(alpha: 0.15),
                                       strokeWidth: 1,
                                     ),
                                   );
@@ -736,11 +748,11 @@ class _HomeDashboardState extends State<HomeDashboard>
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(14.r),
                                       border: Border.all(
-                                        color: Colors.black.withOpacity(0.05),
+                                        color: Colors.black.withValues(alpha: 0.05),
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.04),
+                                          color: Colors.black.withValues(alpha: 0.04),
                                           blurRadius: 14,
                                           offset: const Offset(0, 8),
                                         ),
@@ -769,7 +781,14 @@ class _HomeDashboardState extends State<HomeDashboard>
                                           physics: const BouncingScrollPhysics(),
                                           child: SizedBox(
                                             width: chartWidth,
-                                            child: _showLineChart
+                                            // Only this chart widget swaps
+                                            // on bar/line toggle — everything
+                                            // above (header, dropdown, date
+                                            // range chip) stays untouched.
+                                            child: ValueListenableBuilder<bool>(
+                                              valueListenable: _showLineChart,
+                                              builder: (context, showLine, _) =>
+                                                  showLine
                                         ? LineChart(
                                             LineChartData(
                                               maxY: maxValue.toDouble(),
@@ -855,10 +874,10 @@ class _HomeDashboardState extends State<HomeDashboard>
                                                       colors: [
                                                         const Color(
                                                           0xFFFF6A00,
-                                                        ).withOpacity(0.18),
+                                                        ).withValues(alpha: 0.18),
                                                         const Color(
                                                           0xFFFFD300,
-                                                        ).withOpacity(0.02),
+                                                        ).withValues(alpha: 0.02),
                                                       ],
                                                       begin:
                                                           Alignment.topCenter,
@@ -943,8 +962,8 @@ class _HomeDashboardState extends State<HomeDashboard>
                                                           ),
                                                       color: empty
                                                           ? Colors.grey
-                                                                .withOpacity(
-                                                                  0.25,
+                                                                .withValues(
+                                                                  alpha: 0.25,
                                                                 )
                                                           : null,
                                                       gradient: empty
@@ -969,8 +988,8 @@ class _HomeDashboardState extends State<HomeDashboard>
                                                             toY: maxValue
                                                                 .toDouble(),
                                                             color: Colors.grey
-                                                                .withOpacity(
-                                                                  0.08,
+                                                                .withValues(
+                                                                  alpha: 0.08,
                                                                 ),
                                                           ),
                                                     ),
@@ -985,6 +1004,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                                             swapAnimationCurve:
                                                 Curves.easeOutCubic,
                                           ),
+                                            ),
                                           ),
                                         );
                                       },

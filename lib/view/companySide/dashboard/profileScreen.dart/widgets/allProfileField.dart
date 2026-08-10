@@ -8,7 +8,7 @@ import '../../../../../models/profile/getSingleProfile_model.dart';
 class AllField extends StatelessWidget {
   final Profile profile;
 
-  AllField({super.key, required this.profile});
+  const AllField({super.key, required this.profile});
 
   String get _fullAddress {
     final address = profile.address?.trim() ?? "";

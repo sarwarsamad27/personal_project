@@ -1672,7 +1672,7 @@ class _OrderScreenState extends State<OrderScreen>
       );
     }
 
-    Color _statusColor(String status) {
+    Color statusColor(String status) {
       switch (status) {
         case 'Pending':
           return AppColor.errorColor;
@@ -1689,10 +1689,10 @@ class _OrderScreenState extends State<OrderScreen>
       height: 30.h,
       padding: EdgeInsets.symmetric(horizontal: 6.w),
       decoration: BoxDecoration(
-        color: _statusColor("Pending").withValues(alpha: 0.15),
+        color: statusColor("Pending").withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(10.r),
         border: Border.all(
-          color: _statusColor("Pending").withValues(alpha: 0.7),
+          color: statusColor("Pending").withValues(alpha: 0.7),
         ),
       ),
       child: DropdownButton<String>(

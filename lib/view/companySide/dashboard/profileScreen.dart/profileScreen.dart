@@ -113,7 +113,7 @@ class ProfileScreen extends StatelessWidget {
                             radius: 60.r,
                             backgroundImage: profile.image != null
                                 ? NetworkImage(
-                                    "${Global.getImageUrl(profile.image!)}",
+                                    Global.getImageUrl(profile.image!),
                                   )
                                 : const NetworkImage(
                                     "https://i.pravatar.cc/300",
@@ -149,22 +149,22 @@ class ProfileScreen extends StatelessWidget {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Colors.white.withOpacity(0.18),
-                            Colors.white.withOpacity(0.08),
+                            Colors.white.withValues(alpha: 0.18),
+                            Colors.white.withValues(alpha: 0.08),
                           ],
                         ),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.18),
+                          color: Colors.white.withValues(alpha: 0.18),
                           width: 1,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.18),
+                            color: Colors.black.withValues(alpha: 0.18),
                             blurRadius: 18,
                             offset: const Offset(0, 10),
                           ),
                           BoxShadow(
-                            color: AppColor.primaryColor.withOpacity(0.20),
+                            color: AppColor.primaryColor.withValues(alpha: 0.20),
                             blurRadius: 28,
                             offset: const Offset(0, 8),
                           ),
@@ -184,7 +184,7 @@ class ProfileScreen extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     colors: [
-                                      Colors.white.withOpacity(0.22),
+                                      Colors.white.withValues(alpha: 0.22),
                                       Colors.transparent,
                                     ],
                                   ),
@@ -207,14 +207,14 @@ class ProfileScreen extends StatelessWidget {
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                     colors: [
-                                      AppColor.primaryColor.withOpacity(0.95),
-                                      AppColor.primaryColor.withOpacity(0.55),
+                                      AppColor.primaryColor.withValues(alpha: 0.95),
+                                      AppColor.primaryColor.withValues(alpha: 0.55),
                                     ],
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColor.primaryColor.withOpacity(
-                                        0.35,
+                                      color: AppColor.primaryColor.withValues(
+                                        alpha: 0.35,
                                       ),
                                       blurRadius: 18,
                                       offset: const Offset(0, 6),
@@ -247,7 +247,7 @@ class ProfileScreen extends StatelessWidget {
                                       height: 1,
                                       shadows: [
                                         Shadow(
-                                          color: Colors.black.withOpacity(0.25),
+                                          color: Colors.black.withValues(alpha: 0.25),
                                           blurRadius: 12,
                                           offset: const Offset(0, 4),
                                         ),
@@ -260,7 +260,7 @@ class ProfileScreen extends StatelessWidget {
                                       Text(
                                         "Followers",
                                         style: TextStyle(
-                                          color: Colors.white.withOpacity(0.85),
+                                          color: Colors.white.withValues(alpha: 0.85),
                                           fontSize: 12.sp,
                                           fontWeight: FontWeight.w700,
                                           letterSpacing: 0.2,
@@ -422,8 +422,8 @@ class ProfileScreen extends StatelessWidget {
                                       Text(
                                         "View all exchange requests",
                                         style: TextStyle(
-                                          color: Colors.white.withOpacity(
-                                            0.7,
+                                          color: Colors.white.withValues(
+                                            alpha: 0.7,
                                           ),
                                           fontSize: 13.sp,
                                         ),
@@ -496,8 +496,8 @@ class ProfileScreen extends StatelessWidget {
                                       Text(
                                         "Manage your refund requests",
                                         style: TextStyle(
-                                          color: Colors.white.withOpacity(
-                                            0.7,
+                                          color: Colors.white.withValues(
+                                            alpha: 0.7,
                                           ),
                                           fontSize: 13.sp,
                                         ),

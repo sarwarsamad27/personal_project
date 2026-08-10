@@ -19,7 +19,6 @@ import 'package:new_brand/resources/pakistaniBanks.dart';
 import 'package:new_brand/resources/toast.dart';
 import 'package:share_plus/share_plus.dart';
 // import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/firebasePhoneAuthTestScreen.dart';
-import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/safepay_payment_screen.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getCompanyAmount_provider.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
@@ -56,7 +55,7 @@ import 'package:provider/provider.dart';
 // }
 
 class Wallet extends StatefulWidget {
-  Wallet({super.key});
+  const Wallet({super.key});
 
   @override
   State<Wallet> createState() => _WalletState();
@@ -137,7 +136,7 @@ class _WalletState extends State<Wallet> {
           child: Container(
             padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 4.w),
             decoration: BoxDecoration(
-              color: isSelected ? Colors.green : Colors.white.withOpacity(0.1),
+              color: isSelected ? Colors.green : Colors.white.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10.r),
             ),
             alignment: Alignment.center,
@@ -184,7 +183,7 @@ class _WalletState extends State<Wallet> {
                         height: 5,
                         width: 60,
                         decoration: BoxDecoration(
-                          color: AppColor.whiteColor.withOpacity(0.5),
+                          color: AppColor.whiteColor.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
@@ -226,7 +225,7 @@ class _WalletState extends State<Wallet> {
                             hintText: "Select bank",
                             hintStyle: const TextStyle(color: Colors.white60),
                             filled: true,
-                            fillColor: Colors.white.withOpacity(0.1),
+                            fillColor: Colors.white.withValues(alpha: 0.1),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12.r),
                               borderSide: BorderSide.none,

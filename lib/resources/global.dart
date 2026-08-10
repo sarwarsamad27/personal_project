@@ -159,8 +159,9 @@ class Global {
   static String getImageUrl(String? url) {
     if (url == null) return "";
     // Local file path (offline-queued image, not yet uploaded) — pass through unchanged
-    if (url.startsWith('/') || RegExp(r'^[a-zA-Z]:[\\/]').hasMatch(url))
+    if (url.startsWith('/') || RegExp(r'^[a-zA-Z]:[\\/]').hasMatch(url)) {
       return url;
+    }
     if (url.startsWith('upload')) return "$imageUrl/$url";
     if (url.startsWith('http')) return url;
     return "$imageUrl$url";

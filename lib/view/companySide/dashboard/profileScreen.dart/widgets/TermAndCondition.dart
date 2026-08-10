@@ -63,7 +63,7 @@ class TermAndConditionScreen extends StatelessWidget {
                   Text(
                     'Please read these terms carefully before using the Shookoo platform.',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 13.sp,
                       height: 1.5,
                     ),
@@ -245,7 +245,7 @@ class _Section extends StatelessWidget {
         borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

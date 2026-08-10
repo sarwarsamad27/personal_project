@@ -11,18 +11,18 @@ class RelatedProductModel {
     if (json['relatedProducts'] != null) {
       relatedProducts = <RelatedProducts>[];
       json['relatedProducts'].forEach((v) {
-        relatedProducts!.add(new RelatedProducts.fromJson(v));
+        relatedProducts!.add(RelatedProducts.fromJson(v));
       });
     }
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['message'] = this.message;
-    data['total'] = this.total;
-    if (this.relatedProducts != null) {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['message'] = message;
+    data['total'] = total;
+    if (relatedProducts != null) {
       data['relatedProducts'] =
-          this.relatedProducts!.map((v) => v.toJson()).toList();
+          relatedProducts!.map((v) => v.toJson()).toList();
     }
     return data;
   }
@@ -78,21 +78,21 @@ class RelatedProducts {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['_id'] = this.sId;
-    data['profileId'] = this.profileId;
-    data['categoryId'] = this.categoryId;
-    data['name'] = this.name;
-    data['description'] = this.description;
-    data['images'] = this.images;
-    data['beforeDiscountPrice'] = this.beforeDiscountPrice;
-    data['afterDiscountPrice'] = this.afterDiscountPrice;
-    data['size'] = this.size;
-    data['color'] = this.color;
-    data['stock'] = this.stock;
-    data['createdAt'] = this.createdAt;
-    data['updatedAt'] = this.updatedAt;
-    data['__v'] = this.iV;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['_id'] = sId;
+    data['profileId'] = profileId;
+    data['categoryId'] = categoryId;
+    data['name'] = name;
+    data['description'] = description;
+    data['images'] = images;
+    data['beforeDiscountPrice'] = beforeDiscountPrice;
+    data['afterDiscountPrice'] = afterDiscountPrice;
+    data['size'] = size;
+    data['color'] = color;
+    data['stock'] = stock;
+    data['createdAt'] = createdAt;
+    data['updatedAt'] = updatedAt;
+    data['__v'] = iV;
     return data;
   }
 }

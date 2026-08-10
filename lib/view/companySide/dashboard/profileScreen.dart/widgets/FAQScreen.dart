@@ -188,7 +188,7 @@ class _FAQScreenState extends State<FAQScreen> {
                     end: Alignment.bottomRight,
                     colors: [
                       AppColor.appimagecolor,
-                      AppColor.appimagecolor.withOpacity(0.7),
+                      AppColor.appimagecolor.withValues(alpha: 0.7),
                     ],
                   ),
                 ),
@@ -202,7 +202,7 @@ class _FAQScreenState extends State<FAQScreen> {
                         Container(
                           padding: EdgeInsets.all(10.r),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Icon(
@@ -320,13 +320,13 @@ class _FAQScreenState extends State<FAQScreen> {
                       borderRadius: BorderRadius.circular(14.r),
                       border: Border.all(
                         color: isOpen
-                            ? AppColor.appimagecolor.withOpacity(0.4)
+                            ? AppColor.appimagecolor.withValues(alpha: 0.4)
                             : Colors.transparent,
                         width: 1.2,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -347,7 +347,7 @@ class _FAQScreenState extends State<FAQScreen> {
                                 decoration: BoxDecoration(
                                   color: _categoryColor(
                                     category,
-                                  ).withOpacity(0.1),
+                                  ).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8.r),
                                 ),
                                 child: Icon(
@@ -421,8 +421,8 @@ class _FAQScreenState extends State<FAQScreen> {
                                   width: 3.w,
                                   height: 50.h,
                                   decoration: BoxDecoration(
-                                    color: AppColor.appimagecolor.withOpacity(
-                                      0.4,
+                                    color: AppColor.appimagecolor.withValues(
+                                      alpha: 0.4,
                                     ),
                                     borderRadius: BorderRadius.circular(4.r),
                                   ),

@@ -28,7 +28,7 @@ class CreateCategoryRepository {
        image,
         fileFieldName: "image", 
       );
-      print('+ ${response}');
+      print('+ $response');
       return CreateCategoryModel.fromJson(response);
     } catch (e) {
       return CreateCategoryModel(message: "Error: $e");

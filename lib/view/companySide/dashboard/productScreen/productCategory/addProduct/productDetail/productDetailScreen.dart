@@ -1210,7 +1210,7 @@ class _BlinkingDotState extends State<_BlinkingDot>
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: widget.color.withOpacity(0.5),
+              color: widget.color.withValues(alpha: 0.5),
               blurRadius: 4,
               spreadRadius: 1,
             ),

@@ -5,8 +5,7 @@ class BlinkingBadge extends StatefulWidget {
   final String text;
   final bool isError;
 
-  const BlinkingBadge({Key? key, required this.text, this.isError = false})
-    : super(key: key);
+  const BlinkingBadge({super.key, required this.text, this.isError = false});
 
   @override
   _BlinkingBadgeState createState() => _BlinkingBadgeState();
@@ -57,12 +56,12 @@ class _BlinkingBadgeState extends State<BlinkingBadge>
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
         decoration: BoxDecoration(
-          color: bgColor.withOpacity(0.92),
+          color: bgColor.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(10.r),
           border: Border.all(color: borderColor, width: 1),
           boxShadow: [
             BoxShadow(
-              color: dotColor.withOpacity(0.15),
+              color: dotColor.withValues(alpha: 0.15),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -79,7 +78,7 @@ class _BlinkingBadgeState extends State<BlinkingBadge>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: dotColor.withOpacity(0.5),
+                    color: dotColor.withValues(alpha: 0.5),
                     blurRadius: 4,
                     spreadRadius: 1,
                   ),

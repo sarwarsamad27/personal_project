@@ -142,7 +142,7 @@ class StatsView extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
         ],
       ),
       child: Column(
@@ -153,7 +153,7 @@ class StatsView extends StatelessWidget {
           Text(
             item['title'] as String,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               fontSize: 13.sp,
             ),
           ),
@@ -189,7 +189,7 @@ class StatsView extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
         ],
       ),
       child: Row(
@@ -197,7 +197,7 @@ class StatsView extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.18),
+              color: Colors.white.withValues(alpha: 0.18),
               shape: BoxShape.circle,
             ),
             child: Icon(item['icon'] as IconData, color: Colors.white, size: 24.sp),
@@ -210,7 +210,7 @@ class StatsView extends StatelessWidget {
                 Text(
                   item['title'] as String,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 13.sp,
                   ),
                 ),

@@ -182,7 +182,7 @@ class _ProductImageState extends State<ProductImage> {
                                       sigmaY: 10,
                                     ),
                                     child: Container(
-                                      color: Colors.black.withOpacity(0.2),
+                                      color: Colors.black.withValues(alpha: 0.2),
                                     ),
                                   ),
                                 ),
@@ -276,7 +276,7 @@ class _ProductImageState extends State<ProductImage> {
                   child: Container(
                     padding: EdgeInsets.all(6.w),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -294,7 +294,7 @@ class _ProductImageState extends State<ProductImage> {
                   child: Container(
                     padding: EdgeInsets.all(6.w),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -383,7 +383,7 @@ class _ProductVideoPlayerState extends State<_ProductVideoPlayer> {
                 ClipRect(
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                    child: Container(color: Colors.black.withOpacity(0.2)),
+                    child: Container(color: Colors.black.withValues(alpha: 0.2)),
                   ),
                 ),
               ],

@@ -551,7 +551,9 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
         )
         .map((m) => m.id!)
         .toList();
-    for (final id in ids) socket.emit("chat:delivered", {"messageId": id});
+    for (final id in ids) {
+      socket.emit("chat:delivered", {"messageId": id});
+    }
   }
 
   void _markSingleMessageDelivered(String messageId) {
@@ -569,8 +571,9 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
         )
         .map((m) => m.id!)
         .toList();
-    if (ids.isNotEmpty)
+    if (ids.isNotEmpty) {
       socket.emit("chat:read", {"threadId": threadId, "messageIds": ids});
+    }
   }
 
   void _markSingleMessageRead(String messageId) {
@@ -753,8 +756,9 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
           ...replyPayload,
         },
         ack: (resp) {
-          if (resp is! Map || resp["ok"] != true || resp["data"] == null)
+          if (resp is! Map || resp["ok"] != true || resp["data"] == null) {
             return;
+          }
           final serverMsg = ChatMessage.fromJson(
             Map<String, dynamic>.from(resp["data"]),
           );
@@ -851,14 +855,15 @@ class CompanyChatProvider extends ChangeNotifier with WidgetsBindingObserver {
             ? "Your exchange request has been approved."
             : "Cannot process this exchange request.",
       );
-      if (success)
+      if (success) {
         _updateExchangeStatusLocally(
           exchangeId,
           decision == "Denied" ? "Rejected" : "Accepted",
           {},
         );
-      else
+      } else {
         AppToast.error("Failed to process");
+      }
     } catch (e) {
       AppToast.error("Error: $e");
     } finally {

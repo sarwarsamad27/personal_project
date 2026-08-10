@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/local_storage.dart';
@@ -14,7 +13,6 @@ import 'package:new_brand/viewModel/providers/orderProvider/getDeliveredOrder_pr
 import 'package:new_brand/viewModel/providers/orderProvider/getReturnedOrder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/transactionHIstory_provider.dart';
 import 'package:new_brand/widgets/customBgContainer.dart';
-import 'package:new_brand/widgets/customContainer.dart';
 import 'package:new_brand/widgets/paymentTabbar.dart';
 import 'package:provider/provider.dart';
 
@@ -97,8 +95,9 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
   @override
   void dispose() {
     final socket = SocketService().socket;
-    if (_onWithdrawNew != null)
+    if (_onWithdrawNew != null) {
       socket?.off("wallet:withdraw_new", _onWithdrawNew);
+    }
     if (_onDepositStatus != null) {
       socket?.off("wallet:deposit_status", _onDepositStatus);
     }

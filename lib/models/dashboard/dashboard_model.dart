@@ -6,12 +6,12 @@ class DashboardDataModel {
 
   DashboardDataModel.fromJson(Map<String, dynamic> json) {
     message = json['message'];
-    data = json['data'] != null ? new Data.fromJson(json['data']) : null;
+    data = json['data'] != null ? Data.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['message'] = this.message;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['message'] = message;
     if (this.data != null) {
       data['data'] = this.data!.toJson();
     }
@@ -55,23 +55,23 @@ class Data {
     totalSales = json['totalSales'];
     monthlySales = json['monthlySales'];
     wallet = json['wallet'] != null
-        ? new Wallet.fromJson(json['wallet'])
+        ? Wallet.fromJson(json['wallet'])
         : null;
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['totalProducts'] = this.totalProducts;
-    data['lowStockProducts'] = this.lowStockProducts;
-    data['outOfStockProducts'] = this.outOfStockProducts;
-    data['totalQuantity'] = this.totalQuantity;
-    data['totalOrders'] = this.totalOrders;
-    data['deliveredOrders'] = this.deliveredOrders;
-    data['pendingOrders'] = this.pendingOrders;
-    data['totalSales'] = this.totalSales;
-    data['monthlySales'] = this.monthlySales;
-    if (this.wallet != null) {
-      data['wallet'] = this.wallet!.toJson();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['totalProducts'] = totalProducts;
+    data['lowStockProducts'] = lowStockProducts;
+    data['outOfStockProducts'] = outOfStockProducts;
+    data['totalQuantity'] = totalQuantity;
+    data['totalOrders'] = totalOrders;
+    data['deliveredOrders'] = deliveredOrders;
+    data['pendingOrders'] = pendingOrders;
+    data['totalSales'] = totalSales;
+    data['monthlySales'] = monthlySales;
+    if (wallet != null) {
+      data['wallet'] = wallet!.toJson();
     }
     return data;
   }
@@ -98,11 +98,11 @@ class Wallet {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['totalDelivered'] = this.totalDelivered;
-    data['pendingWithdraw'] = this.pendingWithdraw;
-    data['completedWithdraw'] = this.completedWithdraw;
-    data['currentBalance'] = this.currentBalance;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['totalDelivered'] = totalDelivered;
+    data['pendingWithdraw'] = pendingWithdraw;
+    data['completedWithdraw'] = completedWithdraw;
+    data['currentBalance'] = currentBalance;
     return data;
   }
 }

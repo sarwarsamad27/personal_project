@@ -30,7 +30,7 @@ class AboutScreen extends StatelessWidget {
                     end: Alignment.bottomRight,
                     colors: [
                       AppColor.appimagecolor,
-                      AppColor.appimagecolor.withOpacity(0.7),
+                      AppColor.appimagecolor.withValues(alpha: 0.7),
                     ],
                   ),
                 ),
@@ -46,10 +46,10 @@ class AboutScreen extends StatelessWidget {
                           width: 56.r,
                           height: 56.r,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(16.r),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
+                              color: Colors.white.withValues(alpha: 0.3),
                             ),
                           ),
                           child: Center(
@@ -110,10 +110,10 @@ class AboutScreen extends StatelessWidget {
                         vertical: 6.h,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColor.appimagecolor.withOpacity(0.1),
+                        color: AppColor.appimagecolor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20.r),
                         border: Border.all(
-                          color: AppColor.appimagecolor.withOpacity(0.3),
+                          color: AppColor.appimagecolor.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Text(
@@ -367,7 +367,7 @@ class _Card extends StatelessWidget {
         borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -421,7 +421,7 @@ class _StatCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8),
         ],
       ),
       child: Column(
@@ -429,7 +429,7 @@ class _StatCard extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(8.r),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 16.sp),
@@ -470,7 +470,7 @@ class _FeatureRow extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(5.r),
             decoration: BoxDecoration(
-              color: AppColor.appimagecolor.withOpacity(0.1),
+              color: AppColor.appimagecolor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6.r),
             ),
             child: Icon(icon, size: 12.sp, color: AppColor.appimagecolor),
@@ -508,7 +508,7 @@ class _TeamMember extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 22.r,
-          backgroundColor: color.withOpacity(0.15),
+          backgroundColor: color.withValues(alpha: 0.15),
           child: Text(
             initials,
             style: TextStyle(
@@ -550,9 +550,9 @@ class _TechChip extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
       decoration: BoxDecoration(
-        color: AppColor.appimagecolor.withOpacity(0.08),
+        color: AppColor.appimagecolor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: AppColor.appimagecolor.withOpacity(0.2)),
+        border: Border.all(color: AppColor.appimagecolor.withValues(alpha: 0.2)),
       ),
       child: Text(
         label,

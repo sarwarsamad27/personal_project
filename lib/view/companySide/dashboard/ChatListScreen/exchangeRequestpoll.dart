@@ -50,12 +50,12 @@ class ExchangeRequestPoll extends StatelessWidget {
         borderRadius: BorderRadius.circular(18.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: statusColor.withOpacity(0.25), width: 1.5),
+        border: Border.all(color: statusColor.withValues(alpha: 0.25), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,8 +66,8 @@ class ExchangeRequestPoll extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColor.primaryColor.withOpacity(0.12),
-                  AppColor.primaryColor.withOpacity(0.04),
+                  AppColor.primaryColor.withValues(alpha: 0.12),
+                  AppColor.primaryColor.withValues(alpha: 0.04),
                 ],
               ),
               borderRadius: BorderRadius.only(
@@ -80,7 +80,7 @@ class ExchangeRequestPoll extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(10.w),
                   decoration: BoxDecoration(
-                    color: AppColor.primaryColor.withOpacity(0.15),
+                    color: AppColor.primaryColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                   child: Icon(
@@ -120,7 +120,7 @@ class ExchangeRequestPoll extends StatelessWidget {
                     vertical: 6.h,
                   ),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.12),
+                    color: statusColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20.r),
                     border: Border.all(color: statusColor, width: 1.5),
                   ),
@@ -368,9 +368,9 @@ class ExchangeRequestPoll extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.all(12.w),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.08),
+                      color: statusColor.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: statusColor.withOpacity(0.3)),
+                      border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
@@ -482,9 +482,9 @@ class ExchangeRequestPoll extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: bannerColor.withOpacity(0.1),
+        color: bannerColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: bannerColor.withOpacity(0.4)),
+        border: Border.all(color: bannerColor.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
@@ -532,10 +532,10 @@ class ExchangeRequestPoll extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(10.w),
       decoration: BoxDecoration(
-        color: (titleColor ?? Colors.black87).withOpacity(0.04),
+        color: (titleColor ?? Colors.black87).withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: (titleColor ?? Colors.black87).withOpacity(0.1),
+          color: (titleColor ?? Colors.black87).withValues(alpha: 0.1),
         ),
       ),
       child: Column(
@@ -595,9 +595,9 @@ class ExchangeRequestPoll extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6.r),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         text,
@@ -689,7 +689,7 @@ class _ActionButton extends StatelessWidget {
               ? []
               : [
                   BoxShadow(
-                    color: color.withOpacity(0.35),
+                    color: color.withValues(alpha: 0.35),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),

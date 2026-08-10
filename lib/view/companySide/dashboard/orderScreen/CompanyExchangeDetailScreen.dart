@@ -106,8 +106,9 @@ class _CompanyExchangeDetailScreenState
   }
 
   Future<void> _checkAutoCompletion(ExchangeRequest ex) async {
-    if (!ex.isReplacementShipped || ex.replacementTrackingNumber == null)
+    if (!ex.isReplacementShipped || ex.replacementTrackingNumber == null) {
       return;
+    }
 
     try {
       final repo = LeopardsTrackingRepository();
@@ -631,14 +632,14 @@ class _CompanyExchangeDetailScreenState
     ExchangeRequest ex,
     CompanyExchangeProvider provider,
   ) {
-    final _noteCtrl = TextEditingController();
+    final noteCtrl = TextEditingController();
 
     return _card(
       title: "Inspection Result",
       icon: Icons.verified,
       children: [
         TextField(
-          controller: _noteCtrl,
+          controller: noteCtrl,
           maxLines: 3,
           decoration: InputDecoration(
             labelText: "Inspection Note",
@@ -656,14 +657,14 @@ class _CompanyExchangeDetailScreenState
                 onPressed: provider.processing
                     ? null
                     : () async {
-                        if (_noteCtrl.text.trim().isEmpty) {
+                        if (noteCtrl.text.trim().isEmpty) {
                           AppToast.error("Please enter inspection note");
                           return;
                         }
                         final ok = await provider.submitInspectionResult(
                           exchangeId: ex.id ?? "",
                           result: "disputed",
-                          note: _noteCtrl.text.trim(),
+                          note: noteCtrl.text.trim(),
                         );
                         _showResult(ok, "Dispute raised");
                       },
@@ -688,7 +689,7 @@ class _CompanyExchangeDetailScreenState
                         final ok = await provider.submitInspectionResult(
                           exchangeId: ex.id ?? "",
                           result: "approved",
-                          note: _noteCtrl.text.trim(),
+                          note: noteCtrl.text.trim(),
                         );
                         _showResult(ok, "Inspection approved");
                       },
@@ -726,14 +727,14 @@ class _CompanyExchangeDetailScreenState
     ExchangeRequest ex,
     CompanyExchangeProvider provider,
   ) {
-    final _amtCtrl = TextEditingController();
+    final amtCtrl = TextEditingController();
 
     return _card(
       title: "Process Refund",
       icon: Icons.account_balance_wallet_outlined,
       children: [
         TextField(
-          controller: _amtCtrl,
+          controller: amtCtrl,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
             labelText: "Refund Amount (Rs) *",
@@ -750,7 +751,7 @@ class _CompanyExchangeDetailScreenState
             onPressed: provider.processing
                 ? null
                 : () async {
-                    final amt = double.tryParse(_amtCtrl.text.trim());
+                    final amt = double.tryParse(amtCtrl.text.trim());
                     if (amt == null || amt <= 0) {
                       AppToast.error("Enter valid amount");
                       return;
@@ -988,8 +989,8 @@ class _CompanyExchangeDetailScreenState
 
   // ── Dialogs ───────────────────────────────────────────────────
   void _showAcceptDialog(ExchangeRequest ex, CompanyExchangeProvider provider) {
-    String _resType = "replacement";
-    final _noteCtrl = TextEditingController();
+    String resType = "replacement";
+    final noteCtrl = TextEditingController();
 
     showDialog(
       context: context,
@@ -1038,8 +1039,8 @@ class _CompanyExchangeDetailScreenState
                 final ok = await provider.decide(
                   exchangeId: ex.id ?? "",
                   decision: "Accepted",
-                  resolutionType: _resType,
-                  note: _noteCtrl.text.trim(),
+                  resolutionType: resType,
+                  note: noteCtrl.text.trim(),
                 );
                 _showResult(ok, "Exchange accepted!");
               },
@@ -1056,7 +1057,7 @@ class _CompanyExchangeDetailScreenState
   }
 
   void _showDenyDialog(ExchangeRequest ex, CompanyExchangeProvider provider) {
-    final _noteCtrl = TextEditingController();
+    final noteCtrl = TextEditingController();
 
     showDialog(
       context: context,
@@ -1077,7 +1078,7 @@ class _CompanyExchangeDetailScreenState
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              controller: _noteCtrl,
+              controller: noteCtrl,
               maxLines: 3,
               decoration: InputDecoration(
                 labelText: "Reason for denial *",
@@ -1095,7 +1096,7 @@ class _CompanyExchangeDetailScreenState
           ),
           ElevatedButton(
             onPressed: () async {
-              if (_noteCtrl.text.trim().isEmpty) {
+              if (noteCtrl.text.trim().isEmpty) {
                 AppToast.error("Enter denial reason");
                 return;
               }
@@ -1104,7 +1105,7 @@ class _CompanyExchangeDetailScreenState
                 exchangeId: ex.id ?? "",
                 decision: "Denied",
                 resolutionType: "replacement",
-                note: _noteCtrl.text.trim(),
+                note: noteCtrl.text.trim(),
               );
               _showResult(ok, "Exchange denied");
             },

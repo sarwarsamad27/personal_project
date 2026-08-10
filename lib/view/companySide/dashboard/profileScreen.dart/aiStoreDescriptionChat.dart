@@ -188,7 +188,7 @@ class _AiStoreDescriptionChatState extends State<AiStoreDescriptionChat> {
               gradient: LinearGradient(
                 colors: [
                   AppColor.primaryColor,
-                  AppColor.primaryColor.withOpacity(0.7),
+                  AppColor.primaryColor.withValues(alpha: 0.7),
                 ],
               ),
               shape: BoxShape.circle,
@@ -331,7 +331,7 @@ class _AiStoreDescriptionChatState extends State<AiStoreDescriptionChat> {
       height: 30.w,
       width: 30.w,
       decoration: BoxDecoration(
-        color: AppColor.primaryColor.withOpacity(0.12),
+        color: AppColor.primaryColor.withValues(alpha: 0.12),
         shape: BoxShape.circle,
       ),
       child: Icon(
@@ -440,7 +440,7 @@ class _AiStoreDescriptionChatState extends State<AiStoreDescriptionChat> {
           child: Container(
             padding: EdgeInsets.all(14.w),
             decoration: BoxDecoration(
-              color: AppColor.errorColor.withOpacity(0.08),
+              color: AppColor.errorColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(14.r),
                 topRight: Radius.circular(14.r),

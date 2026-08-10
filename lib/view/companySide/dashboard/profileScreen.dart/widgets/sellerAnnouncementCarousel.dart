@@ -130,7 +130,7 @@ class _RotatingCardsState extends State<_RotatingCards> {
                 decoration: BoxDecoration(
                   color: active
                       ? AppColor.primaryColor
-                      : AppColor.primaryColor.withOpacity(0.25),
+                      : AppColor.primaryColor.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(4.r),
                 ),
               );
@@ -163,7 +163,7 @@ class _AnnouncementCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: gradient.last.withOpacity(0.35),
+            color: gradient.last.withValues(alpha: 0.35),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
@@ -181,7 +181,7 @@ class _AnnouncementCard extends StatelessWidget {
               height: 120.w,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.12),
+                color: Colors.white.withValues(alpha: 0.12),
               ),
             ),
           ),
@@ -196,7 +196,7 @@ class _AnnouncementCard extends StatelessWidget {
                     height: 38.r,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.22),
+                      color: Colors.white.withValues(alpha: 0.22),
                     ),
                     child: Icon(icon, color: Colors.white, size: 19.sp),
                   ),
@@ -222,7 +222,7 @@ class _AnnouncementCard extends StatelessWidget {
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.92),
+                    color: Colors.white.withValues(alpha: 0.92),
                     fontSize: 12.5.sp,
                     height: 1.4,
                   ),
@@ -233,7 +233,7 @@ class _AnnouncementCard extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.18),
+                    color: Colors.white.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                   child: Row(

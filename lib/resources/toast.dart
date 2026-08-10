@@ -63,7 +63,7 @@ class AppToast {
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white.withValues(alpha: 0.2),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: Colors.white, size: 20),
@@ -74,15 +74,15 @@ class AppToast {
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         padding: const EdgeInsets.all(16),
         barBlur: 10,
-        backgroundColor: color.withOpacity(0.7),
+        backgroundColor: color.withValues(alpha: 0.7),
         backgroundGradient: LinearGradient(
-          colors: [color.withOpacity(0.85), color.withOpacity(0.7)],
+          colors: [color.withValues(alpha: 0.85), color.withValues(alpha: 0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadows: [
           BoxShadow(
-            color: color.withOpacity(0.4),
+            color: color.withValues(alpha: 0.4),
             offset: const Offset(0, 8),
             blurRadius: 20,
           ),

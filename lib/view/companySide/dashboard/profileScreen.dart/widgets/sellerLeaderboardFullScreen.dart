@@ -223,12 +223,12 @@ class _SellerRow extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: isMe ? AppColor.primaryColor.withOpacity(0.08) : Colors.white,
+        color: isMe ? AppColor.primaryColor.withValues(alpha: 0.08) : Colors.white,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(
           color: isMe
-              ? AppColor.primaryColor.withOpacity(0.4)
-              : Colors.grey.withOpacity(0.15),
+              ? AppColor.primaryColor.withValues(alpha: 0.4)
+              : Colors.grey.withValues(alpha: 0.15),
         ),
       ),
       child: Row(
@@ -257,7 +257,7 @@ class _SellerRow extends StatelessWidget {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.grey.withOpacity(0.12),
+                    color: Colors.grey.withValues(alpha: 0.12),
                   ),
                   child: Text(
                     "${seller.rank}",
@@ -271,7 +271,7 @@ class _SellerRow extends StatelessWidget {
           SizedBox(width: 12.w),
           CircleAvatar(
             radius: 18.r,
-            backgroundColor: Colors.grey.withOpacity(0.12),
+            backgroundColor: Colors.grey.withValues(alpha: 0.12),
             backgroundImage: seller.image != null
                 ? NetworkImage(Global.getImageUrl(seller.image))
                 : const NetworkImage("https://i.pravatar.cc/300"),

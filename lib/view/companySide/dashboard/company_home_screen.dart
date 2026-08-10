@@ -338,7 +338,7 @@ class _PremiumNavBar extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 18,
                   offset: const Offset(0, -4),
                 ),
@@ -495,14 +495,14 @@ class _CenterMessagesButton extends StatelessWidget {
             colors: selected
                 ? [
                     AppColor.primaryColor,
-                    AppColor.primaryColor.withOpacity(0.85),
+                    AppColor.primaryColor.withValues(alpha: 0.85),
                   ]
                 : [Colors.white, Colors.white],
           ),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.18),
+              color: Colors.black.withValues(alpha: 0.18),
               blurRadius: 18,
               offset: const Offset(0, 8),
             ),

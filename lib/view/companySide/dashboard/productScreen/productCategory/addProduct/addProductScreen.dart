@@ -259,8 +259,9 @@ class AddProductScreen extends StatelessWidget {
                         // ── AI analyzing indicator ──
                         Consumer<AnalyzeProductProvider>(
                           builder: (context, analyzeProvider, _) {
-                            if (!analyzeProvider.isAnalyzing)
+                            if (!analyzeProvider.isAnalyzing) {
                               return const SizedBox.shrink();
+                            }
                             return Padding(
                               padding: EdgeInsets.only(bottom: 12.h),
                               child: Row(

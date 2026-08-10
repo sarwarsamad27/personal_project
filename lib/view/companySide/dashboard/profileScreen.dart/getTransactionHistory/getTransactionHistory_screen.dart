@@ -101,8 +101,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   Color _statusColor(dynamic tx) {
-    if (_isReversal(tx))
+    if (_isReversal(tx)) {
       return Colors.yellow; // reversal unique color (purple-ish)
+    }
     if (_isFailed(tx)) return Colors.redAccent;
     if (_isPending(tx)) return Colors.amber;
     if (_isCompleted(tx)) return Colors.green;
@@ -119,17 +120,20 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     if (!_isDebit(tx)) {
       if (m.contains('order delivered')) return 'Order Credited';
       if (m.contains('refund')) return 'Refund Received';
-      if (m.contains('jazzcash') || m.contains('easypaisa'))
+      if (m.contains('jazzcash') || m.contains('easypaisa')) {
         return 'Top-Up ($method)';
+      }
       if (method.isNotEmpty) return method;
       return 'Amount Credited';
     }
 
     // ── Debits ───────────────────────────────────────────────────────────────
-    if (m.contains('return courier') || m.contains('courier fee'))
+    if (m.contains('return courier') || m.contains('courier fee')) {
       return 'Return Courier Fee';
-    if (m.contains('refund reversal') || m.contains('reversal'))
+    }
+    if (m.contains('refund reversal') || m.contains('reversal')) {
       return 'Refund Reversal';
+    }
     if (m.contains('refund')) return 'Refund';
     if (method.isNotEmpty) return 'Withdrawal ($method)';
     return 'Withdrawal';

@@ -41,12 +41,12 @@ class CustomAppContainer extends StatelessWidget {
       padding:
           padding ?? EdgeInsets.symmetric(vertical: 20.h, horizontal: 20.w),
       decoration: BoxDecoration(
-        color: color ?? Colors.white.withOpacity(0.2),
+        color: color ?? Colors.white.withValues(alpha: 0.2),
         borderRadius: borderRadius ?? BorderRadius.circular(20.r),
         border: Border.all(color: borderColor ?? Colors.white),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),

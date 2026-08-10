@@ -121,7 +121,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       height: 30.w,
       width: 30.w,
       decoration: BoxDecoration(
-        color: AppColor.primaryColor.withOpacity(0.12),
+        color: AppColor.primaryColor.withValues(alpha: 0.12),
         shape: BoxShape.circle,
       ),
       child: Icon(
@@ -150,7 +150,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -207,7 +207,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             padding: EdgeInsets.all(14.w),
             decoration: BoxDecoration(
               color: isWarning
-                  ? AppColor.errorColor.withOpacity(0.08)
+                  ? AppColor.errorColor.withValues(alpha: 0.08)
                   : Colors.white,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(14.r),
@@ -218,7 +218,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                   ? null
                   : [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -255,7 +255,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             padding: EdgeInsets.symmetric(vertical: 6.h),
             child: Divider(
               height: 1,
-              color: baseStyle.color?.withOpacity(0.15),
+              color: baseStyle.color?.withValues(alpha: 0.15),
             ),
           ),
         );
@@ -332,7 +332,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -370,7 +370,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),

@@ -7,14 +7,14 @@ class SignUpModel {
   SignUpModel.fromJson(Map<String, dynamic> json) {
     message = json['message'];
     newUser =
-        json['newUser'] != null ? new NewUser.fromJson(json['newUser']) : null;
+        json['newUser'] != null ? NewUser.fromJson(json['newUser']) : null;
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['message'] = this.message;
-    if (this.newUser != null) {
-      data['newUser'] = this.newUser!.toJson();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['message'] = message;
+    if (newUser != null) {
+      data['newUser'] = newUser!.toJson();
     }
     return data;
   }
@@ -36,11 +36,11 @@ class NewUser {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['email'] = this.email;
-    data['password'] = this.password;
-    data['_id'] = this.sId;
-    data['__v'] = this.iV;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['email'] = email;
+    data['password'] = password;
+    data['_id'] = sId;
+    data['__v'] = iV;
     return data;
   }
 }

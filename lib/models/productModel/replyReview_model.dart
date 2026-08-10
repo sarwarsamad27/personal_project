@@ -6,14 +6,14 @@ class ReplyReviewModel {
 
   ReplyReviewModel.fromJson(Map<String, dynamic> json) {
     message = json['message'];
-    reply = json['reply'] != null ? new Reply.fromJson(json['reply']) : null;
+    reply = json['reply'] != null ? Reply.fromJson(json['reply']) : null;
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['message'] = this.message;
-    if (this.reply != null) {
-      data['reply'] = this.reply!.toJson();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['message'] = message;
+    if (reply != null) {
+      data['reply'] = reply!.toJson();
     }
     return data;
   }
@@ -31,9 +31,9 @@ class Reply {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['text'] = this.text;
-    data['repliedAt'] = this.repliedAt;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['text'] = text;
+    data['repliedAt'] = repliedAt;
     return data;
   }
 }

@@ -561,12 +561,12 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                               vertical: 14.h,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
+                              color: Colors.white.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(12.r),
                               border: Border.all(
                                 color: _selectedCityId != null
                                     ? Colors.green
-                                    : Colors.white.withOpacity(0.5),
+                                    : Colors.white.withValues(alpha: 0.5),
                               ),
                             ),
                             child: Row(
@@ -657,7 +657,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                               gradient: LinearGradient(
                                 colors: [
                                   AppColor.primaryColor,
-                                  AppColor.primaryColor.withOpacity(0.75),
+                                  AppColor.primaryColor.withValues(alpha: 0.75),
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(20.r),

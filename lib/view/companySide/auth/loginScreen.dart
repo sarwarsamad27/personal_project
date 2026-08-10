@@ -11,7 +11,6 @@ import 'package:new_brand/view/companySide/auth/suspendedScreen.dart';
 import 'package:new_brand/view/companySide/auth/termsAgreementScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/company_home_screen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/profileForm.dart';
-import 'package:new_brand/viewModel/providers/AuthProvider/appleLogin_provider.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/googleLogin_provider.dart';
 import 'package:new_brand/viewModel/providers/AuthProvider/login_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/getProfile_provider.dart';
@@ -74,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         "Login to continue your journey",
                         style: TextStyle(
                           fontSize: 14.sp,
-                          color: AppColor.textSecondaryColor.withOpacity(0.8),
+                          color: AppColor.textSecondaryColor.withValues(alpha: 0.8),
                         ),
                       ),
                       SizedBox(height: 30.h),
@@ -250,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Expanded(
                             child: Divider(
-                              color: Colors.grey.withOpacity(0.4),
+                              color: Colors.grey.withValues(alpha: 0.4),
                               thickness: 1,
                             ),
                           ),
@@ -266,7 +265,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           Expanded(
                             child: Divider(
-                              color: Colors.grey.withOpacity(0.4),
+                              color: Colors.grey.withValues(alpha: 0.4),
                               thickness: 1,
                             ),
                           ),

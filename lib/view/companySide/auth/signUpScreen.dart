@@ -73,7 +73,7 @@ class SignUpScreen extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     color: AppColor.textSecondaryColor
-                                        .withOpacity(0.8),
+                                        .withValues(alpha: 0.8),
                                   ),
                                 ),
                                 SizedBox(height: 30.h),
@@ -240,7 +240,7 @@ class SignUpScreen extends StatelessWidget {
                         ? Container(
                             height: double.infinity,
                             width: double.infinity,
-                            color: Colors.black.withOpacity(0.3),
+                            color: Colors.black.withValues(alpha: 0.3),
                             child: const Center(
                               child: SpinKitThreeBounce(
                                 color: AppColor.primaryColor,

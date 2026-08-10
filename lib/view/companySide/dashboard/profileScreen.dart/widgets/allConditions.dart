@@ -11,7 +11,6 @@ import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/FAQScreen.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/TermAndCondition.dart';
 import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/aboutScreen.dart';
-import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/widgets/infoScreen.dart';
 import 'package:new_brand/widgets/customButton.dart';
 import 'package:new_brand/widgets/customContainer.dart';
 
@@ -32,17 +31,17 @@ class AllCondition extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.white.withOpacity(0.18),
-                  Colors.white.withOpacity(0.08),
+                  Colors.white.withValues(alpha: 0.18),
+                  Colors.white.withValues(alpha: 0.08),
                 ],
               ),
               border: Border.all(
-                color: Colors.white.withOpacity(0.20),
+                color: Colors.white.withValues(alpha: 0.20),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.35),
+                  color: Colors.black.withValues(alpha: 0.35),
                   blurRadius: 24,
                   offset: const Offset(0, 12),
                 ),
@@ -56,9 +55,9 @@ class AllCondition extends StatelessWidget {
                   height: 52.r,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.12),
+                    color: Colors.white.withValues(alpha: 0.12),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.18),
+                      color: Colors.white.withValues(alpha: 0.18),
                       width: 1,
                     ),
                   ),
@@ -82,7 +81,7 @@ class AllCondition extends StatelessWidget {
                   "Are you sure you want to logout from your account?",
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
+                    color: Colors.white.withValues(alpha: 0.85),
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
                     height: 1.3,

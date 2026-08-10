@@ -124,7 +124,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             width: 160.w,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               border: Border.all(
                                 color: Colors.white,
                                 width: 1.5,
@@ -152,7 +152,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 14.sp,
-                              color: Colors.white.withOpacity(0.85),
+                              color: Colors.white.withValues(alpha: 0.85),
                               height: 1.5,
                             ),
                           ),
@@ -169,7 +169,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   dotHeight: 8.h,
                   dotWidth: 8.w,
                   activeDotColor: Colors.white,
-                  dotColor: Colors.white.withOpacity(0.4),
+                  dotColor: Colors.white.withValues(alpha: 0.4),
                 ),
               ),
               SizedBox(height: 30.h),

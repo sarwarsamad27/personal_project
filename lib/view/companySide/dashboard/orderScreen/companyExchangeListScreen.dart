@@ -209,7 +209,7 @@ class _CompanyExchangeCard extends StatelessWidget {
                     children: [
                       Text(
                         request.buyerId != null
-                            ? "${request.orderId!}"
+                            ? request.orderId!
                             : "Exchange Request",
                         style: TextStyle(
                           fontSize: 14.sp,

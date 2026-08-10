@@ -87,7 +87,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
                 hintText: widget.hintText,
                 errorText: widget.errorText,
                 hintStyle: TextStyle(
-                  color: AppColor.textSecondaryColor.withOpacity(0.7),
+                  color: AppColor.textSecondaryColor.withValues(alpha: 0.7),
                   fontSize: 14.sp,
                 ),
                 contentPadding: EdgeInsets.symmetric(

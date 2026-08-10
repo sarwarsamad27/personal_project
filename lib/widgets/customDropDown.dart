@@ -19,7 +19,7 @@ class FancyStatusDropdown extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border.all(color: Colors.white),
         borderRadius: BorderRadius.circular(10),
-        color: AppColor.primaryColor.withOpacity(0.25),
+        color: AppColor.primaryColor.withValues(alpha: 0.25),
       ),
       child: DropdownButton<String>(
         value: order.status,

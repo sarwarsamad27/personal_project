@@ -277,7 +277,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 border: Border.all(
                                   color: const Color(
                                     0xFFC9A84C,
-                                  ).withOpacity(0.4),
+                                  ).withValues(alpha: 0.4),
                                   width: 1.5,
                                 ),
                               ),
@@ -294,7 +294,7 @@ class _SplashScreenState extends State<SplashScreen>
                                   border: Border.all(
                                     color: const Color(
                                       0xFFC9A84C,
-                                    ).withOpacity(0.6),
+                                    ).withValues(alpha: 0.6),
                                     width: 1,
                                   ),
                                 ),
@@ -320,12 +320,12 @@ class _SplashScreenState extends State<SplashScreen>
                                   BoxShadow(
                                     color: const Color(
                                       0xFFC9A84C,
-                                    ).withOpacity(0.5),
+                                    ).withValues(alpha: 0.5),
                                     blurRadius: 30,
                                     spreadRadius: 5,
                                   ),
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.4),
+                                    color: Colors.black.withValues(alpha: 0.4),
                                     blurRadius: 15,
                                     offset: const Offset(0, 8),
                                   ),
@@ -403,7 +403,7 @@ class _SplashScreenState extends State<SplashScreen>
                               "Manage. Sell. Grow.",
                               style: TextStyle(
                                 fontSize: 14.sp,
-                                color: Colors.white.withOpacity(0.7),
+                                color: Colors.white.withValues(alpha: 0.7),
                                 fontWeight: FontWeight.w300,
                                 letterSpacing: 2,
                               ),
@@ -417,7 +417,7 @@ class _SplashScreenState extends State<SplashScreen>
                               height: 3,
                               clipBehavior: Clip.hardEdge,
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
+                                color: Colors.white.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: AnimatedBuilder(
@@ -470,7 +470,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 key: ValueKey<int>(_messageIndex),
                                 style: TextStyle(
                                   fontSize: 12.sp,
-                                  color: Colors.white.withOpacity(0.55),
+                                  color: Colors.white.withValues(alpha: 0.55),
                                   letterSpacing: 0.8,
                                 ),
                               ),
@@ -481,7 +481,7 @@ class _SplashScreenState extends State<SplashScreen>
                               "Powered by Shookoo",
                               style: TextStyle(
                                 fontSize: 11.sp,
-                                color: Colors.white.withOpacity(0.4),
+                                color: Colors.white.withValues(alpha: 0.4),
                                 letterSpacing: 1.5,
                               ),
                             ),

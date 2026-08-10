@@ -4,7 +4,7 @@ class ImageViewerScreen extends StatefulWidget {
   final List<String> imageUrls;
   final int initialIndex;
 
-  const ImageViewerScreen({
+  const ImageViewerScreen({super.key, 
     required this.imageUrls,
     required this.initialIndex,
   });

@@ -138,7 +138,7 @@ class _MediaFullscreenViewerState extends State<MediaFullscreenViewer> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                    colors: [Colors.black.withValues(alpha: 0.7), Colors.transparent],
                   ),
                 ),
                 child: Row(
@@ -196,7 +196,9 @@ class _FullScreenVideoPlayerState extends State<_FullScreenVideoPlayer> {
     } else {
       _ctrl = VideoPlayerController.networkUrl(Uri.parse(widget.url));
       _isLocalController = true;
-      _ctrl.initialize().then((_) => setState(() {}));
+      _ctrl.initialize().then((_) {
+        if (mounted) setState(() {});
+      });
     }
     _ctrl.play();
   }
