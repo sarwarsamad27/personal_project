@@ -552,7 +552,9 @@ class _TechChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColor.appimagecolor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: AppColor.appimagecolor.withValues(alpha: 0.2)),
+        border: Border.all(
+          color: AppColor.appimagecolor.withValues(alpha: 0.2),
+        ),
       ),
       child: Text(
         label,
