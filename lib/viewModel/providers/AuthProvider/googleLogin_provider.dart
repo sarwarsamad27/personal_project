@@ -72,8 +72,13 @@ class CompanyGoogleLoginProvider with ChangeNotifier {
 
       final String? idToken = auth.idToken;
       if (idToken == null || idToken.isEmpty) {
+        if (kDebugMode) {
+          debugPrint(
+            "Google idToken not found. Check WEB clientId + SHA-1 config.",
+          );
+        }
         _errorMessage =
-            "Google idToken not found. Check WEB clientId + SHA-1 config.";
+            "Something went wrong signing in with Google. Please try again.";
         _setLoading(false);
         return;
       }
@@ -91,8 +96,33 @@ class CompanyGoogleLoginProvider with ChangeNotifier {
 
       _setLoading(false);
     } catch (e) {
-      _errorMessage = "Google login error: $e";
+      if (kDebugMode) {
+        debugPrint("Google login error (raw): $e");
+      }
+      _errorMessage = _friendlyGoogleError(e);
       _setLoading(false);
     }
+  }
+
+  /// Maps raw Google Sign-In exceptions to a clean, user-facing message.
+  /// The technical detail (exception type, API error code) is only ever
+  /// logged via debugPrint above — never shown to the end user.
+  String _friendlyGoogleError(Object e) {
+    final raw = e.toString();
+
+    if (raw.contains('ApiException: 10') || raw.contains('sign_in_failed')) {
+      // DEVELOPER_ERROR — almost always a SHA-1/config mismatch on our end,
+      // not something the user can fix. Don't expose that detail to them.
+      return "Google Sign-In isn't available right now. Please try again later or log in with email.";
+    }
+    if (raw.contains('network_error') ||
+        raw.contains('SocketException') ||
+        raw.contains('TimeoutException')) {
+      return "Network error. Please check your internet connection and try again.";
+    }
+    if (raw.contains('sign_in_canceled') || raw.contains('sign_in_cancelled')) {
+      return "Google sign-in cancelled";
+    }
+    return "Something went wrong signing in with Google. Please try again.";
   }
 }

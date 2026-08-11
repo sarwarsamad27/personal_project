@@ -154,6 +154,22 @@
           }
         },
         {
+          "client_id": "900853727644-tfc0r7v9ig8fjteu3pp27qvu27kh273i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sarwar.shookoostore",
+            "certificate_hash": "df52745783d65a9287edc23bd50846f4189b3c7b"
+          }
+        },
+        {
+          "client_id": "900853727644-vlr1gn36f7h4rbvakj4bbeptorgmpbja.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sarwar.shookoostore",
+            "certificate_hash": "6414bbb70521a78769734c6f76dac91bd65513ce"
+          }
+        },
+        {
           "client_id": "900853727644-a6m3k2sf0bdumpfkvm7h2hhlal4ct76i.apps.googleusercontent.com",
           "client_type": 3
         }
