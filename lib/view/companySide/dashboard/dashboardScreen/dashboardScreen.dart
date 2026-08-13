@@ -769,12 +769,18 @@ class _HomeDashboardState extends State<HomeDashboard>
                                         final perPoint = _perPointWidthFor(
                                           chartProvider.selectedType,
                                         );
-                                        // Points sit at their natural width,
-                                        // packed close together — the chart
-                                        // is only ever as wide as the data
-                                        // needs, never stretched to fill the
-                                        // card when there are few points.
-                                        final chartWidth = perPoint * count;
+                                        // Points sit at their natural width
+                                        // only once there are enough of them
+                                        // to need horizontal scrolling;
+                                        // otherwise stretch to fill the card
+                                        // so a short range (e.g. Daily's
+                                        // default week) doesn't leave dead
+                                        // space on the right.
+                                        final naturalWidth = perPoint * count;
+                                        final chartWidth =
+                                            naturalWidth < constraints.maxWidth
+                                            ? constraints.maxWidth
+                                            : naturalWidth;
                                         return SingleChildScrollView(
                                           controller: _chartScrollController,
                                           scrollDirection: Axis.horizontal,
