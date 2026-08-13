@@ -27,7 +27,7 @@ class AnalyzeProductProvider with ChangeNotifier {
       isAnalyzing = false;
       analyzeResult = result;
       notifyListeners();
-
+  
       if (result.name != null && result.description != null) {
         onSuccess(result.name!, result.description!);
       } else {
