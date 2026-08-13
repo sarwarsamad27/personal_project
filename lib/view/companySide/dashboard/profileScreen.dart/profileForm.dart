@@ -764,6 +764,21 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
 
                         if (!mounted) return;
 
+                        // ✅ First-time profile creation is the tail end of
+                        // the signup flow — loginScreen only saves the FCM
+                        // token when a profile already exists, so a brand
+                        // new seller would otherwise stay unregistered for
+                        // push until their next full app relaunch.
+                        try {
+                          await LocalStorage.initPushAndSaveToken(
+                            jwtToken: token,
+                          );
+                        } catch (e) {
+                          debugPrint("⚠️ FCM save skipped: $e");
+                        }
+
+                        if (!mounted) return;
+
                         final termsAgreed = await LocalStorage.isTermsAgreed();
 
                         if (!mounted) return;
