@@ -40,6 +40,7 @@ class SellerAnnouncementCarousel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Future.microtask(() {
+      if (!context.mounted) return;
       context.read<GetSellerAnnouncementProvider>().getAnnouncementsOnce();
     });
 

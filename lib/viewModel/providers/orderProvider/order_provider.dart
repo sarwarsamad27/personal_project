@@ -47,7 +47,7 @@ class GetMyOrdersProvider extends ChangeNotifier {
 
       page++; // ✅ only when data exists
     } catch (e) {
-      print("Order Fetch Error: $e");
+      debugPrint("Order Fetch Error: $e");
     }
 
     loading = false;

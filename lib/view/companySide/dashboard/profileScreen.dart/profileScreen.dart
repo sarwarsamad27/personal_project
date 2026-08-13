@@ -28,6 +28,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // FETCH on build only one time using Future.microtask
     Future.microtask(() {
+      if (!context.mounted) return;
       context.read<DashboardProvider>().getDashboardDataOnce();
       Provider.of<ProfileFetchProvider>(
         context,
@@ -35,9 +36,6 @@ class ProfileScreen extends StatelessWidget {
       ).getProfileOnce();
       context.read<CompanyWalletProvider>().fetchCompanyWallet();
     });
-
-    final provider = context.watch<DashboardProvider>();
-    final data = provider.dashboardData?.data;
 
     // Still-live requests only — a finished exchange/refund drops off the
     // badge, everything else (including Denied/Rejected) stays counted.

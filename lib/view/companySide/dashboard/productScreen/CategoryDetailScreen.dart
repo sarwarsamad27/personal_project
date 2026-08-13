@@ -51,6 +51,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     });
 
     Future.microtask(() async {
+      if (!mounted) return;
       final provider = Provider.of<GetProductCategoryWiseProvider>(
         context,
         listen: false,
@@ -191,7 +192,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
           ElevatedButton(
             onPressed: () async {
               await LocalStorage.saveProductConditionSeen();
-              if (mounted) {
+              if (context.mounted) {
                 Navigator.pop(context);
                 _navigateToAddTask();
               }

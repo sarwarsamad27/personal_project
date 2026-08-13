@@ -36,6 +36,7 @@ class _AllOrdersScreenState extends State<AllOrdersScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      if (!mounted) return;
       context.read<GetAllOrdersAnyStatusProvider>().fetchOrders(
         refresh: true,
       );

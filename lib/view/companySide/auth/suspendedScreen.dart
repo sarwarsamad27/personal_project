@@ -84,6 +84,7 @@ class SuspendedScreen extends StatelessWidget {
                       ),
                       onPressed: () async {
                         await LocalStorage.clearToken();
+                        if (!context.mounted) return;
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(builder: (_) => const LoginScreen()),

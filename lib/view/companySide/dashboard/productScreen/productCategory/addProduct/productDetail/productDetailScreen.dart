@@ -25,8 +25,8 @@ import 'package:video_player/video_player.dart';
 import '../../../../../../../models/productModel/getSingleProduct_model.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  final productId;
-  final categoryId;
+  final String productId;
+  final String categoryId;
   final bool isOrderBlocked;
 
   const ProductDetailScreen({
@@ -46,6 +46,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     super.initState();
 
     Future.microtask(() async {
+      if (!mounted) return;
       final provider = Provider.of<GetSingleProductProvider>(
         context,
         listen: false,
@@ -58,6 +59,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         categoryId: widget.categoryId,
         productId: widget.productId,
       );
+      if (!mounted) return;
       final relatedProvider = Provider.of<GetRelatedProductProvider>(
         context,
         listen: false,
@@ -318,8 +320,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => ProductDetailScreen(
-                                      productId: product.sId,
-                                      categoryId: product.categoryId,
+                                      productId: product.sId ?? '',
+                                      categoryId: product.categoryId ?? '',
                                     ),
                                   ),
                                 );
@@ -344,7 +346,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final int qty = prods.quantity ?? 0;
     final bool isOutOfStock = qty == 0;
     final bool isLowStock = qty > 0 && qty <= 10;
-    final bool isInStock = qty > 10;
 
     final String label = isOutOfStock
         ? "Out of Stock"

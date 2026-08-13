@@ -118,6 +118,7 @@ class _HomeDashboardState extends State<HomeDashboard>
     );
 
     Future.microtask(() {
+      if (!mounted) return;
       context.read<DashboardProvider>().getDashboardDataOnce();
       context.read<CompanySalesChartProvider>().getChartData(type: "weekly");
       context.read<CompanyNotificationProvider>().fetchNotifications();
@@ -537,9 +538,6 @@ class _HomeDashboardState extends State<HomeDashboard>
                                   }
 
                                   final count = paddedValues.length;
-                                  final hasSales = paddedValues.whereType<int>().any(
-                                        (value) => value > 0,
-                                      );
 
                                   _scrollChartToEndIfNeeded(
                                     '${chartProvider.selectedType}-${chartProvider.customRange}-$count',

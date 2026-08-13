@@ -1,6 +1,7 @@
 import 'package:new_brand/models/orders/payment/paymentRequest_model.dart';
 import 'package:new_brand/network/network_api_services.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:flutter/foundation.dart';
 
 class PaymentRequestRepository {
   final NetworkApiServices apiServices = NetworkApiServices();
@@ -34,7 +35,7 @@ class PaymentRequestRepository {
         // instead of as a generic global toast.
         suppressErrorToast: true,
       );
-      print(response);
+      debugPrint(response.toString());
 
       return PaymentRequestModel.fromJson(response);
     } catch (e) {

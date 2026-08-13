@@ -34,7 +34,7 @@ class GetCategoryProvider with ChangeNotifier {
       categoryData = response;
       isFetched = true;
     } catch (e) {
-      print("Category Error: $e");
+      debugPrint("Category Error: $e");
     } finally {
       await refreshPendingCategories();
       isLoading = false;

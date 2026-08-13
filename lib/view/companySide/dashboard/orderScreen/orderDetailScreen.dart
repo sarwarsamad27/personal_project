@@ -180,8 +180,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => ProductDetailScreen(
-                                    productId: product.productId,
-                                    categoryId: product.categoryId,
+                                    productId: product.productId ?? '',
+                                    categoryId: product.categoryId ?? '',
                                   ),
                                 ),
                               );

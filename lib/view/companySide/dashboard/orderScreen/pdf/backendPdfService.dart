@@ -31,7 +31,7 @@ class BackendPdfService {
       // ✅ Build URL
       final url = Uri.parse("${Global.generateInvoicePdf}?orderId=$orderId");
 
-      print("📥 Downloading invoice PDF from: $url");
+      debugPrint("📥 Downloading invoice PDF from: $url");
 
       // ✅ Make request
       final response = await http.get(
@@ -42,7 +42,7 @@ class BackendPdfService {
         },
       );
 
-      print("📊 Response status: ${response.statusCode}");
+      debugPrint("📊 Response status: ${response.statusCode}");
 
       if (response.statusCode != 200) {
         String errorMessage = "Failed to generate PDF";
@@ -74,8 +74,8 @@ class BackendPdfService {
 
       await file.writeAsBytes(response.bodyBytes, flush: true);
 
-      print("✅ PDF saved to: $filePath");
-      print("📄 PDF size: ${response.bodyBytes.length} bytes");
+      debugPrint("✅ PDF saved to: $filePath");
+      debugPrint("📄 PDF size: ${response.bodyBytes.length} bytes");
 
       // Close loading dialog
       if (context.mounted) {
@@ -85,7 +85,7 @@ class BackendPdfService {
       // ✅ Open PDF
       final result = await OpenFilex.open(filePath);
       
-      print("📱 Open result: ${result.type} - ${result.message}");
+      debugPrint("📱 Open result: ${result.type} - ${result.message}");
 
       if (result.type != ResultType.done) {
         // If default PDF viewer failed, show success message anyway
@@ -95,7 +95,7 @@ class BackendPdfService {
       }
 
     } catch (error) {
-      print("❌ PDF Download Error: $error");
+      debugPrint("❌ PDF Download Error: $error");
       
       // Close loading dialog if still open
       if (context.mounted) {
@@ -128,7 +128,7 @@ class BackendPdfService {
       final filePath = "${directory.path}/invoice_$orderId.pdf";
       await OpenFilex.open(filePath);
     } catch (error) {
-      print("❌ Error opening PDF: $error");
+      debugPrint("❌ Error opening PDF: $error");
       throw Exception("Failed to open PDF");
     }
   }
@@ -142,10 +142,10 @@ class BackendPdfService {
       
       if (await file.exists()) {
         await file.delete();
-        print("🗑️ PDF deleted: $filePath");
+        debugPrint("🗑️ PDF deleted: $filePath");
       }
     } catch (error) {
-      print("❌ Error deleting PDF: $error");
+      debugPrint("❌ Error deleting PDF: $error");
     }
   }
 }

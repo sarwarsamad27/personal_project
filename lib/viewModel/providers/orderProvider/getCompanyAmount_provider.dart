@@ -129,6 +129,7 @@ class CompanyWalletProvider with ChangeNotifier {
         /// successful verification back to "failed" and leave the caller's
         /// bottom sheet stuck open.
         try {
+          if (!context.mounted) return true;
           await context.read<TransactionHistoryProvider>().fetchTransactions(
             refresh: true,
           );

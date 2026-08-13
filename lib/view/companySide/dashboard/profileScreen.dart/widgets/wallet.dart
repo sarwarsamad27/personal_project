@@ -545,9 +545,9 @@ class _WalletState extends State<Wallet> {
       final tempDir = await getTemporaryDirectory();
       final file = File('${tempDir.path}/shookoo_payment_qr.jpeg');
       await file.writeAsBytes(byteData.buffer.asUint8List());
-      await Share.shareXFiles([
-        XFile(file.path),
-      ], text: 'Shookoo payment QR code');
+      await SharePlus.instance.share(
+        ShareParams(files: [XFile(file.path)], text: 'Shookoo payment QR code'),
+      );
     } catch (_) {
       if (mounted) AppToast.error('Could not download QR code');
     }
@@ -807,6 +807,7 @@ class _WalletState extends State<Wallet> {
                                   'data:image/jpeg;base64,${base64Encode(bytes)}';
                               final amount = amountCtrl.text.trim();
 
+                              if (!context.mounted) return;
                               final ok = await walletProvider
                                   .submitBankTransfer(
                                     amount: amount,

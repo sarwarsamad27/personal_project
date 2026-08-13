@@ -20,7 +20,7 @@ class CompanyReviewProvider with ChangeNotifier {
       _reviews = response.data ?? [];
     } catch (e) {
       _reviews = [];
-      print("Error fetching reviews: $e");
+      debugPrint("Error fetching reviews: $e");
     }
 
     _loading = false;

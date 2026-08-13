@@ -95,6 +95,7 @@ class ForgotScreen extends StatelessWidget {
                                 AppToast.success(provider.forgotData!.message!);
 
                                 // Navigate to next screen
+                                if (!context.mounted) return;
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(

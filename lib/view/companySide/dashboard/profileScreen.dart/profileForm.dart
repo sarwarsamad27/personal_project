@@ -115,7 +115,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
         });
       }
     } catch (e) {
-      print("❌ Cities error: $e");
+      debugPrint("❌ Cities error: $e");
     }
     setState(() => _citiesLoading = false);
   }
@@ -376,7 +376,6 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.read<ProfileProvider>();
     final hasExistingProfile =
         context.watch<ProfileFetchProvider>().profileData?.profile != null;
 
@@ -757,6 +756,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                         // ✅ Force-refresh cached profile so the dashboard
                         // shows the newly created profile immediately
                         // (without this it kept showing "no profile" until restart)
+                        if (!context.mounted) return;
                         await Provider.of<ProfileFetchProvider>(
                           context,
                           listen: false,
@@ -781,7 +781,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
 
                         final termsAgreed = await LocalStorage.isTermsAgreed();
 
-                        if (!mounted) return;
+                        if (!context.mounted) return;
 
                         Navigator.pushReplacement(
                           context,

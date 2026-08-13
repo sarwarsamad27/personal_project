@@ -22,6 +22,7 @@ class _GetReturnedorderScreenState extends State<GetReturnedorderScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      if (!mounted) return;
       final provider = context.read<GetReturnedOrderProvider>();
       if (provider.orders.isEmpty) {
         provider.fetchReturnedOrders(refresh: false);

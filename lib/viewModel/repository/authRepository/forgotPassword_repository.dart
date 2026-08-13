@@ -1,6 +1,7 @@
 import 'package:new_brand/models/auth/forgotPassword_model.dart';
 import 'package:new_brand/network/network_api_services.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:flutter/foundation.dart';
 
 class ForgotPasswordRepository {
   final NetworkApiServices apiService = NetworkApiServices();
@@ -11,7 +12,7 @@ class ForgotPasswordRepository {
       final response = await apiService.postApiNoAuth(apiUrl, {
         "email": email,
       });
-      print(response);
+      debugPrint(response.toString());
       return ForgotPasswordModel.fromJson(response);
     } catch (e) {
       return ForgotPasswordModel(message: "Error occurred: $e");

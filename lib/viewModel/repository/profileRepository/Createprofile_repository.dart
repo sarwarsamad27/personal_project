@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:new_brand/models/profile/createProfile_model.dart';
 import 'package:new_brand/network/network_api_services.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:flutter/foundation.dart';
 
 class ProfileRepository {
   final NetworkApiServices apiServices = NetworkApiServices();
@@ -42,7 +43,7 @@ class ProfileRepository {
         fileFieldName: "image", 
       );
       
-      print('+ $response');
+      debugPrint('+ $response');
       return CreateProfileModel.fromJson(response);
     } catch (e) {
       return CreateProfileModel(message: "Error: $e");

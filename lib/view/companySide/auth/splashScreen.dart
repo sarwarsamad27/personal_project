@@ -135,6 +135,8 @@ class _SplashScreenState extends State<SplashScreen>
       debugPrint("FCM init failed on splash: $e");
     }
 
+    if (!mounted) return;
+
     // ✅ MUST: Check profile before going home
     final profileProvider = context.read<ProfileFetchProvider>();
     profileProvider.clearProfileCache();
@@ -165,12 +167,6 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted || _navigated) return;
     _navigated = true;
     navigateTo(seen ? const LoginScreen() : const OnboardingScreen());
-  }
-
-  void _goHome() {
-    if (_navigated) return;
-    _navigated = true;
-    navigateTo(CompanyHomeScreen());
   }
 
   void navigateTo(Widget screen) {

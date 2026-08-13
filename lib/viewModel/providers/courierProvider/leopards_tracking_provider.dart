@@ -19,7 +19,7 @@ class LeopardsTrackingProvider with ChangeNotifier {
     try {
       _history = await _repository.trackParcel(trackNumber);
     } catch (e) {
-      print("❌ fetchTracking Error: $e");
+      debugPrint("❌ fetchTracking Error: $e");
     } finally {
       _loading = false;
       notifyListeners();
@@ -37,7 +37,7 @@ class LeopardsTrackingProvider with ChangeNotifier {
         await fetchTracking(trackNumber);
       }
     } catch (e) {
-      print("❌ requestPickup Error: $e");
+      debugPrint("❌ requestPickup Error: $e");
     } finally {
       _loading = false;
       notifyListeners();
@@ -49,7 +49,7 @@ class LeopardsTrackingProvider with ChangeNotifier {
     try {
       await _repository.syncAllOrders();
     } catch (e) {
-      print("❌ syncAllOrdersOnOpen Error: $e");
+      debugPrint("❌ syncAllOrdersOnOpen Error: $e");
     }
   }
 }

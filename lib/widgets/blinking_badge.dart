@@ -8,7 +8,7 @@ class BlinkingBadge extends StatefulWidget {
   const BlinkingBadge({super.key, required this.text, this.isError = false});
 
   @override
-  _BlinkingBadgeState createState() => _BlinkingBadgeState();
+  State<BlinkingBadge> createState() => _BlinkingBadgeState();
 }
 
 class _BlinkingBadgeState extends State<BlinkingBadge>

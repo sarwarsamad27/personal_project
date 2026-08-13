@@ -52,6 +52,7 @@ class _OrderScreenState extends State<OrderScreen>
   void initState() {
     super.initState();
     Future.microtask(() {
+      if (!mounted) return;
       Provider.of<GetMyOrdersProvider>(context, listen: false).fetchOrders();
     });
     _setupSocket();
@@ -62,6 +63,7 @@ class _OrderScreenState extends State<OrderScreen>
     // _setupSocket's listener below moves the order to the right tab —
     // no separate handling needed here.
     Future.microtask(() {
+      if (!mounted) return;
       Provider.of<LeopardsTrackingProvider>(
         context,
         listen: false,
@@ -939,8 +941,8 @@ class _OrderScreenState extends State<OrderScreen>
                             context,
                             MaterialPageRoute(
                               builder: (_) => ProductDetailScreen(
-                                productId: firstProduct.productId,
-                                categoryId: firstProduct.categoryId,
+                                productId: firstProduct.productId ?? '',
+                                categoryId: firstProduct.categoryId ?? '',
                               ),
                             ),
                           ),

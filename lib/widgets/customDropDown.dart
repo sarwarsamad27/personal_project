@@ -36,6 +36,8 @@ class FancyStatusDropdown extends StatelessWidget {
                 .read<PendingToDispatchedProvider>()
                 .updateOrderStatus(orderId: order.sId!, status: "dispatched");
 
+            if (!context.mounted) return;
+
             if (success) {
               context.read<GetMyOrdersProvider>().updateStatusAndRefresh();
               context

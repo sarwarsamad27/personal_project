@@ -42,6 +42,7 @@ class AddProductScreen extends StatelessWidget {
 
   Future<void> _analyzeImages(BuildContext context, List<File> images) async {
     final token = await LocalStorage.getToken();
+    if (!context.mounted) return;
     final analyzeProvider = Provider.of<AnalyzeProductProvider>(
       context,
       listen: false,
@@ -108,6 +109,7 @@ class AddProductScreen extends StatelessWidget {
 
   void _saveProduct(BuildContext context) async {
     final token = await LocalStorage.getToken();
+    if (!context.mounted) return;
 
     if (selectedImagesNotifier.value.isEmpty ||
         _nameController.text.isEmpty ||
@@ -219,6 +221,7 @@ class AddProductScreen extends StatelessWidget {
           ? 'Uploading "$productName" in the background — you can keep working.'
           : 'Adding "$productName"...',
     );
+    if (!context.mounted) return;
     Navigator.pop(context);
   }
 

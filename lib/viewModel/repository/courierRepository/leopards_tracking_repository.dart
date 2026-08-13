@@ -2,6 +2,7 @@ import 'package:new_brand/models/courier/leopards_tracking_model.dart';
 import 'package:new_brand/network/base_api_services.dart';
 import 'package:new_brand/network/network_api_services.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:flutter/foundation.dart';
 
 class LeopardsTrackingRepository {
   final BaseApiServices apiService = NetworkApiServices();
@@ -17,7 +18,7 @@ class LeopardsTrackingRepository {
       }
       return [];
     } catch (e) {
-      print("❌ LeopardsTrackingRepository Error: $e");
+      debugPrint("❌ LeopardsTrackingRepository Error: $e");
       return [];
     }
   }
@@ -29,7 +30,7 @@ class LeopardsTrackingRepository {
       });
       return response ?? {"status": 0, "error": "No response from server"};
     } catch (e) {
-      print("❌ requestPickup Error: $e");
+      debugPrint("❌ requestPickup Error: $e");
       return {"status": 0, "error": e.toString()};
     }
   }
@@ -46,7 +47,7 @@ class LeopardsTrackingRepository {
       );
       return response != null && response['status'] == 1;
     } catch (e) {
-      print("❌ syncAllOrders Error: $e");
+      debugPrint("❌ syncAllOrders Error: $e");
       return false;
     }
   }

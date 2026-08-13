@@ -3,6 +3,7 @@ import 'package:new_brand/models/auth/googleLogin_model.dart';
 import 'package:new_brand/models/auth/login_model.dart';
 import 'package:new_brand/network/network_api_services.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:flutter/foundation.dart';
 
 class LoginRepository {
   final NetworkApiServices apiService = NetworkApiServices();
@@ -17,7 +18,7 @@ class LoginRepository {
         "email": email,
         "password": password,
       });
-      print(response);
+      debugPrint(response.toString());
       return LoginModel.fromJson(response);
     } catch (e) {
       return LoginModel(message: "Error occurred: $e");

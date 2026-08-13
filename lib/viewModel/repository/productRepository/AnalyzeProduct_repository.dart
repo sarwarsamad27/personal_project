@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:new_brand/models/productModel/AnalyzeProductModel.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/network/network_api_services.dart';
+import 'package:flutter/foundation.dart';
 
 class AnalyzeProductRepository {
     final NetworkApiServices apiServices = NetworkApiServices();
@@ -25,9 +26,9 @@ class AnalyzeProductRepository {
 
       final streamed = await request.send();
       final response = await http.Response.fromStream(streamed);
-      print(Global.analyzeProductImage);
-      print("📡 Analyze Response status: ${response.statusCode}");
-      print("📡 Analyze Response body: ${response.body}");
+      debugPrint(Global.analyzeProductImage);
+      debugPrint("📡 Analyze Response status: ${response.statusCode}");
+      debugPrint("📡 Analyze Response body: ${response.body}");
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {

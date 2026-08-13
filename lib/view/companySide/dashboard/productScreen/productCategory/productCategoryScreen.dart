@@ -36,6 +36,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
   void initState() {
     super.initState();
     Future.microtask(() async {
+      if (!mounted) return;
       final provider = Provider.of<GetCategoryProvider>(context, listen: false);
       await provider.getCategories();
     });
@@ -229,7 +230,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                             image: newImageFile,
                                           );
 
-                                      // if (!mounted) return;
+                                      if (!dialogCtx.mounted) return;
 
                                       // ✅ close dialog first
                                       Navigator.pop(dialogCtx);
@@ -598,6 +599,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
               if (result == 'added') {
                 AppToast.success("Category added successfully!");
+                if (!context.mounted) return;
                 Provider.of<GetCategoryProvider>(
                   context,
                   listen: false,
@@ -606,6 +608,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 AppToast.show(
                   "No internet — category saved and will sync automatically once you're back online.",
                 );
+                if (!context.mounted) return;
                 Provider.of<GetCategoryProvider>(
                   context,
                   listen: false,

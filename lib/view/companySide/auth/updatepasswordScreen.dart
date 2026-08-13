@@ -20,10 +20,11 @@ class UpdatePasswordScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
         AppToast.error("Please update your password");
-        return false; 
       },
       child: GestureDetector(
          onTap: () => FocusScope.of(context).unfocus(),
@@ -127,6 +128,7 @@ class UpdatePasswordScreen extends StatelessWidget {
                                             AppToast.success(
                                                 provider.updateData!.message!);
 
+                                            if (!context.mounted) return;
                                             Navigator.pushReplacement(
                                               context,
                                               MaterialPageRoute(

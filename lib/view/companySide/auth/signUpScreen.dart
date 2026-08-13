@@ -146,6 +146,7 @@ class SignUpScreen extends StatelessWidget {
                                         "User registered Successful",
                                       );
 
+                                      if (!context.mounted) return;
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(

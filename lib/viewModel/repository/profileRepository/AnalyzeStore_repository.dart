@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:new_brand/models/profile/AnalyzeStoreModel.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:flutter/foundation.dart';
 
 class AnalyzeStoreRepository {
   Future<AnalyzeStoreModel> analyzeStore({
@@ -40,9 +41,9 @@ class AnalyzeStoreRepository {
 
       final streamed = await request.send();
       final response = await http.Response.fromStream(streamed);
-      print(Global.analyzeStoreProfile);
-      print("📡 Analyze Store Response status: ${response.statusCode}");
-      print("📡 Analyze Store Response body: ${response.body}");
+      debugPrint(Global.analyzeStoreProfile);
+      debugPrint("📡 Analyze Store Response status: ${response.statusCode}");
+      debugPrint("📡 Analyze Store Response body: ${response.body}");
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {

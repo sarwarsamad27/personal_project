@@ -1,6 +1,7 @@
 import 'package:new_brand/models/auth/verifyCode_model.dart';
 import 'package:new_brand/network/network_api_services.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:flutter/foundation.dart';
 
 class VerifyCodeRepository {
   final NetworkApiServices apiService = NetworkApiServices();
@@ -12,7 +13,7 @@ class VerifyCodeRepository {
         "email": email,
         "verificationCode": verificationCode,
       });
-      print(response);
+      debugPrint(response.toString());
       return VerifyCodeModel.fromJson(response);
     } catch (e) {
       return VerifyCodeModel(message: "Error occurred: $e");

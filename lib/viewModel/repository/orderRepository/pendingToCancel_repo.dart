@@ -1,6 +1,7 @@
 import 'package:new_brand/models/orders/pendingToCancel_model.dart';
 import 'package:new_brand/network/network_api_services.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:flutter/foundation.dart';
 
 class CancelOrderRepository {
   final NetworkApiServices apiServices = NetworkApiServices();
@@ -18,7 +19,7 @@ class CancelOrderRepository {
         if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
       });
 
-      print("Cancel Order Response: $response");
+      debugPrint("Cancel Order Response: $response");
       return CancelOrderModel.fromJson(response);
     } catch (e) {
       return CancelOrderModel(message: "Error: $e");

@@ -22,6 +22,7 @@ class SellerLeaderboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Future.microtask(() {
+      if (!context.mounted) return;
       context.read<GetLeaderboardProvider>().getLeaderboardOnce();
     });
 

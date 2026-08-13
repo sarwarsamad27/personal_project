@@ -24,6 +24,7 @@ class DeleteProductDialog extends StatelessWidget {
         TextButton(
           onPressed: () async {
             final token = await LocalStorage.getToken() ?? "";
+            if (!context.mounted) return;
             final provider = Provider.of<DeleteProductProvider>(
               context,
               listen: false,

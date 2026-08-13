@@ -1,6 +1,7 @@
 import 'package:new_brand/models/orders/pendingToDispatched_model.dart';
 import 'package:new_brand/network/network_api_services.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:flutter/foundation.dart';
 
 class PendingToDispatchedRepository {
   final NetworkApiServices apiServices = NetworkApiServices();
@@ -21,7 +22,7 @@ class PendingToDispatchedRepository {
          'status': status
       })
       );
-      print(response);
+      debugPrint(response.toString());
 
       return PendingToDispatchedModel.fromJson(response);
     } catch (e) {

@@ -23,7 +23,6 @@ class ExchangeRequestPoll extends StatelessWidget {
     final status = p.normalizeStatus(data.status);
     final isPending = status == "pending";
     final isAccepted = status == "accepted";
-    final isRejected = status == "rejected" || status == "denied";
 
     final statusColor = isPending
         ? const Color(0xFFE67E22)

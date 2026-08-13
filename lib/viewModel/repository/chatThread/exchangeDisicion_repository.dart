@@ -2,6 +2,7 @@
 
 import 'package:new_brand/network/network_api_services.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:flutter/foundation.dart';
 
 class ExchangeDecisionRepository {
   final NetworkApiServices apiServices = NetworkApiServices();
@@ -12,7 +13,7 @@ class ExchangeDecisionRepository {
     String? note,
   }) async {
     try {
-      print("📤 Making exchange decision: $decision for ID: $exchangeId");
+      debugPrint("📤 Making exchange decision: $decision for ID: $exchangeId");
 
       final body = {
         "decision": decision,
@@ -25,11 +26,11 @@ class ExchangeDecisionRepository {
         body,
       );
 
-      print("✅ Exchange decision response: $response");
+      debugPrint("✅ Exchange decision response: $response");
 
       return response["success"] ?? false;
     } catch (e) {
-      print("❌ Exchange decision error: $e");
+      debugPrint("❌ Exchange decision error: $e");
       return false;
     }
   }

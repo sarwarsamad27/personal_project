@@ -24,6 +24,7 @@ class _GetdeliveredorderScreenState extends State<GetdeliveredorderScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      if (!mounted) return;
       final orderProvider = context.read<GetDeliveredOrderProvider>();
       if (orderProvider.orders.isEmpty) {
         orderProvider.fetchDeliveredOrders(refresh: false);

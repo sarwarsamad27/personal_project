@@ -111,6 +111,7 @@ class AddCategoryScreen extends StatelessWidget {
                                 ? null
                                 : () async {
                                     final token = await LocalStorage.getToken();
+                                    if (!context.mounted) return;
                                     final categoryProvider =
                                         context.read<CreateCategoryProvider>();
 

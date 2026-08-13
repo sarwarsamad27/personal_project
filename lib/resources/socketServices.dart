@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:flutter/foundation.dart';
 
 class SocketService {
   static final SocketService _instance = SocketService._internal();
@@ -51,25 +52,25 @@ class SocketService {
       _socket = s;
 
       s.onConnect((_) {
-        print("✅ Socket CONNECTED. id=${s.id}");
+        debugPrint("✅ Socket CONNECTED. id=${s.id}");
         if (!(_connectCompleter?.isCompleted ?? true)) {
           _connectCompleter?.complete(s);
         }
       });
 
       s.onConnectError((err) {
-        print("❌ Socket CONNECT ERROR: $err");
+        debugPrint("❌ Socket CONNECT ERROR: $err");
         if (!(_connectCompleter?.isCompleted ?? true)) {
           _connectCompleter?.complete(null);
         }
       });
 
       s.onError((err) {
-        print("❌ Socket ERROR: $err");
+        debugPrint("❌ Socket ERROR: $err");
       });
 
       s.onDisconnect((_) {
-        print("⚠️ Socket DISCONNECTED");
+        debugPrint("⚠️ Socket DISCONNECTED");
       });
 
       s.connect();
@@ -77,7 +78,7 @@ class SocketService {
       final result = await _connectCompleter!.future.timeout(
         const Duration(seconds: 8),
         onTimeout: () {
-          print("❌ Socket connect TIMEOUT");
+          debugPrint("❌ Socket connect TIMEOUT");
           return null;
         },
       );
@@ -91,13 +92,13 @@ class SocketService {
   void joinThread(String threadId) {
     if (_socket == null || !_socket!.connected) return;
     _socket!.emit("chat:join", {"threadId": threadId});
-    print("✅ Joined room: $threadId");
+    debugPrint("✅ Joined room: $threadId");
   }
 
   void leaveThread(String threadId) {
     if (_socket == null || !_socket!.connected) return;
     _socket!.emit("chat:leave", {"threadId": threadId});
-    print("✅ Left room: $threadId");
+    debugPrint("✅ Left room: $threadId");
   }
 
   void disconnect() {

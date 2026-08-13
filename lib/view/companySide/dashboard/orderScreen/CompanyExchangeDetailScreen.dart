@@ -138,7 +138,6 @@ class _CompanyExchangeDetailScreenState
                 .where((r) => r.id == widget.exchangeId)
                 .firstOrNull ??
             _exchange;
-        final threadId = 'buyer_${widget.userId}_seller_${widget.profileId}';
         return Scaffold(
           backgroundColor: const Color(0xFFF5F6FA),
           appBar: AppBar(
@@ -436,9 +435,6 @@ class _CompanyExchangeDetailScreenState
     }
 
     // ✅ Abhi ship nahi hua — form dikhao
-    final trackCtrl = TextEditingController();
-    final courierCtrl = TextEditingController();
-
     return _card(
       title: "Ship Replacement",
       icon: Icons.replay_circle_filled_outlined,
@@ -1352,44 +1348,6 @@ class _StatusStyle {
   final Color color;
   final IconData icon;
   const _StatusStyle(this.color, this.icon);
-}
-
-class _RadioChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _RadioChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColor.primaryColor.withOpacity(0.1)
-              : Colors.grey[100],
-          borderRadius: BorderRadius.circular(20.r),
-          border: Border.all(
-            color: selected ? AppColor.primaryColor : Colors.grey[300]!,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: selected ? AppColor.primaryColor : Colors.grey[600],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 // ── Full-screen swipeable image viewer ───────────────────────────────────────

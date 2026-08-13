@@ -252,6 +252,7 @@ class EditProductDialog extends StatelessWidget {
                                 .where((f) => f.existsSync())
                                 .toList();
                             final token = await LocalStorage.getToken() ?? "";
+                            if (!context.mounted) return;
 
                             // Captured now — the dialog closes right after
                             // this (see below), so nothing past this point

@@ -158,7 +158,7 @@ class AllCondition extends StatelessWidget {
       final jwtToken = await LocalStorage.getToken();
       final fcmToken = await FirebaseMessaging.instance.getToken();
       if (jwtToken != null && jwtToken.isNotEmpty && fcmToken != null && fcmToken.isNotEmpty) {
-        print("FCM_TOKEN: $fcmToken");
+        debugPrint("FCM_TOKEN: $fcmToken");
         await LocalStorage.removeFcmTokenFromServer(
           jwtToken: jwtToken,
           fcmToken: fcmToken,

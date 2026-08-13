@@ -1,6 +1,7 @@
 import 'package:new_brand/models/auth/updatePassword_model.dart';
 import 'package:new_brand/network/network_api_services.dart';
 import 'package:new_brand/resources/global.dart';
+import 'package:flutter/foundation.dart';
 
 class UpdatePasswordRepository {
   final NetworkApiServices apiService = NetworkApiServices();
@@ -12,7 +13,7 @@ class UpdatePasswordRepository {
         "email": email,
         "newPassword": newPassword,
       });
-      print(response);
+      debugPrint(response.toString());
       return UpdatePasswordModel.fromJson(response);
     } catch (e) {
       return UpdatePasswordModel(message: "Error occurred: $e");

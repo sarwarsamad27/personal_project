@@ -541,33 +541,6 @@ class _TeamMember extends StatelessWidget {
   }
 }
 
-class _TechChip extends StatelessWidget {
-  final String label;
-  const _TechChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-      decoration: BoxDecoration(
-        color: AppColor.appimagecolor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(
-          color: AppColor.appimagecolor.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11.sp,
-          color: AppColor.appimagecolor,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
 class _LegalRow extends StatelessWidget {
   final String label, value;
   const _LegalRow({required this.label, required this.value});

@@ -22,7 +22,7 @@ void _addSizesFromText(String text) {
   selectedSizes.value = updated;
 
   // Debugging print to confirm the sizes
-  print("Selected Sizes: ${selectedSizes.value}");
+  debugPrint("Selected Sizes: ${selectedSizes.value}");
   _sizeController.clear();
 }
 
