@@ -14,6 +14,7 @@ class PaymentTabBar extends StatefulWidget {
   final String? thirdTabbarName;
 
   final Function(int index)? onTabChanged;
+  final int initialIndex;
 
   const PaymentTabBar({
     super.key,
@@ -24,6 +25,7 @@ class PaymentTabBar extends StatefulWidget {
     this.thirdTab,
     this.thirdTabbarName,
     this.onTabChanged,
+    this.initialIndex = 0,
   });
 
   @override
@@ -31,7 +33,8 @@ class PaymentTabBar extends StatefulWidget {
 }
 
 class _PaymentTabBarState extends State<PaymentTabBar> {
-  final ValueNotifier<int> _selectedIndex = ValueNotifier<int>(0);
+  late final ValueNotifier<int> _selectedIndex =
+      ValueNotifier<int>(widget.initialIndex);
 
   void changeTab(int index) {
     _selectedIndex.value = index;

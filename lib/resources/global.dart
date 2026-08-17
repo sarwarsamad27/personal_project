@@ -32,6 +32,7 @@ class Global {
   static var DeleteCategory = "${BaseUrl}/delete/category";
   static var CreateProduct = "${BaseUrl}/create/product";
   static var GetProduct = "${BaseUrl}/get/products";
+  static var GetProductsByStock = "${BaseUrl}/get/products/by-stock";
   static var GetSingleProduct = "${BaseUrl}/get/single/product";
   static var UpdateSingleProduct = "${BaseUrl}/update/product";
   static var DeleteSingleProduct = "${BaseUrl}/delete/product";

@@ -77,10 +77,36 @@ class _RotatingCardsState extends State<_RotatingCards> {
   Timer? _timer;
   int _page = 0;
 
+  // A fixed height (the old 150.h) clips whenever a card's real title +
+  // description needs more room than that guess — worse on some phones
+  // than others since line-wrap count depends on actual screen width.
+  // Instead, every card is laid out once off-screen (real widgets, real
+  // text metrics — not a hand-rolled character/line estimate) so the
+  // carousel can size itself to whichever card is tallest.
+  List<GlobalKey> _measureKeys = [];
+  double? _measuredHeight;
+
   @override
   void initState() {
     super.initState();
     _controller = PageController();
+    _measureKeys = List.generate(widget.cards.length, (_) => GlobalKey());
+    _startAutoRotate();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measureHeights());
+  }
+
+  @override
+  void didUpdateWidget(covariant _RotatingCards oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.cards.length != widget.cards.length) {
+      _measureKeys = List.generate(widget.cards.length, (_) => GlobalKey());
+      _measuredHeight = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _measureHeights());
+    }
+  }
+
+  void _startAutoRotate() {
+    _timer?.cancel();
     if (widget.cards.length > 1) {
       _timer = Timer.periodic(const Duration(seconds: 5), (_) {
         if (!_controller.hasClients) return;
@@ -91,6 +117,20 @@ class _RotatingCardsState extends State<_RotatingCards> {
           curve: Curves.easeInOutCubic,
         );
       });
+    }
+  }
+
+  void _measureHeights() {
+    if (!mounted) return;
+    double tallest = 0;
+    for (final key in _measureKeys) {
+      final box = key.currentContext?.findRenderObject() as RenderBox?;
+      if (box != null && box.hasSize && box.size.height > tallest) {
+        tallest = box.size.height;
+      }
+    }
+    if (tallest > 0 && tallest != _measuredHeight) {
+      setState(() => _measuredHeight = tallest);
     }
   }
 
@@ -105,8 +145,26 @@ class _RotatingCardsState extends State<_RotatingCards> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(
-          height: 150.h,
+        // Offstage measurement pass — laid out (so real sizes are
+        // available) but not painted/hit-tested, and takes no space in
+        // this Column. Runs again only when the card list itself changes
+        // (see didUpdateWidget), not on every rebuild.
+        if (_measuredHeight == null)
+          Offstage(
+            child: Column(
+              children: [
+                for (int i = 0; i < widget.cards.length; i++)
+                  Padding(
+                    key: _measureKeys[i],
+                    padding: EdgeInsets.symmetric(horizontal: 4.w),
+                    child: _AnnouncementCard(card: widget.cards[i]),
+                  ),
+              ],
+            ),
+          ),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: _measuredHeight ?? 150.h,
           child: PageView.builder(
             controller: _controller,
             itemCount: widget.cards.length,
@@ -205,28 +263,34 @@ class _AnnouncementCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       card.title ?? "",
-                      maxLines: 1,
+                      // Admin's title field is capped at 40 characters
+                      // (see adminSide's seller_announcement_management_screen.dart)
+                      // specifically so it always fits within 2 lines —
+                      // maxLines/ellipsis here is only a defensive ceiling
+                      // for older data saved before that cap existed.
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w800,
+                        height: 1.25,
                       ),
                     ),
                   ),
                 ],
               ),
               SizedBox(height: 10.h),
-              Expanded(
-                child: Text(
-                  card.description ?? "",
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    fontSize: 12.5.sp,
-                    height: 1.4,
-                  ),
+              Text(
+                card.description ?? "",
+                // Admin's description field is capped at 150 characters —
+                // same reasoning as the title's maxLines above.
+                maxLines: 6,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.92),
+                  fontSize: 12.5.sp,
+                  height: 1.4,
                 ),
               ),
               if (card.eventDate != null) ...[

@@ -5,6 +5,9 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/view/companySide/dashboard/allOrdersScreen/allOrders_screen.dart';
+import 'package:new_brand/view/companySide/dashboard/orderScreen/orderScreen.dart';
+import 'package:new_brand/view/companySide/dashboard/productScreen/stockProducts_screen.dart';
+import 'package:new_brand/view/companySide/dashboard/profileScreen.dart/myWallet.dart';
 import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -49,12 +52,26 @@ class StatsView extends StatelessWidget {
         'value': '${data.deliveredOrders}',
         'icon': LucideIcons.truck,
         'gradient': [const Color(0xFFFF6A00), const Color(0xFFFFD300)],
+        // Orders section has no "Delivered" tab of its own (only
+        // Pending/Dispatched/Cancelled) — delivered orders live in the
+        // Wallet screen's Delivered tab instead.
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const WalletHistoryScreen(initialTabIndex: 1),
+          ),
+        ),
       },
       {
         'title': 'Pending Orders',
         'value': '${data.pendingOrders}',
         'icon': LucideIcons.clock,
         'gradient': [const Color(0xFF11998E), const Color(0xFF38EF7D)],
+        // OrderScreen's tab bar already opens on Pending by default.
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const OrderScreen()),
+        ),
       },
 
       // ===== PRODUCTS =====
@@ -69,12 +86,30 @@ class StatsView extends StatelessWidget {
         'value': '${data.lowStockProducts ?? 0}',
         'icon': LucideIcons.triangle_alert,
         'gradient': [const Color(0xFFF59E0B), const Color(0xFFD97706)],
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const StockProductsScreen(
+              stockStatus: 'low',
+              title: 'Low Stock Products',
+            ),
+          ),
+        ),
       },
       {
         'title': 'Out of Stock Products',
         'value': '${data.outOfStockProducts ?? 0}',
         'icon': LucideIcons.octagon_alert,
         'gradient': [const Color(0xFFEF4444), const Color(0xFFB91C1C)],
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const StockProductsScreen(
+              stockStatus: 'out',
+              title: 'Out of Stock Products',
+            ),
+          ),
+        ),
       },
 
       // ===== WALLET =====

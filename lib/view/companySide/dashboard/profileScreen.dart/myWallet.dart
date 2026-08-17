@@ -17,7 +17,12 @@ import 'package:new_brand/widgets/paymentTabbar.dart';
 import 'package:provider/provider.dart';
 
 class WalletHistoryScreen extends StatefulWidget {
-  const WalletHistoryScreen({super.key});
+  // 0 = Transaction, 1 = Delivered, 2 = Returned — lets callers (e.g. the
+  // dashboard's "Delivered Orders" card) land directly on a specific tab
+  // instead of always opening on Transaction.
+  final int initialTabIndex;
+
+  const WalletHistoryScreen({super.key, this.initialTabIndex = 0});
 
   @override
   State<WalletHistoryScreen> createState() => _WalletHistoryScreenState();
@@ -213,6 +218,7 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
               Wallet(),
               SizedBox(height: 25.h),
               PaymentTabBar(
+                initialIndex: widget.initialTabIndex,
                 firstTab: TransactionHistoryScreen(),
                 secondTab: GetdeliveredorderScreen(),
                 thirdTab: GetReturnedorderScreen(),

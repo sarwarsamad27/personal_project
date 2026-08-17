@@ -106,7 +106,9 @@ class _AllOrdersScreenState extends State<AllOrdersScreen> {
   Color _statusColor(String? status) {
     switch (status) {
       case 'Pending':
-        return Colors.orange;
+        // Not Colors.orange — this badge sits on CustomBgContainer's orange
+        // gradient background and would blend into it.
+        return Colors.indigo;
       case 'Dispatched':
         return Colors.blue;
       case 'Delivered':
@@ -462,8 +464,11 @@ class _AllOrdersScreenState extends State<AllOrdersScreen> {
                         runSpacing: 6.h,
                         children: [
                           _chip(
+                            // Not AppColor.primaryColor — same orange as
+                            // CustomBgContainer's background, unreadable
+                            // against it.
                             label: _formatDate(order.createdAt),
-                            color: AppColor.primaryColor,
+                            color: Colors.white,
                             icon: Icons.calendar_month_rounded,
                           ),
                           _chip(
@@ -514,9 +519,12 @@ class _AllOrdersScreenState extends State<AllOrdersScreen> {
                 Row(
                   children: [
                     Text(
+                      // Not AppColor.primaryColor — same orange as the page
+                      // background. Dimmer white keeps it visually
+                      // secondary to the bold total beside it.
                       "Rs. ",
                       style: TextStyle(
-                        color: AppColor.primaryColor,
+                        color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
                       ),

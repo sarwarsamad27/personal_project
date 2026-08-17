@@ -38,8 +38,14 @@ class Utils {
     }
   }
 
+  // Every screen that shows this badge (order lists/details) paints it on
+  // top of CustomBgContainer's orange gradient — Colors.orange here used to
+  // render as orange text on an orange background, unreadable. Cyan sits on
+  // the opposite side of the color wheel from that background, so it stays
+  // readable, and doesn't collide with any order-status color already in
+  // use (orange/blue/green/red/purple).
   static Color paymentColor(String? paymentStatus) =>
-      isOrderPrepaid(paymentStatus) ? Colors.green : Colors.orange;
+      isOrderPrepaid(paymentStatus) ? Colors.green : Colors.cyanAccent.shade700;
 
   static IconData paymentIcon(String? paymentStatus) =>
       isOrderPrepaid(paymentStatus)

@@ -33,6 +33,7 @@ import 'package:new_brand/viewModel/providers/productProvider/AnalyzeProductProv
 import 'package:new_brand/viewModel/providers/productProvider/addProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/deleteProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getProductCategoryWise_provider.dart';
+import 'package:new_brand/viewModel/providers/productProvider/getProductsByStock_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getRelatedProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/productProvider/getSingleProduct_provider.dart';
 import 'package:new_brand/viewModel/providers/profileProvider/AnalyzeStoreProvider.dart';
@@ -68,6 +69,7 @@ class AppMultiProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UpdateDeleteCategoryProvider()),
         ChangeNotifierProvider(create: (_) => AddProductProvider()),
         ChangeNotifierProvider(create: (_) => GetProductCategoryWiseProvider()),
+        ChangeNotifierProvider(create: (_) => GetProductsByStockProvider()),
         ChangeNotifierProvider(create: (_) => GetSingleProductProvider()),
         ChangeNotifierProvider(create: (_) => DeleteProductProvider()),
         ChangeNotifierProvider(create: (_) => GetMyOrdersProvider()),

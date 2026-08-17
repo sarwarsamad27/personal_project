@@ -1,8 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:http/http.dart' as http;
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/toast.dart';
@@ -42,6 +46,10 @@ class _OrderScreenState extends State<OrderScreen>
   // ── Bulk selection state ──
   bool _selectionMode = false;
   final Set<String> _selectedIds = {};
+  // Local (not provider-backed) — a handful of quick HTTP downloads, unlike
+  // the booking/dispatch bulk actions, doesn't need to keep running/toasting
+  // after the seller navigates away.
+  bool _bulkDownloadingSlips = false;
   // Actual bulk-operation progress lives in BulkAcceptOrdersProvider /
   // PendingToDispatchedProvider (app-root providers) rather than here — see
   // their doc comments. That's what lets a bulk action keep running (and
@@ -278,6 +286,72 @@ class _OrderScreenState extends State<OrderScreen>
     );
   }
 
+  // Downloads exactly the selected + already-Leopards-booked orders' slips
+  // (never the whole selection — unbooked ones have no slip yet) — same
+  // per-order download+PDF-validate approach as orderDetailScreen.dart's
+  // _downloadSlip, just looped. Saves every slip to the app's Documents
+  // folder; opens the file only when there's a single one so the seller
+  // isn't hit with N separate "open with…" prompts for a bigger batch.
+  Future<void> _bulkDownloadSlips(List<Orders> bookedOrders) async {
+    if (_bulkDownloadingSlips || bookedOrders.isEmpty) return;
+    setState(() {
+      _bulkDownloadingSlips = true;
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+
+    int successCount = 0;
+    String? lastSavedPath;
+    final dir = await getApplicationDocumentsDirectory();
+
+    for (final order in bookedOrders) {
+      final trackNo = order.trackNumber ?? '';
+      if (trackNo.isEmpty) continue;
+      try {
+        final response = await http
+            .get(
+              Uri.parse(Global.downloadSlip(trackNo)),
+              headers: {"Accept": "application/pdf"},
+            )
+            .timeout(const Duration(seconds: 15));
+        if (response.statusCode != 200) continue;
+
+        final bytes = response.bodyBytes;
+        final isPdf =
+            bytes.length >= 4 &&
+            bytes[0] == 0x25 &&
+            bytes[1] == 0x50 &&
+            bytes[2] == 0x44 &&
+            bytes[3] == 0x46;
+        if (!isPdf) continue;
+
+        final file = File("${dir.path}/shipping_slip_$trackNo.pdf");
+        await file.writeAsBytes(bytes, flush: true);
+        lastSavedPath = file.path;
+        successCount++;
+      } catch (_) {
+        // Keep going — one failed download shouldn't abort the rest of
+        // the batch.
+      }
+    }
+
+    if (!mounted) return;
+    setState(() => _bulkDownloadingSlips = false);
+
+    if (successCount == 0) {
+      AppToast.error("Could not download any shipping slips");
+    } else if (successCount == 1 && lastSavedPath != null) {
+      final result = await OpenFilex.open(lastSavedPath);
+      if (result.type != ResultType.done && mounted) {
+        AppToast.success("Slip saved to Documents folder");
+      }
+    } else {
+      AppToast.success(
+        "$successCount shipping slip(s) saved to Documents folder",
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -340,6 +414,20 @@ class _OrderScreenState extends State<OrderScreen>
         .where((e) => e.status == "Pending")
         .toList();
 
+    // Drives the bottom bar's third button: only orders that are already
+    // Leopards-booked have a slip to download, so "Download" only replaces
+    // "Leopards" once every currently-selected order is booked — otherwise
+    // there's at least one order that still needs booking first.
+    final selectedOrders = list
+        .where((o) => _selectedIds.contains(o.sId))
+        .toList();
+    final bookedSelectedOrders = selectedOrders
+        .where((o) => o.leopardsBooked == true && (o.trackNumber?.isNotEmpty ?? false))
+        .toList();
+    final allSelectedBooked =
+        selectedOrders.isNotEmpty &&
+        bookedSelectedOrders.length == selectedOrders.length;
+
     final Widget listWidget = _buildOrderList(
       list: list,
       isPendingTab: true,
@@ -398,7 +486,9 @@ class _OrderScreenState extends State<OrderScreen>
                           ? "Deselect All"
                           : "Select All",
                       style: TextStyle(
-                        color: AppColor.primaryColor,
+                        // Not AppColor.primaryColor — reads as orange text
+                        // on this screen's orange gradient background.
+                        color: Colors.white,
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w700,
                       ),
@@ -473,14 +563,30 @@ class _OrderScreenState extends State<OrderScreen>
                     ),
                   ),
                   SizedBox(width: 8.w),
-                  // Book with Leopards — actually books a courier packet.
+                  // Third slot swaps based on the selection's booking
+                  // state: once every selected order is already booked
+                  // there's nothing left to book — offer their slips
+                  // instead. Mixed/unbooked selections still show
+                  // "Leopards" (booking is safe to re-run — already-booked
+                  // orders are skipped server-side, see bulkAcceptOrders).
                   Expanded(
-                    child: _bulkActionButton(
-                      label: "Leopards",
-                      icon: Icons.local_shipping_rounded,
-                      onTap: _bulkBookWithLeopards,
-                      filled: true,
-                    ),
+                    child: allSelectedBooked
+                        ? _bulkActionButton(
+                            label: _bulkDownloadingSlips
+                                ? "Downloading…"
+                                : "Download",
+                            icon: Icons.download_rounded,
+                            onTap: _bulkDownloadingSlips
+                                ? () {}
+                                : () => _bulkDownloadSlips(bookedSelectedOrders),
+                            filled: true,
+                          )
+                        : _bulkActionButton(
+                            label: "Leopards",
+                            icon: Icons.local_shipping_rounded,
+                            onTap: _bulkBookWithLeopards,
+                            filled: true,
+                          ),
                   ),
                 ],
               ),
@@ -812,9 +918,11 @@ class _OrderScreenState extends State<OrderScreen>
                               runSpacing: 6.h,
                               children: [
                                 _buildBadge(
+                                  // Not AppColor.primaryColor — same orange
+                                  // as this screen's background gradient.
                                   label: _formatOrderDate(order.createdAt),
-                                  bgColor: AppColor.primaryColor,
-                                  textColor: AppColor.primaryColor,
+                                  bgColor: Colors.white,
+                                  textColor: Colors.white,
                                   icon: Icons.calendar_month_rounded,
                                 ),
                                 _buildBadge(
@@ -913,9 +1021,11 @@ class _OrderScreenState extends State<OrderScreen>
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
+                                // Not AppColor.primaryColor — same orange
+                                // as the background gradient.
                                 "Rs.",
                                 style: TextStyle(
-                                  color: AppColor.primaryColor,
+                                  color: Colors.white.withValues(alpha: 0.6),
                                   fontSize: 11.sp,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -1047,8 +1157,13 @@ class _OrderScreenState extends State<OrderScreen>
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
+            // Not AppColor.primaryColor for the selected state — same
+            // orange as the background, so a "selected" card would look
+            // barely different from an unselected one. This dark brown
+            // already anchors the bulk action bar below, so it reads as
+            // "these are connected" instead.
             color: isSelected
-                ? AppColor.primaryColor
+                ? const Color(0xff2A1A0E)
                 : isStale
                 ? Colors.red.withValues(alpha: 0.6)
                 : Colors.white.withValues(alpha: 0.25),
@@ -1059,8 +1174,8 @@ class _OrderScreenState extends State<OrderScreen>
             end: Alignment.bottomRight,
             colors: isSelected
                 ? [
-                    AppColor.primaryColor.withValues(alpha: 0.22),
-                    AppColor.primaryColor.withValues(alpha: 0.08),
+                    const Color(0xff2A1A0E).withValues(alpha: 0.5),
+                    const Color(0xff2A1A0E).withValues(alpha: 0.25),
                   ]
                 : isStale
                 ? [
@@ -1106,13 +1221,17 @@ class _OrderScreenState extends State<OrderScreen>
                   width: 24.w,
                   height: 24.w,
                   decoration: BoxDecoration(
+                    // Not AppColor.primaryColor — an orange checkmark
+                    // circle would barely read against the orange
+                    // background; dark brown keeps the white checkmark
+                    // icon clearly visible too.
                     color: isSelected
-                        ? AppColor.primaryColor
+                        ? const Color(0xff2A1A0E)
                         : Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isSelected
-                          ? AppColor.primaryColor
+                          ? const Color(0xff2A1A0E)
                           : Colors.white.withValues(alpha: 0.6),
                       width: 2,
                     ),
@@ -1259,9 +1378,11 @@ class _OrderScreenState extends State<OrderScreen>
                   runSpacing: 6.h,
                   children: [
                     _buildBadge(
+                      // Not AppColor.primaryColor — same orange as this
+                      // screen's background gradient.
                       label: _formatOrderDate(order.createdAt as String?),
-                      bgColor: AppColor.primaryColor,
-                      textColor: AppColor.primaryColor,
+                      bgColor: Colors.white,
+                      textColor: Colors.white,
                       icon: Icons.calendar_month_rounded,
                     ),
                     _buildBadge(
@@ -1344,9 +1465,11 @@ class _OrderScreenState extends State<OrderScreen>
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
+                    // Not AppColor.primaryColor — same orange as the
+                    // background gradient.
                     "Rs.",
                     style: TextStyle(
-                      color: AppColor.primaryColor,
+                      color: Colors.white.withValues(alpha: 0.6),
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1475,12 +1598,17 @@ class _OrderScreenState extends State<OrderScreen>
     required String label,
     VoidCallback? onTap,
   }) {
+    // Not AppColor.primaryColor for the tappable state — same orange as
+    // this screen's background gradient. Cyan matches the payment-status
+    // badge's "readable accent on orange" choice (see Utils.paymentColor)
+    // and still reads clearly as a distinct, tappable link color.
+    final tappableColor = Colors.cyanAccent.shade700;
     final row = Row(
       children: [
         Icon(
           icon,
           color: onTap != null
-              ? AppColor.primaryColor
+              ? tappableColor
               : Colors.white.withValues(alpha: 0.5),
           size: 13.sp,
         ),
@@ -1490,7 +1618,7 @@ class _OrderScreenState extends State<OrderScreen>
             label,
             style: TextStyle(
               color: onTap != null
-                  ? AppColor.primaryColor
+                  ? tappableColor
                   : Colors.white.withValues(alpha: 0.75),
               fontSize: 12.sp,
               fontWeight: FontWeight.w500,
