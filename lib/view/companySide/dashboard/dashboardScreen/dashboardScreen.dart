@@ -206,7 +206,11 @@ class _HomeDashboardState extends State<HomeDashboard>
 
     final chartProvider = context.read<CompanySalesChartProvider>();
     await Future.wait([
-      context.read<DashboardProvider>().getDashboardDataOnce(),
+      // refresh: true — without it, getDashboardDataOnce() is a no-op
+      // once the first load has already happened (see its own
+      // `if (_fetched && !refresh) return;` guard), so pull-to-refresh
+      // was silently doing nothing for the stat cards.
+      context.read<DashboardProvider>().getDashboardDataOnce(refresh: true),
       chartProvider.getChartData(type: chartProvider.selectedType),
     ]);
   }

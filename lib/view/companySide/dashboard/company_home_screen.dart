@@ -7,6 +7,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/chatThread_provider.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/companyExchange_provider.dart';
 import 'package:new_brand/viewModel/providers/chatProvider/company_refund_provider.dart';
+import 'package:new_brand/viewModel/providers/dashboardProvider/dashboard_provider.dart';
 import 'package:new_brand/viewModel/providers/notificationProvider/company_notification_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/getDispatchedorder_provider.dart';
 import 'package:new_brand/viewModel/providers/orderProvider/order_provider.dart';
@@ -283,7 +284,24 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                   body: screens[index],
                   bottomNavigationBar: _PremiumNavBar(
                     currentIndex: index,
-                    onTap: (i) => _currentIndex.value = i,
+                    onTap: (i) {
+                      _currentIndex.value = i;
+                      // The dashboard tab is kept alive by the IndexedStack
+                      // above (screens never rebuild on tab switch), so its
+                      // only automatic refresh source is live socket events
+                      // (product:delete, new_order, etc.) firing while it's
+                      // already mounted — a product deleted from a
+                      // different screen, or any gap in socket delivery,
+                      // otherwise leaves stale counts showing indefinitely.
+                      // Refreshing every time the seller actually switches
+                      // to this tab guarantees the cards always reflect
+                      // what's really in the database.
+                      if (i == 0) {
+                        context.read<DashboardProvider>().getDashboardDataOnce(
+                          refresh: true,
+                        );
+                      }
+                    },
                   ),
                 );
               },
