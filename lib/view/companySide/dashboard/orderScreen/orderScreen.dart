@@ -7,6 +7,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:new_brand/resources/appColor.dart';
 import 'package:new_brand/resources/global.dart';
 import 'package:new_brand/resources/toast.dart';
@@ -289,9 +290,15 @@ class _OrderScreenState extends State<OrderScreen>
   // Downloads exactly the selected + already-Leopards-booked orders' slips
   // (never the whole selection — unbooked ones have no slip yet) — same
   // per-order download+PDF-validate approach as orderDetailScreen.dart's
-  // _downloadSlip, just looped. Saves every slip to the app's Documents
-  // folder; opens the file only when there's a single one so the seller
-  // isn't hit with N separate "open with…" prompts for a bigger batch.
+  // _downloadSlip, just looped. Every slip lands in
+  // getApplicationDocumentsDirectory(), which on Android/iOS is a
+  // sandboxed folder private to this app — invisible in any file manager
+  // or "Files" app, so the seller has no way to find them afterward unless
+  // we hand them off. A single slip is opened directly (their PDF viewer
+  // then offers its own save/share); multiple slips are handed to the
+  // native share sheet instead, so the seller can save/send them wherever
+  // they actually want (Files, WhatsApp, Drive, …) rather than N silent
+  // "open with…" prompts.
   Future<void> _bulkDownloadSlips(List<Orders> bookedOrders) async {
     if (_bulkDownloadingSlips || bookedOrders.isEmpty) return;
     setState(() {
@@ -300,8 +307,7 @@ class _OrderScreenState extends State<OrderScreen>
       _selectedIds.clear();
     });
 
-    int successCount = 0;
-    String? lastSavedPath;
+    final savedPaths = <String>[];
     final dir = await getApplicationDocumentsDirectory();
 
     for (final order in bookedOrders) {
@@ -327,8 +333,7 @@ class _OrderScreenState extends State<OrderScreen>
 
         final file = File("${dir.path}/shipping_slip_$trackNo.pdf");
         await file.writeAsBytes(bytes, flush: true);
-        lastSavedPath = file.path;
-        successCount++;
+        savedPaths.add(file.path);
       } catch (_) {
         // Keep going — one failed download shouldn't abort the rest of
         // the batch.
@@ -338,16 +343,19 @@ class _OrderScreenState extends State<OrderScreen>
     if (!mounted) return;
     setState(() => _bulkDownloadingSlips = false);
 
-    if (successCount == 0) {
+    if (savedPaths.isEmpty) {
       AppToast.error("Could not download any shipping slips");
-    } else if (successCount == 1 && lastSavedPath != null) {
-      final result = await OpenFilex.open(lastSavedPath);
+    } else if (savedPaths.length == 1) {
+      final result = await OpenFilex.open(savedPaths.first);
       if (result.type != ResultType.done && mounted) {
-        AppToast.success("Slip saved to Documents folder");
+        AppToast.success("Slip saved");
       }
     } else {
-      AppToast.success(
-        "$successCount shipping slip(s) saved to Documents folder",
+      await SharePlus.instance.share(
+        ShareParams(
+          files: savedPaths.map((p) => XFile(p)).toList(),
+          text: '${savedPaths.length} shipping slip(s)',
+        ),
       );
     }
   }
