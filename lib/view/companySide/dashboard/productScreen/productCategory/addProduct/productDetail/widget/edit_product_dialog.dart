@@ -79,7 +79,8 @@ class EditProductDialog extends StatelessWidget {
           // below), so there's nothing left to block on.
           child: Consumer<EditProductNotifier>(
             builder: (context, s, _) {
-              final bool canUpdate = s.isChanged && s.isValid;
+              final bool canUpdate =
+                  s.isChanged && s.isValid && !s.isSubmitting;
               return _buildForm(context, s, canUpdate);
             },
           ),
@@ -244,8 +245,10 @@ class EditProductDialog extends StatelessWidget {
                   opacity: canUpdate ? 1.0 : 0.5,
                   child: CustomButton(
                     text: "Update",
+                    isLoading: s.isSubmitting,
                     onTap: canUpdate
                         ? () async {
+                            s.setSubmitting(true);
                             await s.removeMissingFiles();
 
                             final validNewImages = s.newImages

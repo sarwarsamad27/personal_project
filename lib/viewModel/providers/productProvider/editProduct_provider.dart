@@ -29,6 +29,14 @@ class EditProductNotifier extends ChangeNotifier {
   File? newVideoFile;       // user picked a new local video
   bool videoRemoved = false; // user explicitly removed the existing video
 
+  // ── Submit state ─────────────────────────────────────────────────────────────
+  bool isSubmitting = false;
+
+  void setSubmitting(bool value) {
+    isSubmitting = value;
+    notifyListeners();
+  }
+
   // current video to show: new file takes precedence, then existing if not removed
   String? get currentVideoUrl =>
       newVideoFile == null && !videoRemoved ? oldVideoUrl : null;
