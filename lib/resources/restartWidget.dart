@@ -19,13 +19,33 @@ class RestartWidget extends StatefulWidget {
 
 class RestartWidgetState extends State<RestartWidget> {
   Key _key = UniqueKey();
+  // True for exactly one frame during a restart — see restart() below.
+  bool _tearingDown = false;
 
+  // Two-phase swap instead of changing `_key` directly in one setState.
+  // Doing it in one step disposes the entire old tree (every provider, the
+  // chat socket, and — if logout's "Logging out…" dialog was still open —
+  // its perpetually-animating spinner) and builds the entire new tree
+  // (MaterialApp, Navigator, LoginScreen) within the very same frame. On
+  // some Android devices that produced a washed-out/faded login screen on
+  // the first paint — only killing and reopening the app forced a clean
+  // repaint. Building an empty SizedBox for one frame first lets the old
+  // (heavy) tree finish tearing down in isolation before the new tree gets
+  // its first paint.
   void restart() {
-    setState(() => _key = UniqueKey());
+    setState(() => _tearingDown = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        _key = UniqueKey();
+        _tearingDown = false;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_tearingDown) return const SizedBox.shrink();
     return KeyedSubtree(key: _key, child: widget.child);
   }
 }

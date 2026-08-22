@@ -51,12 +51,23 @@ class UploadJob {
 /// the server like it always does — so nothing here needs to survive an
 /// app restart.
 class BackgroundUploadManager extends ChangeNotifier {
+  // `FileDownloader().updates` is a single-subscription stream that only
+  // tolerates being listened to once for the process's lifetime. Logout
+  // (see restartApp() in restartWidget.dart) tears down and recreates
+  // AppMultiProvider — and with it this class — so listening to the raw
+  // stream directly here would throw "Stream has already been listened to"
+  // on the second login. Wrapping it once in a broadcast stream lets each
+  // new instance subscribe/unsubscribe freely.
+  static final Stream<TaskUpdate> _updates = FileDownloader()
+      .updates
+      .asBroadcastStream();
+
   final Map<String, UploadJob> _jobs = {};
   final Map<String, void Function(TaskStatusUpdate update)> _onDone = {};
   late final StreamSubscription<TaskUpdate> _sub;
 
   BackgroundUploadManager() {
-    _sub = FileDownloader().updates.listen(_onUpdate);
+    _sub = _updates.listen(_onUpdate);
   }
 
   List<UploadJob> get jobs => List.unmodifiable(_jobs.values);

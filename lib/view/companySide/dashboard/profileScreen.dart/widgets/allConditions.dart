@@ -167,6 +167,16 @@ class AllCondition extends StatelessWidget {
       await FirebaseMessaging.instance.deleteToken().timeout(const Duration(seconds: 3));
     } catch (_) {}
 
+    // Close the "Logging out…" dialog (with its perpetually-animating
+    // SpinKitThreeBounce) before tearing down the whole app tree — leaving
+    // it open let a live Ticker/AnimationController race the old tree's
+    // teardown against the new tree's first paint, which was landing as a
+    // washed-out/faded login screen on next build (only a full app kill
+    // forced a clean repaint).
+    if (context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+
     await AppNav.forceLogoutToLogin();
   }
 
